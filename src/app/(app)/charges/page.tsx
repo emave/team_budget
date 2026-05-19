@@ -4,6 +4,7 @@ import { listChargesFiltered } from '@/server/domain/charges';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { users } from '@/server/db/schema';
 import { ChargeRow } from './charge-row';
+import { CancelChargeButton } from './cancel-button';
 import Link from 'next/link';
 
 export default async function ChargesPage({ searchParams }: { searchParams: { status?: 'open' | 'paid' | 'cancelled' } }) {
@@ -40,6 +41,7 @@ export default async function ChargesPage({ searchParams }: { searchParams: { st
             createdAt={c.createdAt}
             userDisplayName={userNames.get(c.userId) ?? '?'}
             currency={settings.currency}
+            actions={me.role === 'admin' && c.status === 'open' ? <CancelChargeButton id={c.id} /> : null}
           />
         ))}
         {rows.length === 0 && <div style={{ color: '#6b7280' }}>No charges.</div>}
