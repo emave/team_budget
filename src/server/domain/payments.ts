@@ -2,7 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, payments, paymentAllocations, users } from '@/server/db/schema';
 import type { Db } from './types';
-import { recomputeChargeStatus, sumAllocationsForCharge } from './charges';
+import { recomputeChargeStatus, sumAllocationsForCharge, listOpenChargesForMember } from './charges';
 
 export type Pot = 'cash' | 'card';
 
@@ -116,6 +116,31 @@ export async function listPaymentsByPayer(db: Db, payerUserId: string) {
     .from(payments)
     .where(and(eq(payments.payerUserId, payerUserId), isNull(payments.cancelledAt)))
     .all();
+}
+
+export async function fifoAllocate(
+  db: Db,
+  payerUserId: string,
+  amount: number,
+): Promise<AllocationInput[]> {
+  let remaining = amount;
+  const result: AllocationInput[] = [];
+  const open = await listOpenChargesForMember(db, payerUserId);
+  for (const c of open) {
+    if (remaining <= 0) break;
+    const already = await sumAllocationsForCharge(db, c.id);
+    const headroom = c.amount - already;
+    if (headroom <= 0) continue;
+    const take = Math.min(headroom, remaining);
+    result.push({ chargeId: c.id, amount: take });
+    remaining -= take;
+  }
+  if (remaining > 0) {
+    throw new Error(
+      `payment amount ${amount} exceeds total open debt by ${remaining}`,
+    );
+  }
+  return result;
 }
 
 export async function cancelPayment(db: Db, paymentId: string) {
