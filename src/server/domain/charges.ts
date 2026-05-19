@@ -137,3 +137,59 @@ export async function getMemberOutstandingDebt(db: Db, userId: string): Promise<
   }
   return total;
 }
+
+export interface SplitAllocation {
+  userId: string;
+  amount: number;
+}
+
+export interface CreateSplitChargeInput {
+  description: string;
+  allocations: SplitAllocation[];
+  createdByUserId: string;
+}
+
+export interface SplitChargeResult {
+  groupId: string;
+  charges: Charge[];
+}
+
+export async function createSplitCharge(
+  db: Db,
+  input: CreateSplitChargeInput,
+): Promise<SplitChargeResult> {
+  if (input.allocations.length === 0) {
+    throw new Error('split must include at least one allocation');
+  }
+  for (const a of input.allocations) {
+    assertPositive(a.amount);
+    await assertUserExists(db, a.userId);
+  }
+  await assertUserExists(db, input.createdByUserId);
+  const groupId = randomUUID();
+  const ids: string[] = [];
+  db.transaction((tx) => {
+    for (const a of input.allocations) {
+      const id = randomUUID();
+      ids.push(id);
+      tx.insert(charges)
+        .values({
+          id,
+          userId: a.userId,
+          type: 'out_of_bounds',
+          amount: a.amount,
+          description: input.description,
+          groupId,
+          status: 'open',
+          createdByUserId: input.createdByUserId,
+        })
+        .run();
+    }
+  });
+  const out: Charge[] = [];
+  for (const id of ids) {
+    const c = await getChargeById(db, id);
+    if (c) out.push(c);
+  }
+  return { groupId, charges: out };
+}
