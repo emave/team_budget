@@ -117,3 +117,25 @@ export async function listPaymentsByPayer(db: Db, payerUserId: string) {
     .where(and(eq(payments.payerUserId, payerUserId), isNull(payments.cancelledAt)))
     .all();
 }
+
+export async function cancelPayment(db: Db, paymentId: string) {
+  const p = db.select().from(payments).where(eq(payments.id, paymentId)).get();
+  if (!p) throw new Error(`payment ${paymentId} not found`);
+  if (p.cancelledAt) return p; // idempotent
+
+  const affectedCharges = db
+    .select({ chargeId: paymentAllocations.chargeId })
+    .from(paymentAllocations)
+    .where(eq(paymentAllocations.paymentId, paymentId))
+    .all();
+
+  db.update(payments)
+    .set({ cancelledAt: new Date().toISOString() })
+    .where(eq(payments.id, paymentId))
+    .run();
+
+  for (const { chargeId } of affectedCharges) {
+    await recomputeChargeStatus(db, chargeId);
+  }
+  return db.select().from(payments).where(eq(payments.id, paymentId)).get()!;
+}

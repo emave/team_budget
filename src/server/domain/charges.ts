@@ -104,3 +104,17 @@ export async function createPotBorrow(db: Db, input: CreatePotBorrowInput): Prom
     .run();
   return (await getChargeById(db, id))!;
 }
+
+export async function cancelCharge(db: Db, chargeId: string): Promise<Charge> {
+  const c = await getChargeById(db, chargeId);
+  if (!c) throw new Error(`charge ${chargeId} not found`);
+  if (c.status === 'cancelled') return c;
+  const allocated = await sumAllocationsForCharge(db, chargeId);
+  if (allocated > 0) {
+    throw new Error(
+      `cannot cancel charge ${chargeId}: it has allocations (cancel the payments first)`,
+    );
+  }
+  db.update(charges).set({ status: 'cancelled' }).where(eq(charges.id, chargeId)).run();
+  return (await getChargeById(db, chargeId))!;
+}
