@@ -71,3 +71,36 @@ export async function recomputeChargeStatus(db: Db, chargeId: string) {
     db.update(charges).set({ status: next }).where(eq(charges.id, chargeId)).run();
   }
 }
+
+export type Pot = 'cash' | 'card';
+
+export interface CreatePotBorrowInput {
+  userId: string;
+  amount: number;
+  sourcePot: Pot;
+  description: string;
+  createdByUserId: string;
+}
+
+export async function createPotBorrow(db: Db, input: CreatePotBorrowInput): Promise<Charge> {
+  assertPositive(input.amount);
+  if (input.sourcePot !== 'cash' && input.sourcePot !== 'card') {
+    throw new Error(`invalid source pot: ${String(input.sourcePot)}`);
+  }
+  await assertUserExists(db, input.userId);
+  await assertUserExists(db, input.createdByUserId);
+  const id = randomUUID();
+  db.insert(charges)
+    .values({
+      id,
+      userId: input.userId,
+      type: 'pot_borrow',
+      amount: input.amount,
+      description: input.description,
+      sourcePot: input.sourcePot,
+      status: 'open',
+      createdByUserId: input.createdByUserId,
+    })
+    .run();
+  return (await getChargeById(db, id))!;
+}
