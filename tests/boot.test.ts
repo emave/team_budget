@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 describe('boot', () => {
   beforeEach(() => {
     vi.resetModules();
+    process.env.SKIP_BOT = '1';
     process.env.NODE_ENV = 'test';
     process.env.BOT_TOKEN = 'test:0123456789';
     process.env.BOT_USERNAME = 'test_bot';

@@ -1,5 +1,6 @@
 import 'server-only';
 import { env } from './env';
+import { startBot } from './bot';
 
 type BootState = 'pending' | 'booting' | 'ready' | 'failed';
 
@@ -9,8 +10,13 @@ let bootPromise: Promise<void> | null = null;
 async function doBoot() {
   state = 'booting';
   try {
-    env(); // validate env early
-    // bot + cron startup happens in Phase D/G; this is the seam
+    env();
+    if (process.env.SKIP_BOT !== '1') {
+      // Don't await: long-polling starts a loop. We just want it to begin.
+      void startBot().catch((err) => {
+        console.error('Bot failed:', err);
+      });
+    }
     state = 'ready';
   } catch (err) {
     state = 'failed';
