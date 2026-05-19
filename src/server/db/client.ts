@@ -3,9 +3,11 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
 
-export function getDb() {
+let _db: DrizzleDb | null = null;
+
+export function getDb(): DrizzleDb {
   if (!_db) {
     const url = process.env.DATABASE_URL ?? 'data/team_budget.db';
     const sqlite = new Database(url);
