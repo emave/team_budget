@@ -76,9 +76,14 @@ Recorded by admin when the team buys something using its own money: pot, amount,
 
 ### 3.8 Cancellations
 
-Charges and payments both have a `cancelled` status (no hard deletes):
+Charges and payments are both reversible (no hard deletes), but represented differently:
 
-- Cancelling a payment removes its allocations; previously-paid charges may reopen.
+- A **charge** has a `status` enum that includes `cancelled` (alongside `open` and `paid`).
+- A **payment** has a `cancelled_at` nullable timestamp; `null` means active.
+
+Semantics:
+
+- Cancelling a payment removes its allocations; previously-paid charges may reopen (status recomputed to `open`).
 - Cancelling a charge is forbidden while it has allocations — admin must reverse the relevant payments first.
 
 ### 3.9 Derived values
@@ -149,7 +154,7 @@ Single-row table:
 | `billing_period`      | text null | `YYYY-MM`, only for `monthly_dues`                     |
 | `group_id`            | uuid null | set for `out_of_bounds` to group split rows            |
 | `source_pot`          | enum null | `cash` \| `card`, only for `pot_borrow`                |
-| `status`              | enum      | `open` \| `paid` \| `cancelled`; computed on every write |
+| `status`              | enum      | `open` \| `paid` \| `cancelled`; stored, recomputed by domain code whenever allocations change |
 | `created_at`          | timestamp |                                                        |
 | `created_by_user_id`  | fk users  |                                                        |
 
@@ -221,7 +226,7 @@ Invariants enforced in domain code:
 One Next.js (App Router) application, deployed as a single Docker container.
 
 - Web UI (Server Components + targeted client components, Base Web/Styletron)
-- Telegram bot (grammY) runs in the same Node process, started on app boot, using **long-polling**. Polling chosen for self-host friendliness — no need for public HTTPS or a domain.
+- Telegram bot (grammY) runs in the same Node process, started on app boot, using **long-polling**. Polling means the bot itself does not require a public HTTPS endpoint — but the Telegram Mini App (§7.4) does. See §12.
 - Background scheduler (`node-cron`) runs in-process for monthly dues generation.
 - Persistence: SQLite via Drizzle ORM, single file at `data/team_budget.db`, WAL mode for concurrent reads.
 
@@ -446,7 +451,16 @@ Every zod schema gets one positive + one negative test.
 - Mounts a host volume for `data/` (SQLite database) so it survives container restarts.
 - Env vars: `BOT_TOKEN`, `BOT_USERNAME`, `BOOTSTRAP_ADMIN_TELEGRAM_ID`, `NEXT_PUBLIC_BASE_URL`, `CURRENCY`.
 - `docker-compose.yml` provides the dev setup with the volume already configured.
-- No external dependencies (no Redis, no Postgres, no SMTP). Bot uses polling, so no public HTTPS required.
+- No external dependencies (no Redis, no Postgres, no SMTP).
+
+### 12.1 HTTPS requirements
+
+- **Bot updates**: long-polling, so the bot itself does not need a public HTTPS endpoint.
+- **Telegram Mini App**: Telegram requires the mini app URL to be publicly reachable over HTTPS. The host running this app must therefore be exposed via HTTPS through one of:
+  - A VPS with a domain and Let's Encrypt (Caddy or nginx + certbot)
+  - A home server fronted by Cloudflare Tunnel (free) or similar
+  - ngrok / Tailscale Funnel for early testing
+- **Web UI (desktop)**: works over HTTP for local-only access, but HTTPS is recommended in production for cookie security. If you're already exposing HTTPS for the mini app, the web UI shares the same endpoint.
 
 ## 13. Out of Scope for v1
 
