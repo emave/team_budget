@@ -38,3 +38,7 @@ yarn-error.log*
 
 # superpowers brainstorming session artifacts
 .superpowers/
+
+# playwright
+test-results/
+playwright-report/
