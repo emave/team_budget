@@ -3,6 +3,7 @@ import { Bot } from 'grammy';
 import { env } from '@/server/env';
 import { getDb } from '@/server/db/client';
 import { identifyUser, type BotContext } from './middleware';
+import { registerStartHandler } from './handlers/start';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -14,7 +15,9 @@ export function getBot(): Bot<BotContext> {
       return next();
     });
     _bot.use(identifyUser);
-    // Command handlers are registered in subsequent tasks.
+    registerStartHandler(_bot, {
+      bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID,
+    });
   }
   return _bot;
 }
