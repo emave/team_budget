@@ -1,4 +1,4 @@
-import { and, eq, isNull, sum } from 'drizzle-orm';
+import { and, asc, eq, isNull, sum } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, payments, paymentAllocations, users } from '@/server/db/schema';
 import type { Db } from './types';
@@ -117,4 +117,23 @@ export async function cancelCharge(db: Db, chargeId: string): Promise<Charge> {
   }
   db.update(charges).set({ status: 'cancelled' }).where(eq(charges.id, chargeId)).run();
   return (await getChargeById(db, chargeId))!;
+}
+
+export async function listOpenChargesForMember(db: Db, userId: string) {
+  return db
+    .select()
+    .from(charges)
+    .where(and(eq(charges.userId, userId), eq(charges.status, 'open')))
+    .orderBy(asc(charges.createdAt))
+    .all();
+}
+
+export async function getMemberOutstandingDebt(db: Db, userId: string): Promise<number> {
+  const open = await listOpenChargesForMember(db, userId);
+  let total = 0;
+  for (const c of open) {
+    const allocated = await sumAllocationsForCharge(db, c.id);
+    total += c.amount - allocated;
+  }
+  return total;
 }
