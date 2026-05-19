@@ -7,6 +7,7 @@ import { identifyUser, type BotContext } from './middleware';
 import { registerStartHandler } from './handlers/start';
 import { registerHelpHandler } from './handlers/help';
 import { registerMenuHandler } from './handlers/menu';
+import { registerBalanceHandler } from './handlers/balance';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -23,6 +24,7 @@ export function getBot(): Bot<BotContext> {
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
+    registerBalanceHandler(_bot);
   }
   return _bot;
 }
