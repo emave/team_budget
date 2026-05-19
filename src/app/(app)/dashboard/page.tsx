@@ -4,9 +4,11 @@ import { getPotBalances } from '@/server/domain/pots';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
+import { recentActivity } from '@/server/domain/activity';
 import { formatCents } from '@/shared/format';
 import { PotCard } from './pot-card';
 import { MemberRow } from './member-row';
+import { ActivityFeed } from './activity';
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -16,6 +18,7 @@ export default async function DashboardPage() {
   if (user.role === 'admin') {
     const [pots, members] = await Promise.all([getPotBalances(db), listActiveMembers(db)]);
     const debts = await Promise.all(members.map((m) => getMemberOutstandingDebt(db, m.id)));
+    const events = await recentActivity(db, 10);
 
     return (
       <div>
@@ -36,6 +39,7 @@ export default async function DashboardPage() {
             />
           ))}
         </div>
+        <ActivityFeed events={events} currency={settings.currency} />
       </div>
     );
   }
