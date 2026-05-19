@@ -1,0 +1,69 @@
+{
+  "name": "team-budget",
+  "version": "0.1.0",
+  "description": "Team Budget - Self-hosted app for airsoft team shared money",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "next lint",
+    "format": "prettier --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "test:e2e": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.8",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@tanstack/react-query": "^5.100.10",
+    "baseui": "^16.1.1",
+    "better-sqlite3": "^12.10.0",
+    "drizzle-orm": "^0.45.2",
+    "grammy": "^1.43.0",
+    "next": "~14.2.35",
+    "node-cron": "^4.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.76.0",
+    "server-only": "^0.0.1",
+    "styletron-engine-atomic": "^1.6.2",
+    "styletron-react": "^6.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.8.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "@vitest/ui": "^4.1.6",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.35",
+    "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^20.9.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.1",
+    "typescript": "~5.4.5",
+    "vitest": "~1.6.1"
+  }
+}
