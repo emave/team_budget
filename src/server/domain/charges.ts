@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, sum } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sum } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, payments, paymentAllocations, users } from '@/server/db/schema';
 import type { Db } from './types';
@@ -126,6 +126,32 @@ export async function listOpenChargesForMember(db: Db, userId: string) {
     .where(and(eq(charges.userId, userId), eq(charges.status, 'open')))
     .orderBy(asc(charges.createdAt))
     .all();
+}
+
+export interface ChargesFilter {
+  userId?: string;
+  type?: 'monthly_dues' | 'out_of_bounds' | 'adhoc' | 'pot_borrow';
+  status?: 'open' | 'paid' | 'cancelled';
+  limit?: number;
+}
+
+export async function listChargesFiltered(db: Db, filter: ChargesFilter = {}) {
+  const conds = [];
+  if (filter.userId) conds.push(eq(charges.userId, filter.userId));
+  if (filter.type) conds.push(eq(charges.type, filter.type));
+  if (filter.status) conds.push(eq(charges.status, filter.status));
+  const whereExpr = conds.length === 0 ? undefined : conds.length === 1 ? conds[0] : and(...conds);
+  const limit = filter.limit ?? 1000;
+  if (whereExpr) {
+    return db
+      .select()
+      .from(charges)
+      .where(whereExpr)
+      .orderBy(desc(charges.createdAt))
+      .limit(limit)
+      .all();
+  }
+  return db.select().from(charges).orderBy(desc(charges.createdAt)).limit(limit).all();
 }
 
 export async function getMemberOutstandingDebt(db: Db, userId: string): Promise<number> {
