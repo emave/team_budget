@@ -7,17 +7,15 @@ import { BaseProvider } from 'baseui';
 import { lightTheme } from '@/ui/theme';
 
 export function Providers({ children }: { children: ReactNode }) {
-  const engine = useMemo(() => {
-    if (typeof document === 'undefined') {
-      // Server-side fallback for SSR
-      return null as any;
-    }
+  // Styletron's Client engine touches document.head; on the server we render
+  // children unwrapped and let the client engine attach during hydration.
+  // Plan 2 will swap in the SSR stylesheet collector.
+  const engine = useMemo((): Styletron | null => {
+    if (typeof document === 'undefined') return null;
     return new Styletron();
   }, []);
 
-  if (!engine) {
-    return <>{children}</>;
-  }
+  if (!engine) return <>{children}</>;
 
   return (
     <StyletronProvider value={engine}>
