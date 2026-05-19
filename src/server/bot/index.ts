@@ -4,6 +4,8 @@ import { env } from '@/server/env';
 import { getDb } from '@/server/db/client';
 import { identifyUser, type BotContext } from './middleware';
 import { registerStartHandler } from './handlers/start';
+import { registerHelpHandler } from './handlers/help';
+import { registerMenuHandler } from './handlers/menu';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -18,6 +20,8 @@ export function getBot(): Bot<BotContext> {
     registerStartHandler(_bot, {
       bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID,
     });
+    registerHelpHandler(_bot);
+    registerMenuHandler(_bot);
   }
   return _bot;
 }
