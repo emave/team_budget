@@ -1,5 +1,6 @@
 import 'server-only';
-import { Bot } from 'grammy';
+import { Bot, session } from 'grammy';
+import { conversations } from '@grammyjs/conversations';
 import { env } from '@/server/env';
 import { getDb } from '@/server/db/client';
 import { identifyUser, type BotContext } from './middleware';
@@ -12,14 +13,14 @@ let _bot: Bot<BotContext> | null = null;
 export function getBot(): Bot<BotContext> {
   if (!_bot) {
     _bot = new Bot<BotContext>(env().BOT_TOKEN);
+    _bot.use(session({ initial: () => ({}) }));
+    _bot.use(conversations());
     _bot.use((ctx, next) => {
       ctx.db = getDb();
       return next();
     });
     _bot.use(identifyUser);
-    registerStartHandler(_bot, {
-      bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID,
-    });
+    registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
   }

@@ -10,5 +10,5 @@ export interface BotContextProps {
   currentUser: typeof users.$inferSelect | null;
 }
 
-export type BotContext = Context & SessionFlavor<SessionData> & ConversationFlavor & BotContextProps;
+export type BotContext = ConversationFlavor<Context & SessionFlavor<SessionData> & BotContextProps>;
 export type BotConversation = Conversation<BotContext>;
