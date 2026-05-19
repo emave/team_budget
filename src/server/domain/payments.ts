@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, payments, paymentAllocations, users } from '@/server/db/schema';
 import type { Db } from './types';
@@ -163,4 +163,8 @@ export async function cancelPayment(db: Db, paymentId: string) {
     await recomputeChargeStatus(db, chargeId);
   }
   return db.select().from(payments).where(eq(payments.id, paymentId)).get()!;
+}
+
+export async function listAllPayments(db: Db, limit = 200) {
+  return db.select().from(payments).orderBy(desc(payments.createdAt)).limit(limit).all();
 }
