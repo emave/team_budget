@@ -1,4 +1,5 @@
 allowBuilds:
   better-sqlite3: true
+  core-js: set this to true or false
   esbuild: true
   unrs-resolver: set this to true or false
