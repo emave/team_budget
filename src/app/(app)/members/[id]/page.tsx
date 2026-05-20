@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
-import { getUserById } from '@/server/domain/users';
+import { getUserById, canHardDeleteUser } from '@/server/domain/users';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import {
   getMemberOutstandingDebt,
@@ -29,6 +29,9 @@ export default async function MemberDetail({ params }: { params: { id: string } 
   const debt = await getMemberOutstandingDebt(db, u.id);
   const charges = await listOpenChargesForMember(db, u.id);
   const payments = await listPaymentsByPayer(db, u.id);
+  const isAdmin = me.role === 'admin';
+  const deleteBlockedReason = isAdmin ? await canHardDeleteUser(db, u.id) : null;
+  const isSelf = me.id === u.id;
 
   const openRows: OpenChargeRow[] = charges.map((c) => ({
     id: c.id,
@@ -46,7 +49,13 @@ export default async function MemberDetail({ params }: { params: { id: string } 
     <div>
       <PageHeader
         title={u.displayName}
-        actions={me.role === 'admin' ? <AdminControls user={{ id: u.id, isActive: u.isActive, role: u.role }} /> : null}
+        actions={isAdmin ? (
+          <AdminControls
+            user={{ id: u.id, displayName: u.displayName, isActive: u.isActive, role: u.role }}
+            isSelf={isSelf}
+            deleteBlockedReason={deleteBlockedReason}
+          />
+        ) : null}
       />
 
       <StatusCard tone={debt > 0 ? 'negative' : 'positive'}>
