@@ -9,13 +9,28 @@ import {
   cancelPayment as domainCancel,
   fifoAllocate,
 } from '@/server/domain/payments';
+import { getNotifier } from '@/server/bot/notifications';
+import { getOrCreateSettings } from '@/server/domain/settings';
+import { formatCents } from '@/shared/format';
+import { getMemberOutstandingDebt } from '@/server/domain/charges';
 
 export function makePaymentActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
   const adminAction = makeAdminAction(deps);
 
   const recordPayment = adminAction(async ({ user, db }, input: unknown) => {
     const p = recordPaymentSchema.parse(input);
-    return domainRecord(db, { ...p, createdByUserId: user.id });
+    const result = await domainRecord(db, { ...p, createdByUserId: user.id });
+    if (process.env.SKIP_BOT !== '1') {
+      try {
+        const settings = await getOrCreateSettings(db);
+        const remaining = await getMemberOutstandingDebt(db, p.payerUserId);
+        await getNotifier().notifyUser(
+          p.payerUserId,
+          `💵 Payment ${formatCents(result.payment.amount, settings.currency)} (${result.payment.method}) recorded. Remaining: ${formatCents(remaining, settings.currency)}.`,
+        );
+      } catch (err) { console.error('[actions] notify failed:', err); }
+    }
+    return result;
   });
 
   const cancelPayment = adminAction(async ({ db }, input: { id: string }) => {

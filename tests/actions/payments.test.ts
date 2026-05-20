@@ -22,6 +22,7 @@ describe('payment actions', () => {
   beforeEach(async () => {
     db = createTestDb();
     process.env.SESSION_SECRET = SECRET;
+    process.env.SKIP_BOT = '1';
     adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
     memberId = (await createUser(db, { telegramUserId: 2, displayName: 'V', role: 'member' })).id;
     const s = await createSession(db, adminId);
