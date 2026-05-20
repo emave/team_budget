@@ -62,3 +62,68 @@ See [`docs/superpowers/specs/2026-05-19-team-budget-design.md`](docs/superpowers
 5. Navigate to `/members`, click "+ Invite", generate a link.
 6. Test settings: change dues amount, click "Generate dues now". Charges should appear on `/charges` for every active member.
 7. Record a payment for one of those charges via `/payments/new`. Confirm the dashboard pot balance updates.
+
+## Deployment
+
+### Prerequisites
+
+- A Telegram bot token from [@BotFather](https://t.me/BotFather)
+- Your Telegram numeric ID from [@userinfobot](https://t.me/userinfobot)
+- A host with Docker installed and a public HTTPS URL (required for the Telegram Mini App and Telegram Login Widget — see [Spec §12](docs/superpowers/specs/2026-05-19-team-budget-design.md#121-https-requirements))
+- The HTTPS URL can come from Cloudflare Tunnel (free), a VPS with Let's Encrypt, or any other reverse proxy
+
+### One-time setup
+
+1. Configure the BotFather bot:
+   - `/setdomain` → set your HTTPS domain (enables Telegram Login Widget)
+   - `/newapp` → register a Telegram Mini App pointing at `https://yourdomain.com/mini`
+2. Clone the repo and copy env:
+   ```bash
+   git clone <repo>
+   cd team_budget
+   cp .env.example .env
+   # edit .env with your bot token, your telegram id, and your public URL
+   ```
+3. Generate a session secret:
+   ```bash
+   openssl rand -hex 32
+   # paste into SESSION_SECRET in .env
+   ```
+4. Apply database migrations to the host volume:
+   ```bash
+   mkdir -p data
+   pnpm install --frozen-lockfile
+   DATABASE_URL=./data/team_budget.db pnpm db:migrate
+   ```
+
+### Run
+
+```bash
+docker compose up -d --build
+docker compose logs -f
+```
+
+Visit your HTTPS URL. On first `/start` to your bot in Telegram, you (the bootstrap admin) will be created.
+
+### Upgrades
+
+```bash
+git pull
+DATABASE_URL=./data/team_budget.db pnpm db:migrate  # only when schema changes
+docker compose up -d --build
+```
+
+### Backups
+
+Back up the `./data` directory regularly — it contains the SQLite database with all team finance state.
+
+### Without Docker
+
+```bash
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm build
+pnpm start
+```
+
+You'll need a process supervisor (systemd, pm2) to keep `pnpm start` alive across reboots.
