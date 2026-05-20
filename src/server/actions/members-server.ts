@@ -20,6 +20,10 @@ export async function editMember(input: z.infer<typeof editMemberSchema>) {
   return m.editMember(input);
 }
 
+export async function deleteMember(input: { id: string }) {
+  return m.deleteMember(input);
+}
+
 export async function revokeInvite(input: { id: string }) {
   return m.revokeInvite(input);
 }

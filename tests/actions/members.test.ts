@@ -97,4 +97,36 @@ describe('member actions', () => {
     const memberActions = makeMemberActions({ getDb: () => db });
     await expect(memberActions.revokeInvite({ id: inv.id })).rejects.toThrow(/admin required/);
   });
+
+  it('admin can delete an isolated member', async () => {
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const actions = makeMemberActions({ getDb: () => db });
+    const r = await actions.deleteMember({ id: m.id });
+    expect(r).toEqual({ ok: true });
+  });
+
+  it('admin cannot delete themselves', async () => {
+    const actions = makeMemberActions({ getDb: () => db });
+    await expect(actions.deleteMember({ id: adminId })).rejects.toThrow(/cannot delete self/);
+  });
+
+  it('cannot delete a member with charges', async () => {
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const { charges } = await import('@/server/db/schema');
+    db.insert(charges).values({
+      id: 'c1', userId: m.id, type: 'adhoc', amount: 100,
+      description: 'd', createdByUserId: adminId,
+    }).run();
+    const actions = makeMemberActions({ getDb: () => db });
+    await expect(actions.deleteMember({ id: m.id })).rejects.toThrow(/has_financial_history/);
+  });
+
+  it('member cannot delete', async () => {
+    const target = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const memberLogin = await createUser(db, { telegramUserId: 3, displayName: 'X', role: 'member' });
+    const s = await createSession(db, memberLogin.id);
+    cookieRef.value = signCookie(s.token, SECRET);
+    const actions = makeMemberActions({ getDb: () => db });
+    await expect(actions.deleteMember({ id: target.id })).rejects.toThrow(/admin required/);
+  });
 });
