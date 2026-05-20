@@ -80,3 +80,9 @@ export const upsertCategorySchema = z.object({
   id: idSchema.optional(),
   name: z.string().min(1).max(60),
 });
+
+export const editMemberSchema = z.object({
+  id: idSchema,
+  displayName: z.string().trim().min(1).max(80),
+  role: roleSchema,
+});
