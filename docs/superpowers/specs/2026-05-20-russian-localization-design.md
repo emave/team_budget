@@ -1,192 +1,317 @@
-# Russian Localization (Russian-only)
+# Bilingual EN/RU Localization
 
 Status: draft — awaiting user review
-Date: 2026-05-20
+Date: 2026-05-20 (revised — original Russian-only design superseded)
 
 ## Goal
 
-Convert every user-facing string in the app to Russian, formal "вы" tone. The app is single-language afterward — no language switcher, no locale negotiation, no fallback to English.
+Make the app fully bilingual (English ⇄ Russian) with per-user preference. Every user-facing string — web UI and Telegram bot — exists in both languages. Users pick their language; the app auto-detects on first contact.
+
+Russian uses formal "вы" tone.
+
+## High-level decisions
+
+- **Storage**: per-user, in DB. New `locale` column on `users` table, nullable.
+- **Default for new users**: auto-detect — `ctx.from.language_code` on bot side, `Accept-Language` header on web. Fallback to `ru`.
+- **Switcher**: header dropdown on web (RU/EN), `/language` command on bot.
+- **Approach**: custom mini-i18n (no library). Two TypeScript message catalogs with identical structure, type-checked at compile time so any missing key in either language is caught.
+
+Rationale for no library: only 2 languages, single self-hosted app, App Router server components mean a library buys little. Custom is ~150 lines and stays out of the way.
 
 ## Surfaces in scope
 
-1. **Web UI** in `src/app/**` — pages, headers, forms, dashboards, mini app. ~30 `.tsx` files contain user-visible literals.
-2. **Telegram bot** in `src/server/bot/**` — every `ctx.reply(...)`, every `await ctx.reply(...)` argument, every prompt inside grammY conversations, every inline keyboard button label, every "no items" empty-state message. 16 files.
-3. **Server action errors** that surface to the user — `ActionError` messages in `src/server/actions/_wrapper.ts` (`'sign in required'`, `'admin required'`) and any other thrown `ActionError` raised from action wrappers.
-4. **HTML language attribute** — `<html lang="en">` → `<html lang="ru">` in `src/app/layout.tsx`.
-5. **Page metadata** — `metadata = { title: 'Team Budget' }` in `src/app/layout.tsx`.
-6. **Date formatting** — every `.toLocaleString()` / `.toLocaleDateString()` in `src/app/**` switches to a shared `formatDateTime` / `formatDate` helper that pins locale to `'ru-RU'`.
+1. **Web UI** in `src/app/**` — all text, including the `/login` page (no user yet, so resolution falls back to cookie / Accept-Language).
+2. **Telegram bot** in `src/server/bot/**` — every `ctx.reply`, every inline keyboard label, every conversation prompt.
+3. **ActionError surface messages** — translated at the catch site by code, not by string (see below).
+4. **HTML `lang` attribute** — set per request from resolved locale.
+5. **Page metadata** — `<title>` resolved per locale.
+6. **Date formatting** — locale-aware via a `formatDateTime(d, locale)` helper.
 
-## Surfaces out of scope (remain English)
+## Surfaces out of scope
 
-- `throw new Error(...)` messages in `src/server/domain/**` — these are invariant violations / programmer errors that never reach end users in normal flow.
-- Bot command tokens (`/start`, `/menu`, `/help`, `/balance`, `/history`, `/info`, `/invite`) — these are commands, not display strings. (Help text *describing* them is in scope.)
-- Currency symbol formatting — already configurable per-team via `settings.currency`.
-- User-generated content — info-page titles/bodies, member display names, charge descriptions.
-- Existing test fixtures and assertions — adjusted only if they assert on now-translated strings (see "Tests" below).
+- Domain invariant `throw new Error(...)` (e.g. "payer X not found") in `src/server/domain/**` — programmer errors, never normally surfaced.
+- Bot command tokens (`/start`, `/menu`, etc.) — Telegram BotAPI restricts these to `[a-z0-9_]`.
+- Currency symbols — already configurable per-team via `settings.currency`.
+- User-generated content (info-page bodies, display names, descriptions).
 
-## Approach: centralized `STR` table
+## Schema change
 
-Add a single new module `src/shared/strings.ts` that exports a `STR` constant — an object literal grouped by surface. Replace inline string literals throughout the codebase with references into `STR`.
-
-Why centralized rather than replace-in-place:
-
-- Tone consistency (formal "вы") is reviewable in one file rather than scattered across ~50 files.
-- Typos and unintentional English remnants are greppable: any non-Cyrillic literal under `src/app/**` or `src/server/bot/**` after this change is a smell.
-- Future retoning (e.g. switching to informal "ты") is a single-file edit.
-- Adds zero runtime dependencies — `STR` is a plain TypeScript object, tree-shakeable.
-
-### Shape of `STR`
+Add to `users` table:
 
 ```ts
-export const STR = {
-  brand: 'Командный бюджет',
+locale: text('locale', { enum: ['en', 'ru'] }),  // nullable; null = auto-detect on next contact
+```
 
+Migration generated via `pnpm db:generate`. The column is nullable so existing users are unaffected; on their next login or bot interaction we auto-detect and persist.
+
+## Module layout
+
+```
+src/shared/i18n/
+  index.ts          # Locale type, LOCALES, DEFAULT_LOCALE, getMessages, detectFromAcceptLanguage, detectFromTelegram
+  messages-en.ts    # English catalog — source of truth for shape
+  messages-ru.ts    # Russian catalog — typed as Messages, compile error if a key is missing
+  types.ts          # type Messages = typeof MESSAGES_EN (or hand-written interface)
+
+src/shared/format.ts
+  + formatDateTime(d, locale)
+  + formatDate(d, locale)
+
+src/server/i18n/
+  resolve.ts        # resolveLocaleForRequest() — server-side resolution combining user.locale + cookie + Accept-Language
+
+src/app/_i18n-provider.tsx   # client context provider; useMessages() hook
+```
+
+### Locale type and constants
+
+```ts
+// src/shared/i18n/index.ts
+export type Locale = 'en' | 'ru';
+export const LOCALES: readonly Locale[] = ['en', 'ru'] as const;
+export const DEFAULT_LOCALE: Locale = 'ru';
+
+import { MESSAGES_EN } from './messages-en';
+import { MESSAGES_RU } from './messages-ru';
+
+export type Messages = typeof MESSAGES_EN;
+
+const catalogs: Record<Locale, Messages> = {
+  en: MESSAGES_EN,
+  ru: MESSAGES_RU as Messages,  // typed identically; TS errors if shape diverges
+};
+
+export function getMessages(locale: Locale): Messages {
+  return catalogs[locale];
+}
+
+export function detectFromAcceptLanguage(header: string | null | undefined): Locale {
+  if (!header) return DEFAULT_LOCALE;
+  // first language tag, lowercase, language-only
+  const tag = header.split(',')[0]?.trim().toLowerCase().split('-')[0];
+  return tag === 'ru' ? 'ru' : tag === 'en' ? 'en' : DEFAULT_LOCALE;
+}
+
+export function detectFromTelegram(languageCode: string | undefined): Locale {
+  if (!languageCode) return DEFAULT_LOCALE;
+  return languageCode.toLowerCase().startsWith('ru') ? 'ru' : languageCode.toLowerCase().startsWith('en') ? 'en' : DEFAULT_LOCALE;
+}
+```
+
+### Catalog shape
+
+Plain nested object. Static strings as string fields; parameterized strings as arrow functions:
+
+```ts
+// src/shared/i18n/messages-en.ts
+export const MESSAGES_EN = {
+  brand: 'Team Budget',
   nav: {
-    dashboard: 'Главная',
-    members: 'Участники',
-    charges: 'Начисления',
-    payments: 'Платежи',
-    spendings: 'Траты',
-    info: 'Информация',
-    settings: 'Настройки',
-    adminBadge: '(админ)',
+    dashboard: 'Dashboard',
+    members: 'Members',
+    charges: 'Charges',
+    payments: 'Payments',
+    spendings: 'Spendings',
+    info: 'Info',
+    settings: 'Settings',
+    adminBadge: '(admin)',
   },
-
   auth: {
-    loginTitle: 'Командный бюджет',
-    loginSubtitle: 'Войдите через свой Telegram-аккаунт.',
-    signInRequired: 'Требуется вход в систему.',
-    adminRequired: 'Требуются права администратора.',
+    loginTitle: 'Team Budget',
+    loginSubtitle: 'Sign in with your Telegram account.',
   },
-
   dashboard: {
-    cashPot: 'Касса (наличные)',
-    cardPot: 'Касса (карта)',
-    activityHeading: 'Последние события',
-    noActivity: 'Событий пока нет.',
-    settled: 'Долгов нет',
-    owes: (amount: string) => `Долг: ${amount}`,
-    // ...
+    cashPot: 'Cash pot',
+    cardPot: 'Card pot',
+    activityHeading: 'Recent activity',
+    noActivity: 'Nothing yet.',
+    settled: 'Settled',
+    owes: (amount: string) => `Owes ${amount}`,
+    youOweLabel: 'You owe',
+    youSettledLabel: 'Settled',
+    teamSummary: 'Team summary',
+    potsLine: (cash: string, card: string) => `Cash pot ${cash} · Card pot ${card}`,
+    membersHeading: (count: number) => `Members (${count})`,
+    chargeLine: (amount: string, name: string, desc: string) => `🧾 Charge ${amount} → ${name}: ${desc}`,
+    paymentLine: (payer: string, amount: string, method: string) => `💵 ${payer} paid ${amount} (${method})`,
+    spendingLine: (amount: string, pot: string, desc: string) => `🛒 ${amount} from ${pot}: ${desc}`,
   },
-
+  // ... full surface coverage
   bot: {
     start: {
-      welcomeBack: (name: string) =>
-        `С возвращением, ${name}. Команда /menu — список действий.`,
-      inviteInvalid: 'Эта ссылка-приглашение недействительна или уже использована.',
-      welcomeNew: (name: string) =>
-        `Добро пожаловать в команду, ${name}! Команда /menu — список действий.`,
-      welcomeAdmin:
-        'Здравствуйте, администратор. Бюджет команды теперь под вашим управлением. /menu — список действий.',
-      notMember: 'Вы пока не участник команды. Попросите администратора прислать ссылку-приглашение.',
+      welcomeBack: (name: string) => `Welcome back, ${name}. /menu to see options.`,
+      inviteInvalid: 'That invite is invalid or has already been used.',
+      welcomeNew: (name: string) => `Welcome to the team, ${name}! /menu to see options.`,
+      welcomeAdmin: 'Welcome, admin. The team budget is yours. /menu to see options.',
+      notMember: 'You are not a team member yet. Ask your admin for an invite link.',
     },
-    charge: {
-      typePrompt: 'Тип начисления?',
-      memberPrompt: 'Участник?',
-      // ...
+    // ... menu, help, charge, pay, spend, info, invite, history, balance
+    language: {
+      prompt: 'Choose your language:',
+      btnEnglish: '🇬🇧 English',
+      btnRussian: '🇷🇺 Русский',
+      switched: (loc: 'en' | 'ru') => loc === 'ru' ? 'Язык переключён на русский.' : 'Language switched to English.',
     },
-    // ... pay, spend, info, invite, help, history, balance, menu
   },
-
   errors: {
-    invalidAmount: 'Некорректная сумма. Действие отменено.',
-    noMembersSelected: 'Участники не выбраны. Действие отменено.',
-    settledMember: 'У этого участника нет долгов. Действие отменено.',
-    adminOnly: 'Эта команда только для администраторов.',
+    adminOnly: 'This command is for admins only.',
+    notMember: 'You are not a team member yet. Ask your admin for an invite link.',
+    invalidAmount: 'Invalid amount. Aborted.',
+    noMembersSelected: 'No members selected. Aborted.',
+    settledMember: 'That member is settled. Aborted.',
+    signInRequired: 'Sign in required.',
+    adminRequired: 'Admin required.',
   },
 } as const;
 ```
 
-The grouping is by **surface** (route / handler), not by **semantic category**. The reason: a translator (or future me) scrolling `strings.ts` should be able to find a string by remembering where it appears, without needing to know an ontology.
+`messages-ru.ts` mirrors the structure exactly; TypeScript catches missing or extra keys because `catalogs.ru` is typed `Messages`.
 
-Where a string is parameterized (display name, amount, count), the value is a function. Where it's static, it's a string literal. No template-string interpolation in `STR` itself.
+### Why arrow functions for parameterized strings
 
-### Date / time helpers
-
-Add to `src/shared/format.ts`:
+It keeps the message catalog opinionated about ordering and grammar — Russian sentences often re-order arguments compared to English. A catalog like:
 
 ```ts
-export function formatDateTime(iso: string | Date): string {
-  return new Date(iso).toLocaleString('ru-RU');
-}
+en: { paidLine: (payer, amount, method) => `${payer} paid ${amount} (${method})` }
+ru: { paidLine: (payer, amount, method) => `${payer} внёс ${amount} (${method})` }
+```
 
-export function formatDate(iso: string | Date): string {
-  return new Date(iso).toLocaleDateString('ru-RU');
+lets each language compose its own sentence from the same arguments.
+
+## Locale resolution
+
+### Web (server-side)
+
+`resolveLocaleForRequest(): Promise<Locale>` order:
+1. If user is authenticated and `user.locale` is set → return it.
+2. Else if `tb_locale` cookie is set to a known locale → return it.
+3. Else detect from `Accept-Language` request header.
+4. Else `DEFAULT_LOCALE` (`ru`).
+
+Called once per request in the root server components (`/login`, `(app)/layout.tsx`, `(mini)/layout.tsx`) and the resolved locale is:
+- Set on `<html lang="...">`.
+- Passed via `<I18nProvider locale={...}>` to client components.
+- Passed explicitly to any server function that needs to format dates / produce localized output.
+
+### Bot
+
+`resolveBotLocale(ctx): Locale` order:
+1. If `ctx.currentUser?.locale` is set → return it.
+2. Else detect from `ctx.from?.language_code`.
+3. Else `DEFAULT_LOCALE`.
+
+Each handler / conversation calls this at the top and uses `getMessages(locale)`.
+
+On first contact (e.g. `/start`), after the user is created the detected locale is persisted to `users.locale` so subsequent interactions are stable.
+
+## Language switcher
+
+### Web
+
+Add a small dropdown on the right side of `AppHeader` — RU / EN. On change, calls a new server action `setMyLocale({ locale })` that:
+1. Updates `users.locale` for the current user.
+2. Sets `tb_locale` cookie (so pre-login pages on the same browser remember).
+3. Returns; client triggers `router.refresh()`.
+
+The mini app has no header. A small selector in `/mini` settings tab (or a tiny chip in the corner) — see [src/app/(mini)/mini/](src/app/(mini)/mini/) layout for placement; deferred to "nice to have" — bot `/language` is the primary path for mini users.
+
+### Bot
+
+Add `/language` command in [src/server/bot/handlers/](src/server/bot/handlers/). Sends an inline keyboard with two buttons (🇬🇧 English / 🇷🇺 Русский). Callback updates `users.locale` and replies with confirmation in the newly selected locale.
+
+Command description registered via `setMyCommands` on bot init — also a new addition; gives users autocomplete for `/menu`, `/help`, `/language`, etc. Worth doing now since we're touching this surface.
+
+## Server action errors
+
+`ActionError` already carries a `code: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'BAD_INPUT' | 'INTERNAL'`. Change the philosophy:
+- `error.message` stays English (for logs / dev).
+- UI catch sites translate by code using `messages.errors`.
+- Where an action throws `BAD_INPUT` with a meaningful message, that message is treated as a translation key (or accepts an English fallback that the UI displays as-is). For this pass, the small number of BAD_INPUT throws keep English messages — most BAD_INPUT is caught by Zod schemas before reaching the action body.
+
+## Date formatting
+
+```ts
+// src/shared/format.ts
+export function formatDateTime(d: string | Date, locale: Locale): string {
+  return new Date(d).toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-US');
+}
+export function formatDate(d: string | Date, locale: Locale): string {
+  return new Date(d).toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'en-US');
 }
 ```
 
-Replace every `new Date(x).toLocaleString()` and `.toLocaleDateString()` in `src/app/**` with these helpers. (`src/server/**` does not use locale-formatted dates for display — only for ISO storage — so it's untouched.)
+Replace every `new Date(x).toLocaleString()` in `src/app/**` with `formatDateTime(x, locale)`.
+
+## Component contracts
+
+- **Server components**: pull locale from `resolveLocaleForRequest()`, pass to children, render via `getMessages(locale)`.
+- **Client components**: `useMessages()` hook reads from `I18nProvider` context; no direct catalog imports.
+- **Bot handlers**: call `resolveBotLocale(ctx)` at the top of each handler/middleware, pass `getMessages(locale)` to conversation steps.
 
 ## Files affected
 
-Web (estimated by `find src/app -name '*.tsx'`):
+New:
+- `src/shared/i18n/index.ts`
+- `src/shared/i18n/messages-en.ts`
+- `src/shared/i18n/messages-ru.ts`
+- `src/server/i18n/resolve.ts`
+- `src/app/_i18n-provider.tsx`
+- `src/server/bot/handlers/language.ts`
+- `src/server/actions/i18n-server.ts` (the `setMyLocale` action)
+- `drizzle/<n>_add_users_locale.sql` (generated)
 
-- `src/app/layout.tsx` — `lang`, `metadata.title`
-- `src/app/login/page.tsx`
-- `src/app/(app)/header.tsx`
-- `src/app/(app)/dashboard/page.tsx`, `dashboard/activity.tsx`, `dashboard/pot-card.tsx`, `dashboard/member-row.tsx`
-- `src/app/(app)/members/page.tsx`, `members/invite-button.tsx`, `members/[id]/page.tsx`, `members/[id]/admin-controls.tsx`
-- `src/app/(app)/charges/page.tsx`, `charges/charge-row.tsx`, `charges/cancel-button.tsx`
-- `src/app/(app)/charges/new/page.tsx`, `new-charge-tabs.tsx`, `adhoc-form.tsx`, `pot-borrow-form.tsx`, `split-form.tsx`
-- `src/app/(app)/payments/page.tsx`, `payments/cancel-button.tsx`, `payments/new/page.tsx`
-- `src/app/(app)/spendings/page.tsx`, `spendings/cancel-button.tsx`, `spendings/new/page.tsx`
-- `src/app/(app)/info/page.tsx`, `info/page-editor.tsx`
-- `src/app/(app)/settings/page.tsx`, `settings/dues-form.tsx`, `settings/categories-list.tsx`
-- `src/app/(mini)/layout.tsx`, `(mini)/mini/page.tsx`, `mini/init.tsx`, `mini/tabs.tsx`, `mini/auth-gate.tsx`
-- `src/app/(mini)/mini/charges/page.tsx`, `mini/payments/page.tsx`, `mini/info/*`
-
-Bot:
-
-- `src/server/bot/handlers/start.ts`, `menu.ts`, `help.ts`, `balance.ts`, `history.ts`, `info.ts`, `invite.ts`
-- `src/server/bot/conversations/charge.ts`, `pay.ts`, `spend.ts`, `info-edit.ts`
-- `src/server/bot/notifications.ts`
-
-Other:
-
-- `src/shared/strings.ts` — new
-- `src/shared/format.ts` — add `formatDateTime`, `formatDate`
-- `src/server/actions/_wrapper.ts` — Russian `ActionError` messages
+Modified:
+- `src/server/db/schema.ts` — add `locale` to users.
+- `src/server/bot/middleware.ts` — translate "admins only" / "not a member" via resolved locale.
+- `src/server/bot/index.ts` — register `/language` handler, `setMyCommands` with descriptions per locale.
+- `src/server/bot/handlers/start.ts` — persist detected locale on user create.
+- `src/server/actions/_wrapper.ts` — keep English error messages; UI translates by code.
+- `src/app/layout.tsx` — dynamic `lang`, title, wrap with I18nProvider.
+- `src/app/login/page.tsx` — translate copy.
+- `src/app/(app)/layout.tsx` — resolve locale, pass to header & provider.
+- `src/app/(app)/header.tsx` — translated nav + new language switcher.
+- All other `src/app/(app)/**.tsx` and `src/app/(mini)/**.tsx` user-facing files — replace literals with `messages.*` lookups.
+- All `src/server/bot/handlers/**` and `src/server/bot/conversations/**` — translated.
+- `src/shared/format.ts` — locale-aware helpers.
 
 ## Execution order
 
-1. Create `src/shared/strings.ts` with the full `STR` table (drafted top-to-bottom in one pass so tone is consistent).
-2. Add `formatDateTime` / `formatDate` to `src/shared/format.ts`.
-3. Convert `src/app/layout.tsx` (`lang`, title) and `src/app/login/page.tsx`.
-4. Convert `src/app/(app)/**` — header first, then dashboard, then per-feature routes.
-5. Convert `src/app/(mini)/**`.
-6. Convert `src/server/bot/handlers/**`.
-7. Convert `src/server/bot/conversations/**` and `notifications.ts`.
-8. Convert `ActionError` messages in `src/server/actions/_wrapper.ts`.
-9. `pnpm typecheck` — must pass.
-10. `pnpm build` — must pass.
-11. Smoke grep: `grep -rEn "[A-Z][a-z]{2,}" src/app src/server/bot --include='*.ts' --include='*.tsx' | grep -v "import\|from '@/\|className\|^[^:]*:[0-9]*: *//"` — review residual English-looking literals; some will be brand tokens, identifiers, route names, or `as const` keys — anything that's user-visible needs to be translated.
-12. Manual smoke: open `/login`, `/dashboard`, `/mini` in a browser; run `/start`, `/menu`, `/help`, `/balance`, `/history` against the bot.
+1. Schema: add `locale` to `users`, generate migration, apply.
+2. Add `src/shared/i18n/**` with full EN catalog. RU catalog as stub (every key present, values set to English placeholders) — so TypeScript compiles and we can incrementally fill RU.
+3. Add `src/server/i18n/resolve.ts`.
+4. Add `I18nProvider` + `useMessages` hook in `src/app/_i18n-provider.tsx`.
+5. Convert `src/app/layout.tsx` (dynamic `lang`, provider wrap).
+6. Convert `/login` (uses Accept-Language since no user).
+7. Convert `(app)/layout.tsx`, `(app)/header.tsx` + language switcher dropdown + `setMyLocale` action.
+8. Convert each `(app)/**` page surface.
+9. Convert `(mini)/**` surfaces.
+10. Schema-touch handlers: `bot/middleware.ts`, `bot/handlers/start.ts` (persist detected locale).
+11. Add `bot/handlers/language.ts` + register in `bot/index.ts` (plus `setMyCommands`).
+12. Convert each `bot/handlers/**` and `bot/conversations/**` to read locale from `ctx.currentUser` / detect.
+13. Fill in real Russian translations across `messages-ru.ts` (formal "вы").
+14. Update date formatting calls in `src/app/**` to use `formatDateTime(x, locale)`.
+15. `pnpm typecheck`. `pnpm build`. Fix any issue.
+16. Smoke: switch language on web, switch via `/language` in bot, verify nav + dashboard + bot replies render in chosen language for both.
 
 ## Tests
 
-Two test layers exist:
+- Vitest unit tests (domain logic) — unaffected.
+- Playwright e2e tests — any assertion on translated text becomes a lookup into the same catalog, or assertions are pinned to a fixed locale by setting the cookie at test setup. Updated as encountered during execution.
+- Add a single TS-level sanity test (Vitest) that imports both catalogs and asserts deep-key parity — guards against future drift. Lightweight, ~10 lines.
 
-- **Vitest** unit tests in `tests/` — these test domain logic, not UI strings. Should be unaffected.
-- **Playwright** e2e in `tests/` (per `playwright.config.ts`) — may assert on user-visible text. Each e2e file is grepped during execution; any English assertion on translated text is updated to its Russian counterpart from `STR`.
+## Risks
 
-No new test scaffolding is added. The smoke checks in step 11–12 of execution are sufficient verification for a copy-only change.
-
-## Risks / non-issues
-
-- **Stringly-typed risk**: `STR.bot.charge.typePrompt` is a static field reference; renaming requires a grep. Acceptable for the scale of this app.
-- **Format functions in `STR`**: a function-shaped entry like `welcomeBack(name)` is technically not a string. It's still fine to live in `STR` because the consumer pattern is identical (`STR.bot.start.welcomeBack(name)`). Alternative — separate `STR_FN` module — adds ceremony for no payoff.
-- **Brand name "Team Budget"**: translated to "Командный бюджет" everywhere, per user instruction "all user-facing texts in Russian". If the user wants the brand kept English, this is a 1-line revert in `STR.brand` and `STR.auth.loginTitle`.
-- **Bot command names** (`/start`, `/menu`, ...) stay English because they are interface tokens registered with Telegram, not display strings. Help text *describing* them is translated.
-- **`lang="ru"` and CSS**: BaseUI / styletron have no locale-dependent behavior here. No layout impact expected.
+- **Russian translation quality**: I'm producing first-pass Russian. User reviews and edits in `messages-ru.ts` before declaring done.
+- **Migration runs in prod**: Per memory, migrations are applied manually via piped SQL on TrueNAS. The generated `ALTER TABLE users ADD COLUMN locale ...` is a non-destructive additive change; safe.
+- **Cookie + cross-domain**: not relevant — single-origin self-hosted app behind Cloudflare Tunnel.
+- **Mini app rendering**: must not break — mini layout already resolves user, so locale resolution lives in the same place.
+- **Bot conversations holding state**: grammY conversations re-enter on every message. The locale must be re-resolved each step (or captured into conversation state at start). Re-resolving each step is simpler; the trip to DB for `currentUser` already happens via middleware. We use `ctx.currentUser?.locale` inside each step.
 
 ## What done looks like
 
-- Opening `/login` in a fresh browser shows Russian copy with formal "вы" tone.
-- Every page under `/dashboard`, `/members`, `/charges`, `/payments`, `/spendings`, `/info`, `/settings` shows Russian copy. Currency formatting still respects per-team `settings.currency`.
-- The mini app under `/mini` shows Russian copy.
-- Running `/start`, `/menu`, `/help`, `/balance`, `/history`, `/info`, `/invite` against the Telegram bot returns Russian replies in formal "вы" tone.
-- Inline keyboards (e.g. "Done" button in member-pick) show Russian labels.
-- Action errors ("sign in required" → "Требуется вход в систему") render in Russian when triggered.
-- Dates in lists render in `ru-RU` format (e.g. `20.05.2026, 14:30:00`).
-- `pnpm typecheck` and `pnpm build` pass.
-- No new dependencies added to `package.json`.
+- Logging in fresh from an `Accept-Language: ru` browser lands on `/dashboard` in Russian.
+- Header dropdown switches to English; page reloads in English; choice survives logout/login.
+- `/start` against the bot from a Russian Telegram client returns Russian greeting; `/start` from English client returns English.
+- `/language` on the bot shows a 2-button keyboard; tapping flips the user's preference; subsequent replies are in the new language.
+- `pnpm typecheck`, `pnpm build`, and `pnpm test` all pass.
+- No remaining English literal in user-facing surfaces under either locale (verified by grep over the converted files).
