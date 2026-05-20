@@ -9,6 +9,7 @@ import { registerHelpHandler } from './handlers/help';
 import { registerMenuHandler } from './handlers/menu';
 import { registerBalanceHandler } from './handlers/balance';
 import { registerHistoryHandler } from './handlers/history';
+import { registerInfoHandler } from './handlers/info';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -27,6 +28,7 @@ export function getBot(): Bot<BotContext> {
     registerMenuHandler(_bot);
     registerBalanceHandler(_bot);
     registerHistoryHandler(_bot);
+    registerInfoHandler(_bot);
   }
   return _bot;
 }
