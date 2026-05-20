@@ -45,11 +45,31 @@ describe('member actions', () => {
     await actions.reactivateMember({ id: m.id });
   });
 
-  it('admin can change role', async () => {
+  it('admin can edit name and role together', async () => {
     const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
     const actions = makeMemberActions({ getDb: () => db });
-    const r = await actions.changeMemberRole({ id: m.id, role: 'admin' });
+    const r = await actions.editMember({ id: m.id, displayName: 'Mary', role: 'admin' });
+    expect(r.displayName).toBe('Mary');
     expect(r.role).toBe('admin');
+  });
+
+  it('editMember rejects empty display name', async () => {
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const actions = makeMemberActions({ getDb: () => db });
+    await expect(
+      actions.editMember({ id: m.id, displayName: '   ', role: 'member' }),
+    ).rejects.toThrow();
+  });
+
+  it('member cannot edit', async () => {
+    const target = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const memberLogin = await createUser(db, { telegramUserId: 3, displayName: 'X', role: 'member' });
+    const s = await createSession(db, memberLogin.id);
+    cookieRef.value = signCookie(s.token, SECRET);
+    const actions = makeMemberActions({ getDb: () => db });
+    await expect(
+      actions.editMember({ id: target.id, displayName: 'Mary', role: 'member' }),
+    ).rejects.toThrow(/admin required/);
   });
 
   it('member cannot invite', async () => {

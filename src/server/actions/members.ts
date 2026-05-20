@@ -4,12 +4,12 @@ import { getDb as defaultGetDb } from '@/server/db/client';
 import type { Db } from '@/server/domain/types';
 import {
   inviteMemberSchema,
+  editMemberSchema,
   idSchema,
-  roleSchema,
 } from '@/shared/schemas';
 import { createInvite, revokeInvite as domainRevokeInvite } from '@/server/domain/invites';
 import {
-  changeRole as domainChangeRole,
+  updateUserProfile,
   deactivateUser,
   reactivateUser,
 } from '@/server/domain/users';
@@ -33,10 +33,12 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
     return reactivateUser(db, id);
   });
 
-  const changeMemberRole = adminAction(async ({ db }, input: { id: string; role: 'admin' | 'member' }) => {
-    const id = idSchema.parse(input.id);
-    const role = roleSchema.parse(input.role);
-    return domainChangeRole(db, id, role);
+  const editMember = adminAction(async ({ db }, input: z.infer<typeof editMemberSchema>) => {
+    const parsed = editMemberSchema.parse(input);
+    return updateUserProfile(db, parsed.id, {
+      displayName: parsed.displayName,
+      role: parsed.role,
+    });
   });
 
   const revokeInvite = adminAction(async ({ db }, input: { id: string }) => {
@@ -44,12 +46,12 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
     return domainRevokeInvite(db, id);
   });
 
-  return { inviteMember, deactivateMember, reactivateMember, changeMemberRole, revokeInvite };
+  return { inviteMember, deactivateMember, reactivateMember, editMember, revokeInvite };
 }
 
 const prod = makeMemberActions();
 export const inviteMember = prod.inviteMember;
 export const deactivateMember = prod.deactivateMember;
 export const reactivateMember = prod.reactivateMember;
-export const changeMemberRole = prod.changeMemberRole;
+export const editMember = prod.editMember;
 export const revokeInvite = prod.revokeInvite;
