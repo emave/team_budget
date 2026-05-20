@@ -11,7 +11,12 @@ import { listPaymentsByPayer } from '@/server/domain/payments';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDateTime, getMessages } from '@/shared/i18n';
+import { PageHeader } from '@/ui/page-header';
+import { Panel } from '@/ui/panel';
+import { StatusCard } from '@/ui/status-card';
+import { SectionHeading } from '@/ui/heading';
 import { AdminControls } from './admin-controls';
+import { OpenChargesTable, PaymentHistoryTable, type OpenChargeRow, type PaymentHistoryRow } from './detail-tables';
 
 export default async function MemberDetail({ params }: { params: { id: string } }) {
   const me = await requireUser();
@@ -25,38 +30,38 @@ export default async function MemberDetail({ params }: { params: { id: string } 
   const charges = await listOpenChargesForMember(db, u.id);
   const payments = await listPaymentsByPayer(db, u.id);
 
+  const openRows: OpenChargeRow[] = charges.map((c) => ({
+    id: c.id,
+    description: c.description,
+    amountFormatted: formatCents(c.amount, settings.currency),
+  }));
+  const paymentRows: PaymentHistoryRow[] = payments.map((p) => ({
+    id: p.id,
+    whenFormatted: formatDateTime(p.receivedAt, locale),
+    method: p.method,
+    amountFormatted: formatCents(p.amount, settings.currency),
+  }));
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>{u.displayName}</h2>
-        {me.role === 'admin' && <AdminControls user={{ id: u.id, isActive: u.isActive, role: u.role }} />}
-      </div>
+      <PageHeader
+        title={u.displayName}
+        actions={me.role === 'admin' ? <AdminControls user={{ id: u.id, isActive: u.isActive, role: u.role }} /> : null}
+      />
 
-      <div style={{ background: debt > 0 ? '#fef2f2' : '#f0fdf4', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-        <strong>{debt > 0 ? m.members.owes(formatCents(debt, settings.currency)) : m.members.settledBadge}</strong>
-      </div>
+      <StatusCard tone={debt > 0 ? 'negative' : 'positive'}>
+        {debt > 0 ? m.members.owes(formatCents(debt, settings.currency)) : m.members.settledBadge}
+      </StatusCard>
 
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>{m.members.openCharges}</h3>
-        {charges.length === 0 && <div style={{ color: '#6b7280' }}>{m.common.none}</div>}
-        {charges.map((c) => (
-          <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid #f3f4f6' }}>
-            <span>{c.description}</span>
-            <span>{formatCents(c.amount, settings.currency)}</span>
-          </div>
-        ))}
-      </div>
+      <Panel marginBottom={16}>
+        <SectionHeading>{m.members.openCharges}</SectionHeading>
+        <OpenChargesTable rows={openRows} />
+      </Panel>
 
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
-        <h3 style={{ marginTop: 0 }}>{m.members.paymentHistory}</h3>
-        {payments.length === 0 && <div style={{ color: '#6b7280' }}>{m.common.none}</div>}
-        {payments.map((p) => (
-          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid #f3f4f6' }}>
-            <span>{formatDateTime(p.receivedAt, locale)} — {p.method}</span>
-            <span>{formatCents(p.amount, settings.currency)}</span>
-          </div>
-        ))}
-      </div>
+      <Panel>
+        <SectionHeading>{m.members.paymentHistory}</SectionHeading>
+        <PaymentHistoryTable rows={paymentRows} />
+      </Panel>
     </div>
   );
 }

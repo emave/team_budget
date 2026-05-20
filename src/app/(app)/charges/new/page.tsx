@@ -3,6 +3,7 @@ import { getDb } from '@/server/db/client';
 import { listActiveMembers } from '@/server/domain/users';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
+import { PageHeader } from '@/ui/page-header';
 import { NewChargeTabs } from './new-charge-tabs';
 
 export default async function NewChargePage() {
@@ -13,7 +14,7 @@ export default async function NewChargePage() {
   const m = getMessages(locale);
   return (
     <div>
-      <h2>{m.charges.newPageTitle}</h2>
+      <PageHeader title={m.charges.newPageTitle} />
       <NewChargeTabs members={members.map((mm) => ({ id: mm.id, displayName: mm.displayName }))} />
     </div>
   );

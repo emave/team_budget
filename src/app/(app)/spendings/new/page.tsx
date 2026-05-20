@@ -3,6 +3,7 @@ import { getDb } from '@/server/db/client';
 import { listCategories } from '@/server/domain/categories';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
+import { PageHeader } from '@/ui/page-header';
 import { RecordSpendingForm } from './record-form';
 
 export default async function NewSpendingPage() {
@@ -13,7 +14,7 @@ export default async function NewSpendingPage() {
   const m = getMessages(locale);
   return (
     <div>
-      <h2>{m.spendings.newPageTitle}</h2>
+      <PageHeader title={m.spendings.newPageTitle} />
       <RecordSpendingForm categories={cats.map((c) => ({ id: c.id, name: c.name }))} />
     </div>
   );

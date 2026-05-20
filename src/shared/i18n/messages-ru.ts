@@ -53,6 +53,10 @@ export const MESSAGES_RU: Messages = {
     owesAmount: (amount: string) => `долг ${amount}`,
     methodCash: 'Наличные',
     methodCard: 'Карта',
+    colWhen: 'Когда',
+    colDescription: 'Описание',
+    colAmount: 'Сумма',
+    colActions: '',
   },
 
   dashboard: {
@@ -71,6 +75,10 @@ export const MESSAGES_RU: Messages = {
       `💵 ${payer} внёс ${amount} (${method})`,
     spendingLine: (amount: string, pot: string, desc: string) =>
       `🛒 ${amount} из ${pot}: ${desc}`,
+    colMember: 'Участник',
+    colStatus: 'Статус',
+    colEvent: 'Событие',
+    colWhen: 'Когда',
   },
 
   members: {
@@ -90,16 +98,24 @@ export const MESSAGES_RU: Messages = {
     reactivate: 'Активировать',
     makeMember: 'Сделать участником',
     makeAdmin: 'Сделать админом',
+    colMember: 'Участник',
+    colRole: 'Роль',
+    colStatus: 'Статус',
   },
 
   charges: {
     title: 'Начисления',
-    newCharge: '+ Новое начисление',
+    newCharge: 'Новое начисление',
     filterAll: 'Все',
     filterOpen: 'Открытые',
     filterPaid: 'Оплачено',
     filterCancelled: 'Отменено',
     none: 'Начислений нет.',
+    colType: 'Тип',
+    colDescription: 'Описание',
+    colAmount: 'Сумма',
+    colStatus: 'Статус',
+    colWhen: 'Когда',
     statusOpen: 'открыто',
     statusPaid: 'оплачено',
     statusCancelled: 'отменено',
@@ -127,8 +143,12 @@ export const MESSAGES_RU: Messages = {
 
   payments: {
     title: 'Платежи',
-    record: '+ Записать платёж',
+    record: 'Записать платёж',
     none: 'Платежей нет.',
+    colPayer: 'Плательщик',
+    colMethod: 'Способ',
+    colAmount: 'Сумма',
+    colWhen: 'Когда',
     newPageTitle: 'Запись платежа',
     payerLabel: 'Плательщик',
     methodLabel: 'Способ',
@@ -141,8 +161,13 @@ export const MESSAGES_RU: Messages = {
 
   spendings: {
     title: 'Траты',
-    record: '+ Записать трату',
+    record: 'Записать трату',
     none: 'Трат нет.',
+    colPot: 'Касса',
+    colDescription: 'Описание',
+    colCategory: 'Категория',
+    colAmount: 'Сумма',
+    colWhen: 'Когда',
     newPageTitle: 'Запись траты',
     potLabel: 'Касса',
     amountLabel: 'Сумма',
@@ -177,6 +202,7 @@ export const MESSAGES_RU: Messages = {
     newCategoryPlaceholder: 'Новая категория',
     archive: 'В архив',
     add: 'Добавить',
+    colCategory: 'Категория',
   },
 
   mini: {

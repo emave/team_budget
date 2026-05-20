@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listSpendings } from '@/server/domain/spendings';
@@ -7,7 +6,10 @@ import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDateTime, getMessages } from '@/shared/i18n';
-import { CancelSpendingButton } from './cancel-button';
+import { PageHeader } from '@/ui/page-header';
+import { Panel } from '@/ui/panel';
+import { LinkButton } from '@/ui/link-button';
+import { SpendingsTable, type SpendingRow } from './spendings-table';
 
 export default async function SpendingsPage() {
   const me = await requireUser();
@@ -19,38 +21,26 @@ export default async function SpendingsPage() {
   const cats = new Map((await listCategories(db, { includeArchived: true })).map((c) => [c.id, c.name]));
   rows.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
 
+  const shaped: SpendingRow[] = rows.map((s) => ({
+    id: s.id,
+    pot: s.pot,
+    description: s.description,
+    category: s.categoryId ? cats.get(s.categoryId) ?? '' : '',
+    amountFormatted: formatCents(s.amount, settings.currency),
+    whenFormatted: formatDateTime(s.occurredAt, locale),
+    cancelled: Boolean(s.cancelledAt),
+    showCancel: me.role === 'admin' && !s.cancelledAt,
+  }));
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>{m.spendings.title}</h2>
-        {me.role === 'admin' && <Link href="/spendings/new">{m.spendings.record}</Link>}
-      </div>
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
-        {rows.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '80px 1fr 120px 100px 160px 80px',
-              gap: 12,
-              padding: '8px 0',
-              borderTop: '1px solid #f3f4f6',
-              fontSize: 13,
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ color: '#6b7280' }}>{s.pot}</span>
-            <span>{s.description}</span>
-            <span style={{ color: '#6b7280' }}>{s.categoryId ? cats.get(s.categoryId) ?? '' : ''}</span>
-            <span>{formatCents(s.amount, settings.currency)}</span>
-            <span style={{ color: s.cancelledAt ? '#6b7280' : '#16a34a' }}>
-              {s.cancelledAt ? m.common.cancelled : formatDateTime(s.occurredAt, locale)}
-            </span>
-            <span>{me.role === 'admin' && !s.cancelledAt && <CancelSpendingButton id={s.id} />}</span>
-          </div>
-        ))}
-        {rows.length === 0 && <div style={{ color: '#6b7280' }}>{m.spendings.none}</div>}
-      </div>
+      <PageHeader
+        title={m.spendings.title}
+        actions={me.role === 'admin' ? <LinkButton href="/spendings/new">{m.spendings.record}</LinkButton> : null}
+      />
+      <Panel>
+        <SpendingsTable rows={shaped} />
+      </Panel>
     </div>
   );
 }

@@ -49,6 +49,10 @@ export const MESSAGES_EN = {
     owesAmount: (amount: string) => `owes ${amount}`,
     methodCash: 'Cash',
     methodCard: 'Card',
+    colWhen: 'When',
+    colDescription: 'Description',
+    colAmount: 'Amount',
+    colActions: '',
   },
 
   dashboard: {
@@ -67,6 +71,10 @@ export const MESSAGES_EN = {
       `💵 ${payer} paid ${amount} (${method})`,
     spendingLine: (amount: string, pot: string, desc: string) =>
       `🛒 ${amount} from ${pot}: ${desc}`,
+    colMember: 'Member',
+    colStatus: 'Status',
+    colEvent: 'Event',
+    colWhen: 'When',
   },
 
   members: {
@@ -86,16 +94,24 @@ export const MESSAGES_EN = {
     reactivate: 'Reactivate',
     makeMember: 'Make member',
     makeAdmin: 'Make admin',
+    colMember: 'Member',
+    colRole: 'Role',
+    colStatus: 'Status',
   },
 
   charges: {
     title: 'Charges',
-    newCharge: '+ New charge',
+    newCharge: 'New charge',
     filterAll: 'All',
     filterOpen: 'Open',
     filterPaid: 'Paid',
     filterCancelled: 'Cancelled',
     none: 'No charges.',
+    colType: 'Type',
+    colDescription: 'Description',
+    colAmount: 'Amount',
+    colStatus: 'Status',
+    colWhen: 'When',
     statusOpen: 'open',
     statusPaid: 'paid',
     statusCancelled: 'cancelled',
@@ -123,8 +139,12 @@ export const MESSAGES_EN = {
 
   payments: {
     title: 'Payments',
-    record: '+ Record payment',
+    record: 'Record payment',
     none: 'No payments.',
+    colPayer: 'Payer',
+    colMethod: 'Method',
+    colAmount: 'Amount',
+    colWhen: 'When',
     newPageTitle: 'Record payment',
     payerLabel: 'Payer',
     methodLabel: 'Method',
@@ -137,8 +157,13 @@ export const MESSAGES_EN = {
 
   spendings: {
     title: 'Spendings',
-    record: '+ Record spending',
+    record: 'Record spending',
     none: 'No spendings.',
+    colPot: 'Pot',
+    colDescription: 'Description',
+    colCategory: 'Category',
+    colAmount: 'Amount',
+    colWhen: 'When',
     newPageTitle: 'Record spending',
     potLabel: 'Pot',
     amountLabel: 'Amount',
@@ -173,6 +198,7 @@ export const MESSAGES_EN = {
     newCategoryPlaceholder: 'New category',
     archive: 'Archive',
     add: 'Add',
+    colCategory: 'Category',
   },
 
   mini: {

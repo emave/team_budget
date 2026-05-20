@@ -4,6 +4,9 @@ import { getOrCreateSettings } from '@/server/domain/settings';
 import { listCategories } from '@/server/domain/categories';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
+import { PageHeader } from '@/ui/page-header';
+import { Panel } from '@/ui/panel';
+import { SectionHeading } from '@/ui/heading';
 import { DuesForm } from './dues-form';
 import { CategoriesList } from './categories-list';
 
@@ -16,15 +19,15 @@ export default async function SettingsPage() {
   const m = getMessages(locale);
   return (
     <div>
-      <h2>{m.settings.title}</h2>
-      <section style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20, marginBottom: 16 }}>
-        <h3>{m.settings.monthlyDuesHeading}</h3>
+      <PageHeader title={m.settings.title} />
+      <Panel marginBottom={16}>
+        <SectionHeading>{m.settings.monthlyDuesHeading}</SectionHeading>
         <DuesForm currentCents={s.monthlyDuesAmount} currency={s.currency} />
-      </section>
-      <section style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
-        <h3>{m.settings.categoriesHeading}</h3>
+      </Panel>
+      <Panel>
+        <SectionHeading>{m.settings.categoriesHeading}</SectionHeading>
         <CategoriesList categories={cats.map((c) => ({ id: c.id, name: c.name, archived: c.archived }))} />
-      </section>
+      </Panel>
     </div>
   );
 }
