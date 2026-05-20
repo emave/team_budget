@@ -57,7 +57,11 @@ export const createSplitChargeSchema = z.object({
 });
 
 export const inviteMemberSchema = z.object({
-  displayNameHint: z.string().min(1).max(80).optional(),
+  displayNameHint: z
+    .string()
+    .max(80)
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
 });
 
 export const updateDuesAmountSchema = z.object({ amount: moneySchema });

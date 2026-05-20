@@ -31,6 +31,13 @@ describe('member actions', () => {
     expect(r.token).toMatch(/^[A-Za-z0-9_-]{16,}$/);
   });
 
+  it('admin can create an invite with empty display-name hint', async () => {
+    const actions = makeMemberActions({ getDb: () => db });
+    const r = await actions.inviteMember({ displayNameHint: '' });
+    expect(r.token).toMatch(/^[A-Za-z0-9_-]{16,}$/);
+    expect(r.displayNameHint).toBeNull();
+  });
+
   it('admin can deactivate/reactivate', async () => {
     const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
     const actions = makeMemberActions({ getDb: () => db });

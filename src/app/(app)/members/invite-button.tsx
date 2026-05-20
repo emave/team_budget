@@ -40,6 +40,11 @@ export function InviteButton() {
                 <Input {...(register('displayNameHint') as object)} placeholder={m.members.displayNamePlaceholder} />
               </FormControl>
               <Button type="submit" isLoading={mut.isPending}>{m.members.generateLink}</Button>
+              {mut.isError && (
+                <p style={{ color: '#b91c1c', marginTop: 12 }}>
+                  {mut.error instanceof Error ? mut.error.message : String(mut.error)}
+                </p>
+              )}
             </form>
           )}
           {link && (
