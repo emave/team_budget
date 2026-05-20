@@ -9,8 +9,8 @@ Plan 1 (Foundation & Money Domain) — backend layer complete and tested. Web UI
 ## Dev setup
 
 Requirements:
-- Node 20 LTS
-- pnpm 9+
+- Node 22 LTS
+- pnpm 11+
 - A Telegram bot from [@BotFather](https://t.me/BotFather)
 - Your Telegram numeric ID (use [@userinfobot](https://t.me/userinfobot))
 
@@ -89,12 +89,14 @@ See [`docs/superpowers/specs/2026-05-19-team-budget-design.md`](docs/superpowers
    openssl rand -hex 32
    # paste into SESSION_SECRET in .env
    ```
-4. Apply database migrations to the host volume:
+4. Initialize the data directory:
    ```bash
    mkdir -p data
-   pnpm install --frozen-lockfile
-   DATABASE_URL=./data/team_budget.db pnpm db:migrate
    ```
+   (Migrations apply automatically on container start — no separate step needed.)
+5. Push to `main` once so GitHub Actions publishes the first image, then make the GHCR package public:
+   - Open `https://github.com/<your-user>/<your-repo>/packages` → `team-budget` → Package settings → Change visibility to **Public**.
+   - This lets Watchtower on the host pull the image anonymously. (Alternative: keep it private and configure Watchtower with a registry credential — out of scope here.)
 
 ### Run (first time on the host)
 
