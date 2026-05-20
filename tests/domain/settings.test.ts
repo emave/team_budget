@@ -15,9 +15,10 @@ describe('settings', () => {
   it('creates defaults on first read', async () => {
     const s = await getOrCreateSettings(db);
     expect(s.monthlyDuesAmount).toBe(0);
-    expect(s.currency).toBe('USD');
     expect(s.dueDay).toBe(1);
     expect(s.lastDuesGeneratedFor).toBeNull();
+    expect(s.cashOpeningCents).toBe(0);
+    expect(s.cardOpeningCents).toBe(0);
   });
 
   it('updates monthly dues amount', async () => {

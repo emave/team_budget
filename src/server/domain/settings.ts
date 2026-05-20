@@ -6,7 +6,7 @@ export async function getOrCreateSettings(db: Db) {
   let row = db.select().from(settings).where(eq(settings.id, 1)).get();
   if (!row) {
     db.insert(settings)
-      .values({ id: 1, monthlyDuesAmount: 0, currency: 'USD', dueDay: 1 })
+      .values({ id: 1, monthlyDuesAmount: 0, dueDay: 1 })
       .run();
     row = db.select().from(settings).where(eq(settings.id, 1)).get();
   }
