@@ -1,10 +1,19 @@
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { users } from '@/server/db/schema';
+import {
+  users,
+  charges,
+  payments,
+  spendings,
+  infoPages,
+  invites,
+} from '@/server/db/schema';
 import type { Locale } from '@/shared/i18n';
 import type { Db } from './types';
 
 export type Role = 'admin' | 'member';
+
+export type DeleteBlockReason = 'has_financial_history' | 'has_invites';
 
 export interface CreateUserInput {
   telegramUserId: number;
@@ -75,6 +84,53 @@ export async function updateUserProfile(
   const row = db.select().from(users).where(eq(users.id, id)).get();
   if (!row) throw new Error('user not found');
   return row;
+}
+
+export async function canHardDeleteUser(
+  db: Db,
+  id: string,
+): Promise<DeleteBlockReason | null> {
+  const hasCharge = db
+    .select({ id: charges.id })
+    .from(charges)
+    .where(or(eq(charges.userId, id), eq(charges.createdByUserId, id)))
+    .limit(1)
+    .get();
+  if (hasCharge) return 'has_financial_history';
+
+  const hasPayment = db
+    .select({ id: payments.id })
+    .from(payments)
+    .where(or(eq(payments.payerUserId, id), eq(payments.createdByUserId, id)))
+    .limit(1)
+    .get();
+  if (hasPayment) return 'has_financial_history';
+
+  const hasSpending = db
+    .select({ id: spendings.id })
+    .from(spendings)
+    .where(eq(spendings.createdByUserId, id))
+    .limit(1)
+    .get();
+  if (hasSpending) return 'has_financial_history';
+
+  const hasInfoPage = db
+    .select({ id: infoPages.id })
+    .from(infoPages)
+    .where(eq(infoPages.updatedByUserId, id))
+    .limit(1)
+    .get();
+  if (hasInfoPage) return 'has_financial_history';
+
+  const hasInvite = db
+    .select({ id: invites.id })
+    .from(invites)
+    .where(or(eq(invites.createdByUserId, id), eq(invites.consumedByUserId, id)))
+    .limit(1)
+    .get();
+  if (hasInvite) return 'has_invites';
+
+  return null;
 }
 
 export async function listActiveMembers(db: Db) {

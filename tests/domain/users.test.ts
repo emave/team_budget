@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDb, type TestDb } from '../helpers/db';
+import * as schema from '@/server/db/schema';
 import {
   createUser,
   getUserByTelegramId,
   deactivateUser,
   reactivateUser,
   updateUserProfile,
+  canHardDeleteUser,
 } from '@/server/domain/users';
 
 describe('users domain', () => {
@@ -78,5 +80,75 @@ describe('users domain', () => {
     await expect(
       createUser(db, { telegramUserId: 42, displayName: 'B', role: 'member' }),
     ).rejects.toThrow();
+  });
+
+  it('canHardDeleteUser returns null for an isolated user', async () => {
+    const u = await createUser(db, { telegramUserId: 42, displayName: 'A', role: 'member' });
+    expect(await canHardDeleteUser(db, u.id)).toBeNull();
+  });
+
+  it('canHardDeleteUser blocks user with a charge', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'X', role: 'admin' });
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' });
+    db.insert(schema.charges).values({
+      id: 'c1', userId: u.id, type: 'adhoc', amount: 100,
+      description: 'd', createdByUserId: admin.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_financial_history');
+  });
+
+  it('canHardDeleteUser blocks the charge creator too', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'X', role: 'admin' });
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' });
+    db.insert(schema.charges).values({
+      id: 'c1', userId: admin.id, type: 'adhoc', amount: 100,
+      description: 'd', createdByUserId: u.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_financial_history');
+  });
+
+  it('canHardDeleteUser blocks user with a payment', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'X', role: 'admin' });
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' });
+    db.insert(schema.payments).values({
+      id: 'p1', payerUserId: u.id, method: 'cash', amount: 100,
+      receivedAt: '2026-01-01T00:00:00Z', createdByUserId: admin.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_financial_history');
+  });
+
+  it('canHardDeleteUser blocks user with a spending', async () => {
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'admin' });
+    db.insert(schema.spendings).values({
+      id: 's1', pot: 'cash', amount: 100, description: 'd',
+      occurredAt: '2026-01-01T00:00:00Z', createdByUserId: u.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_financial_history');
+  });
+
+  it('canHardDeleteUser blocks info-page editor', async () => {
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'admin' });
+    db.insert(schema.infoPages).values({
+      id: 'i1', title: 't', body: 'b', updatedByUserId: u.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_financial_history');
+  });
+
+  it('canHardDeleteUser flags invite creator', async () => {
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'admin' });
+    db.insert(schema.invites).values({
+      id: 'inv1', token: 'tok1', createdByUserId: u.id,
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_invites');
+  });
+
+  it('canHardDeleteUser flags invite consumer', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'X', role: 'admin' });
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' });
+    db.insert(schema.invites).values({
+      id: 'inv1', token: 'tok1', createdByUserId: admin.id,
+      consumedByUserId: u.id, consumedAt: '2026-01-01T00:00:00Z',
+    }).run();
+    expect(await canHardDeleteUser(db, u.id)).toBe('has_invites');
   });
 });
