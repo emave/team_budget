@@ -1,7 +1,6 @@
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listChargesFiltered } from '@/server/domain/charges';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { users } from '@/server/db/schema';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDateTime, getMessages } from '@/shared/i18n';
@@ -15,7 +14,6 @@ import { ChargesTable, type ChargeRow } from './charges-table';
 export default async function ChargesPage({ searchParams }: { searchParams: { status?: 'open' | 'paid' | 'cancelled' } }) {
   const me = await requireUser();
   const db = getDb();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const status = searchParams.status;
@@ -30,7 +28,7 @@ export default async function ChargesPage({ searchParams }: { searchParams: { st
     type: c.type,
     description: c.description,
     userDisplayName: userNames.get(c.userId) ?? '?',
-    amountFormatted: formatCents(c.amount, settings.currency),
+    amountFormatted: formatCents(c.amount),
     status: c.status,
     whenFormatted: formatDateTime(c.createdAt, locale),
     showCancel: me.role === 'admin' && c.status === 'open',

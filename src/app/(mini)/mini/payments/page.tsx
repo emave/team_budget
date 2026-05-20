@@ -1,7 +1,6 @@
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listPaymentsByPayer } from '@/server/domain/payments';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDate, getMessages } from '@/shared/i18n';
@@ -11,7 +10,6 @@ import { MiniTabs } from '../tabs';
 export default async function MiniPaymentsPage() {
   const user = await requireUser();
   const db = getDb();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const rows = await listPaymentsByPayer(db, user.id);
@@ -26,7 +24,7 @@ export default async function MiniPaymentsPage() {
             padding: '8px 4px', borderTop: '1px solid #f3f4f6', fontSize: 13,
           }}>
             <span>{formatDate(p.receivedAt, locale)} · {p.method}</span>
-            <span>{formatCents(p.amount, settings.currency)}</span>
+            <span>{formatCents(p.amount)}</span>
           </div>
         ))}
         {rows.length === 0 && <div style={{ color: '#6b7280' }}>{m.mini.none}</div>}

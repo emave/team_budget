@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { getUserById, canHardDeleteUser } from '@/server/domain/users';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import {
   getMemberOutstandingDebt,
   listOpenChargesForMember,
@@ -23,7 +22,6 @@ export default async function MemberDetail({ params }: { params: { id: string } 
   const db = getDb();
   const u = await getUserById(db, params.id);
   if (!u) notFound();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const debt = await getMemberOutstandingDebt(db, u.id);
@@ -36,13 +34,13 @@ export default async function MemberDetail({ params }: { params: { id: string } 
   const openRows: OpenChargeRow[] = charges.map((c) => ({
     id: c.id,
     description: c.description,
-    amountFormatted: formatCents(c.amount, settings.currency),
+    amountFormatted: formatCents(c.amount),
   }));
   const paymentRows: PaymentHistoryRow[] = payments.map((p) => ({
     id: p.id,
     whenFormatted: formatDateTime(p.receivedAt, locale),
     method: p.method,
-    amountFormatted: formatCents(p.amount, settings.currency),
+    amountFormatted: formatCents(p.amount),
   }));
 
   return (
@@ -59,7 +57,7 @@ export default async function MemberDetail({ params }: { params: { id: string } 
       />
 
       <StatusCard tone={debt > 0 ? 'negative' : 'positive'}>
-        {debt > 0 ? m.members.owes(formatCents(debt, settings.currency)) : m.members.settledBadge}
+        {debt > 0 ? m.members.owes(formatCents(debt)) : m.members.settledBadge}
       </StatusCard>
 
       <Panel marginBottom={16}>

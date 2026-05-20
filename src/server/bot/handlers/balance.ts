@@ -1,7 +1,6 @@
 import type { Bot } from 'grammy';
 import type { BotContext } from '../middleware';
 import { listOpenChargesForMember, getMemberOutstandingDebt } from '@/server/domain/charges';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { botMessages } from '../i18n';
 import { renderTeamOverview } from './team';
@@ -13,7 +12,6 @@ export function registerBalanceHandler(bot: Bot<BotContext>) {
       await ctx.reply(m.bot.notMember);
       return;
     }
-    const settings = await getOrCreateSettings(ctx.db);
     const total = await getMemberOutstandingDebt(ctx.db, ctx.currentUser.id);
 
     const personalLines: string[] = [];
@@ -22,9 +20,9 @@ export function registerBalanceHandler(bot: Bot<BotContext>) {
       personalLines.push(m.bot.settledYes);
     } else {
       const charges = await listOpenChargesForMember(ctx.db, ctx.currentUser.id);
-      personalLines.push(m.bot.youOweTotal(formatCents(total, settings.currency)));
+      personalLines.push(m.bot.youOweTotal(formatCents(total)));
       for (const c of charges) {
-        personalLines.push(m.bot.chargeBullet(formatCents(c.amount, settings.currency), c.description));
+        personalLines.push(m.bot.chargeBullet(formatCents(c.amount), c.description));
       }
     }
 

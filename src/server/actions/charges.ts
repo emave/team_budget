@@ -15,7 +15,6 @@ import {
   cancelCharge as domainCancel,
 } from '@/server/domain/charges';
 import { getNotifier } from '@/server/bot/notifications';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 
 export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
@@ -26,10 +25,9 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     const charge = await domainAdhoc(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        const settings = await getOrCreateSettings(db);
         await getNotifier().notifyUser(
           p.userId,
-          `🧾 New charge: ${p.description} ${formatCents(charge.amount, settings.currency)}. Type /balance to see total.`,
+          `🧾 New charge: ${p.description} ${formatCents(charge.amount)}. Type /balance to see total.`,
         );
       } catch (err) { console.error('[actions] notify failed:', err); }
     }
@@ -41,10 +39,9 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     const charge = await domainPotBorrow(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        const settings = await getOrCreateSettings(db);
         await getNotifier().notifyUser(
           p.userId,
-          `💰 You borrowed ${formatCents(charge.amount, settings.currency)} from the ${p.sourcePot} pot: ${p.description}. Type /balance to see total.`,
+          `💰 You borrowed ${formatCents(charge.amount)} from the ${p.sourcePot} pot: ${p.description}. Type /balance to see total.`,
         );
       } catch (err) { console.error('[actions] notify failed:', err); }
     }
@@ -56,11 +53,10 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     const result = await domainSplit(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        const settings = await getOrCreateSettings(db);
         for (const a of p.allocations) {
           await getNotifier().notifyUser(
             a.userId,
-            `🧾 New shared charge: ${p.description} ${formatCents(a.amount, settings.currency)}. Type /balance to see total.`,
+            `🧾 New shared charge: ${p.description} ${formatCents(a.amount)}. Type /balance to see total.`,
           );
         }
       } catch (err) { console.error('[actions] notify failed:', err); }

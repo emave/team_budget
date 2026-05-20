@@ -10,7 +10,6 @@ import {
   fifoAllocate,
 } from '@/server/domain/payments';
 import { getNotifier } from '@/server/bot/notifications';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
 
@@ -22,11 +21,10 @@ export function makePaymentActions(deps: { getDb: () => Db } = { getDb: defaultG
     const result = await domainRecord(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        const settings = await getOrCreateSettings(db);
         const remaining = await getMemberOutstandingDebt(db, p.payerUserId);
         await getNotifier().notifyUser(
           p.payerUserId,
-          `💵 Payment ${formatCents(result.payment.amount, settings.currency)} (${result.payment.method}) recorded. Remaining: ${formatCents(remaining, settings.currency)}.`,
+          `💵 Payment ${formatCents(result.payment.amount)} (${result.payment.method}) recorded. Remaining: ${formatCents(remaining)}.`,
         );
       } catch (err) { console.error('[actions] notify failed:', err); }
     }

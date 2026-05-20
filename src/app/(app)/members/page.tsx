@@ -1,6 +1,5 @@
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
 import { users } from '@/server/db/schema';
 import { formatCents } from '@/shared/format';
@@ -17,7 +16,6 @@ import { SectionHeading } from '@/ui/heading';
 export default async function MembersPage() {
   const me = await requireUser();
   const db = getDb();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const all = db.select().from(users).all();
@@ -30,7 +28,7 @@ export default async function MembersPage() {
       displayName: u.displayName,
       role: u.role as 'admin' | 'member',
       isActive: u.isActive,
-      debtFormatted: debt > 0 ? formatCents(debt, settings.currency) : null,
+      debtFormatted: debt > 0 ? formatCents(debt) : null,
     };
   });
 

@@ -7,7 +7,6 @@ import {
 } from '@/server/domain/charges';
 import { parseDollarsToCents, formatCents } from '@/shared/format';
 import { listActiveMembers } from '@/server/domain/users';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { botMessages } from '../i18n';
 import { getNotifier } from '../notifications';
 import { getMessages, isLocale, detectFromTelegram } from '@/shared/i18n';
@@ -21,7 +20,6 @@ export async function chargeConversation(conversation: BotConversation, ctx: Bot
     return;
   }
   const adminId = ctx.currentUser.id;
-  const settings = await getOrCreateSettings(ctx.db);
 
   await ctx.reply(m.bot.charge.typePrompt, {
     reply_markup: new InlineKeyboard()
@@ -77,7 +75,7 @@ export async function chargeConversation(conversation: BotConversation, ctx: Bot
     } else {
       await createPotBorrow(ctx.db, { userId, amount: cents, sourcePot, description, createdByUserId: adminId });
     }
-    const formatted = formatCents(cents, settings.currency);
+    const formatted = formatCents(cents);
     await ctx.reply(
       type === 'adhoc' ? m.bot.charge.createdAdhoc(formatted) : m.bot.charge.createdPotBorrow(formatted),
     );
@@ -132,7 +130,7 @@ export async function chargeConversation(conversation: BotConversation, ctx: Bot
 
   const allocations = Array.from(picked).map((id) => ({ userId: id, amount: perCents }));
   await createSplitCharge(ctx.db, { description, allocations, createdByUserId: adminId });
-  const formattedPer = formatCents(perCents, settings.currency);
+  const formattedPer = formatCents(perCents);
   await ctx.reply(m.bot.charge.splitCreated(formattedPer, picked.size));
   try {
     for (const id of picked) {

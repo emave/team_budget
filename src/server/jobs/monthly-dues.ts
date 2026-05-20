@@ -26,7 +26,7 @@ export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
     try {
       const settings = await getOrCreateSettings(db);
       await getNotifier().notifyAllActive(
-        `📅 Monthly dues for ${period} have been added (${formatCents(settings.monthlyDuesAmount, settings.currency)}). Type /balance to see total.`,
+        `📅 Monthly dues for ${period} have been added (${formatCents(settings.monthlyDuesAmount)}). Type /balance to see total.`,
       );
     } catch (err) { console.error('[dues] notify failed:', err); }
   }

@@ -84,7 +84,7 @@ export async function getStats(db: Db): Promise<Stats> {
     },
     uptime: { seconds: uptimeSeconds, human: formatUptime(uptimeSeconds) },
     money: {
-      currency: settings.currency,
+      currency: 'BYN',
       cashCents: pots.cash,
       cardCents: pots.card,
       monthlyDuesCents: settings.monthlyDuesAmount,

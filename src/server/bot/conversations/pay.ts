@@ -4,7 +4,6 @@ import { recordPayment, fifoAllocate } from '@/server/domain/payments';
 import { parseDollarsToCents, formatCents } from '@/shared/format';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { botMessages } from '../i18n';
 import { getNotifier } from '../notifications';
 import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
@@ -18,7 +17,6 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
     return;
   }
   const adminId = ctx.currentUser.id;
-  const settings = await getOrCreateSettings(ctx.db);
 
   // Step 1: payer
   const members = await listActiveMembers(ctx.db);
@@ -42,7 +40,7 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
     await ctx.reply(m.bot.pay.settledAborted);
     return;
   }
-  await ctx.reply(m.bot.pay.owesAmountPrompt(formatCents(debt, settings.currency)));
+  await ctx.reply(m.bot.pay.owesAmountPrompt(formatCents(debt)));
   const amountCtx = await conversation.waitFor('message:text');
   let cents: number;
   try {
@@ -52,7 +50,7 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
     return;
   }
   if (cents > debt) {
-    await ctx.reply(m.bot.pay.exceedsDebt(formatCents(debt, settings.currency)));
+    await ctx.reply(m.bot.pay.exceedsDebt(formatCents(debt)));
     return;
   }
 
@@ -77,8 +75,8 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
   });
 
   const remaining = debt - cents;
-  const formattedAmount = formatCents(cents, settings.currency);
-  const formattedRemaining = formatCents(remaining, settings.currency);
+  const formattedAmount = formatCents(cents);
+  const formattedRemaining = formatCents(remaining);
   await ctx.reply(m.bot.pay.recorded(method, formattedAmount, formattedRemaining));
   try {
     await getNotifier().notifyUser(payerId, (recipient) => {

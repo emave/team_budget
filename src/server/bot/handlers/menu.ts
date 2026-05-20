@@ -35,14 +35,12 @@ export function registerMenuHandler(bot: Bot<BotContext>) {
     await ctx.answerCallbackQuery();
     if (!ctx.currentUser) return;
     const { getMemberOutstandingDebt, listOpenChargesForMember } = await import('@/server/domain/charges');
-    const { getOrCreateSettings } = await import('@/server/domain/settings');
     const { formatCents } = await import('@/shared/format');
-    const s = await getOrCreateSettings(ctx.db);
     const total = await getMemberOutstandingDebt(ctx.db, ctx.currentUser.id);
     if (total === 0) { await ctx.reply(m.bot.settledYes); return; }
     const cs = await listOpenChargesForMember(ctx.db, ctx.currentUser.id);
-    const lines = cs.map((c) => m.bot.chargeBullet(formatCents(c.amount, s.currency), c.description));
-    await ctx.reply(`${m.bot.youOweTotal(formatCents(total, s.currency))}\n${lines.join('\n')}`);
+    const lines = cs.map((c) => m.bot.chargeBullet(formatCents(c.amount), c.description));
+    await ctx.reply(`${m.bot.youOweTotal(formatCents(total))}\n${lines.join('\n')}`);
   });
 
   bot.callbackQuery('menu:history', async (ctx) => {

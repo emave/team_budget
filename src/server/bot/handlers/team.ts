@@ -1,13 +1,11 @@
 import type { Bot } from 'grammy';
 import type { BotContext } from '../middleware';
 import { getTeamOverview } from '@/server/domain/team';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { botMessages } from '../i18n';
 
 export async function renderTeamOverview(ctx: BotContext): Promise<string> {
   const { m } = botMessages(ctx);
-  const settings = await getOrCreateSettings(ctx.db);
   const overview = await getTeamOverview(ctx.db);
 
   if (overview.members.length === 0) {
@@ -16,16 +14,16 @@ export async function renderTeamOverview(ctx: BotContext): Promise<string> {
 
   const lines: string[] = [];
   lines.push(m.bot.team.heading);
-  lines.push(m.bot.team.totalOutstanding(formatCents(overview.totalOutstandingCents, settings.currency)));
+  lines.push(m.bot.team.totalOutstanding(formatCents(overview.totalOutstandingCents)));
   lines.push(m.bot.team.potsLine(
-    formatCents(overview.cashPotCents, settings.currency),
-    formatCents(overview.cardPotCents, settings.currency),
+    formatCents(overview.cashPotCents),
+    formatCents(overview.cardPotCents),
   ));
   lines.push('');
   lines.push(m.bot.team.membersHeading(overview.settledCount, overview.unsettledCount));
   for (const b of overview.members) {
     if (b.outstandingCents > 0) {
-      lines.push(m.bot.team.memberLineDebt(b.displayName, formatCents(b.outstandingCents, settings.currency)));
+      lines.push(m.bot.team.memberLineDebt(b.displayName, formatCents(b.outstandingCents)));
     } else {
       lines.push(m.bot.team.memberLineSettled(b.displayName));
     }

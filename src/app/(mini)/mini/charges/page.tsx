@@ -1,7 +1,6 @@
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listChargesFiltered } from '@/server/domain/charges';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages, type Messages } from '@/shared/i18n';
@@ -17,7 +16,6 @@ const STATUS_KEYS: Record<string, keyof Messages['charges']> = {
 export default async function MiniChargesPage() {
   const user = await requireUser();
   const db = getDb();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const rows = await listChargesFiltered(db, { userId: user.id, limit: 50 });
@@ -35,7 +33,7 @@ export default async function MiniChargesPage() {
             }}>
               <span>{c.description}</span>
               <span style={{ color: c.status === 'paid' ? '#16a34a' : c.status === 'cancelled' ? '#6b7280' : '#dc2626' }}>
-                {formatCents(c.amount, settings.currency)} ({statusLabel})
+                {formatCents(c.amount)} ({statusLabel})
               </span>
             </div>
           );

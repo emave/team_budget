@@ -22,7 +22,7 @@ export default async function SettingsPage() {
       <PageHeader title={m.settings.title} />
       <Panel marginBottom={16}>
         <SectionHeading>{m.settings.monthlyDuesHeading}</SectionHeading>
-        <DuesForm currentCents={s.monthlyDuesAmount} currency={s.currency} />
+        <DuesForm currentCents={s.monthlyDuesAmount} />
       </Panel>
       <Panel>
         <SectionHeading>{m.settings.categoriesHeading}</SectionHeading>

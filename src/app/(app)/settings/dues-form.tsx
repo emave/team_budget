@@ -10,7 +10,7 @@ import { updateMonthlyDuesAmount, runDuesNow } from '@/server/actions/settings-s
 import { formatCents } from '@/shared/format';
 import { useMessages } from '@/app/_i18n-provider';
 
-export function DuesForm({ currentCents, currency }: { currentCents: number; currency: string }) {
+export function DuesForm({ currentCents }: { currentCents: number }) {
   const m = useMessages();
   const router = useRouter();
   const [amount, setAmount] = useState((currentCents / 100).toFixed(2));
@@ -25,7 +25,7 @@ export function DuesForm({ currentCents, currency }: { currentCents: number; cur
 
   return (
     <div style={{ display: 'grid', gap: 12, maxWidth: 360 }}>
-      <FormControl label={m.settings.currentLabel(formatCents(currentCents, currency))}>
+      <FormControl label={m.settings.currentLabel(formatCents(currentCents))}>
         <Input value={amount} onChange={(e) => setAmount(e.currentTarget.value)} />
       </FormControl>
       <div style={{ display: 'flex', gap: 8 }}>

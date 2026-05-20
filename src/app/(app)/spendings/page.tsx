@@ -2,7 +2,6 @@ import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listSpendings } from '@/server/domain/spendings';
 import { listCategories } from '@/server/domain/categories';
-import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDateTime, getMessages } from '@/shared/i18n';
@@ -14,7 +13,6 @@ import { SpendingsTable, type SpendingRow } from './spendings-table';
 export default async function SpendingsPage() {
   const me = await requireUser();
   const db = getDb();
-  const settings = await getOrCreateSettings(db);
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
   const rows = await listSpendings(db);
@@ -26,7 +24,7 @@ export default async function SpendingsPage() {
     pot: s.pot,
     description: s.description,
     category: s.categoryId ? cats.get(s.categoryId) ?? '' : '',
-    amountFormatted: formatCents(s.amount, settings.currency),
+    amountFormatted: formatCents(s.amount),
     whenFormatted: formatDateTime(s.occurredAt, locale),
     cancelled: Boolean(s.cancelledAt),
     showCancel: me.role === 'admin' && !s.cancelledAt,
