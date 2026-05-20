@@ -1,6 +1,6 @@
 import 'server-only';
 import { Bot, session } from 'grammy';
-import { conversations } from '@grammyjs/conversations';
+import { conversations, createConversation } from '@grammyjs/conversations';
 import { env } from '@/server/env';
 import { getDb } from '@/server/db/client';
 import { identifyUser, type BotContext } from './middleware';
@@ -11,6 +11,7 @@ import { registerBalanceHandler } from './handlers/balance';
 import { registerHistoryHandler } from './handlers/history';
 import { registerInfoHandler } from './handlers/info';
 import { registerInviteHandler } from './handlers/invite';
+import { spendConversation } from './conversations/spend';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -24,6 +25,8 @@ export function getBot(): Bot<BotContext> {
       return next();
     });
     _bot.use(identifyUser);
+    _bot.use(createConversation(spendConversation, 'spend'));
+    _bot.command('spend', async (ctx) => { await ctx.conversation.enter('spend'); });
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);

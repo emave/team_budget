@@ -11,4 +11,4 @@ export interface BotContextProps {
 }
 
 export type BotContext = ConversationFlavor<Context & SessionFlavor<SessionData> & BotContextProps>;
-export type BotConversation = Conversation<BotContext>;
+export type BotConversation = Conversation<BotContext, BotContext>;
