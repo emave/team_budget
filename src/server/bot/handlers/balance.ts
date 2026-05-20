@@ -4,6 +4,7 @@ import { listOpenChargesForMember, getMemberOutstandingDebt } from '@/server/dom
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { botMessages } from '../i18n';
+import { renderTeamOverview } from './team';
 
 export function registerBalanceHandler(bot: Bot<BotContext>) {
   bot.command('balance', async (ctx) => {
@@ -14,12 +15,25 @@ export function registerBalanceHandler(bot: Bot<BotContext>) {
     }
     const settings = await getOrCreateSettings(ctx.db);
     const total = await getMemberOutstandingDebt(ctx.db, ctx.currentUser.id);
+
+    const personalLines: string[] = [];
+    personalLines.push(m.bot.team.personalHeading(ctx.currentUser.displayName));
     if (total === 0) {
-      await ctx.reply(m.bot.settledYes);
+      personalLines.push(m.bot.settledYes);
+    } else {
+      const charges = await listOpenChargesForMember(ctx.db, ctx.currentUser.id);
+      personalLines.push(m.bot.youOweTotal(formatCents(total, settings.currency)));
+      for (const c of charges) {
+        personalLines.push(m.bot.chargeBullet(formatCents(c.amount, settings.currency), c.description));
+      }
+    }
+
+    if (ctx.currentUser.role === 'admin') {
+      const team = await renderTeamOverview(ctx);
+      await ctx.reply(`${personalLines.join('\n')}\n\n${team}`);
       return;
     }
-    const charges = await listOpenChargesForMember(ctx.db, ctx.currentUser.id);
-    const lines = charges.map((c) => m.bot.chargeBullet(formatCents(c.amount, settings.currency), c.description));
-    await ctx.reply(`${m.bot.youOweTotal(formatCents(total, settings.currency))}\n${lines.join('\n')}`);
+
+    await ctx.reply(personalLines.join('\n'));
   });
 }

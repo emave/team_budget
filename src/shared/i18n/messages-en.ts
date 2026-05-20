@@ -245,6 +245,12 @@ export const MESSAGES_EN = {
       info: 'Team info / FAQ',
       help: 'Show commands',
       language: 'Change language',
+      team: 'Team overview (admin)',
+      spend: 'Record a spending (admin)',
+      pay: 'Record a payment (admin)',
+      charge: 'Create a charge (admin)',
+      invite: 'Create an invite link (admin)',
+      info_edit: 'Manage FAQ entries (admin)',
     },
     adminOnly: 'This command is for admins only.',
     notMember: 'You are not a team member yet. Ask your admin for an invite link.',
@@ -268,6 +274,7 @@ export const MESSAGES_EN = {
     menuBtnRecordPayment: '💵 Record payment',
     menuBtnRecordSpending: '🛒 Record spending',
     menuBtnInvite: '🔗 Invite',
+    menuBtnTeamOverview: '📊 Team overview',
     menuTypeHistory: 'Type /history to see your activity.',
     menuTypeInfo: 'Type /info to browse entries.',
     adminsOnlyShort: 'Admins only.',
@@ -284,6 +291,7 @@ export const MESSAGES_EN = {
 /language — change language
 
 Admin commands (admin only):
+/team — team overview (totals, pots, per-member debt)
 /spend — record a spending
 /pay — record a payment
 /charge — create a charge
@@ -369,6 +377,18 @@ Admin commands (admin only):
       btnRussian: '🇷🇺 Русский',
       switchedToEn: 'Language switched to English.',
       switchedToRu: 'Язык переключён на русский.',
+    },
+    team: {
+      heading: '📊 Team overview',
+      totalOutstanding: (amount: string) => `💰 Total outstanding: ${amount}`,
+      potsLine: (cash: string, card: string) => `💵 Cash pot: ${cash}\n💳 Card pot: ${card}`,
+      membersHeading: (settled: number, unsettled: number) =>
+        `👥 Members — settled ${settled} / unsettled ${unsettled}:`,
+      memberLineDebt: (name: string, amount: string) => `  • ${name} — owes ${amount}`,
+      memberLineSettled: (name: string) => `  ✅ ${name}`,
+      noMembers: 'No active members yet.',
+      allSettled: '✅ All members are settled.',
+      personalHeading: (name: string) => `👤 ${name}`,
     },
   },
 };

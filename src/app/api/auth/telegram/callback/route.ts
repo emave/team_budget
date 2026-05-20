@@ -6,6 +6,7 @@ import { getDb } from '@/server/db/client';
 import { getUserByTelegramId } from '@/server/domain/users';
 import { createSession } from '@/server/domain/sessions';
 import { bootstrapAdminIfNeeded } from '@/server/domain/bootstrap';
+import { syncAdminCommandsForUser } from '@/server/bot/admin-commands';
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
       photoUrl: input.photo_url ?? null,
     });
     user = await getUserByTelegramId(db, input.id);
+    if (user) await syncAdminCommandsForUser(user);
   }
   if (!user) {
     return new NextResponse(

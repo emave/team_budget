@@ -249,6 +249,12 @@ export const MESSAGES_RU: Messages = {
       info: 'Информация по команде / FAQ',
       help: 'Список команд',
       language: 'Сменить язык',
+      team: 'Сводка по команде (админ)',
+      spend: 'Записать трату (админ)',
+      pay: 'Записать платёж (админ)',
+      charge: 'Создать начисление (админ)',
+      invite: 'Создать ссылку-приглашение (админ)',
+      info_edit: 'Управлять FAQ (админ)',
     },
     adminOnly: 'Эта команда доступна только администраторам.',
     notMember: 'Вы пока не участник команды. Попросите администратора прислать ссылку-приглашение.',
@@ -272,6 +278,7 @@ export const MESSAGES_RU: Messages = {
     menuBtnRecordPayment: '💵 Записать платёж',
     menuBtnRecordSpending: '🛒 Записать трату',
     menuBtnInvite: '🔗 Пригласить',
+    menuBtnTeamOverview: '📊 Сводка команды',
     menuTypeHistory: 'Введите /history чтобы увидеть свою активность.',
     menuTypeInfo: 'Введите /info чтобы просмотреть записи.',
     adminsOnlyShort: 'Только для администраторов.',
@@ -288,6 +295,7 @@ export const MESSAGES_RU: Messages = {
 /language — сменить язык
 
 Команды администратора (только для админов):
+/team — сводка по команде (итоги, кассы, долги участников)
 /spend — записать трату
 /pay — записать платёж
 /charge — создать начисление
@@ -373,6 +381,18 @@ export const MESSAGES_RU: Messages = {
       btnRussian: '🇷🇺 Русский',
       switchedToEn: 'Language switched to English.',
       switchedToRu: 'Язык переключён на русский.',
+    },
+    team: {
+      heading: '📊 Сводка по команде',
+      totalOutstanding: (amount: string) => `💰 Общий долг: ${amount}`,
+      potsLine: (cash: string, card: string) => `💵 Касса наличных: ${cash}\n💳 Касса карты: ${card}`,
+      membersHeading: (settled: number, unsettled: number) =>
+        `👥 Участники — без долга ${settled} / с долгом ${unsettled}:`,
+      memberLineDebt: (name: string, amount: string) => `  • ${name} — должен ${amount}`,
+      memberLineSettled: (name: string) => `  ✅ ${name}`,
+      noMembers: 'Активных участников пока нет.',
+      allSettled: '✅ Все участники без долгов.',
+      personalHeading: (name: string) => `👤 ${name}`,
     },
   },
 };

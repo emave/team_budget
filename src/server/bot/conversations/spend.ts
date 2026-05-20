@@ -4,8 +4,10 @@ import { recordSpending } from '@/server/domain/spendings';
 import { parseDollarsToCents } from '@/shared/format';
 import { listCategories } from '@/server/domain/categories';
 import { botMessages } from '../i18n';
+import { hydrateConversationCtx } from './hydrate';
 
 export async function spendConversation(conversation: BotConversation, ctx: BotContext) {
+  await hydrateConversationCtx(ctx);
   const { m } = botMessages(ctx);
   if (ctx.currentUser?.role !== 'admin') {
     await ctx.reply(m.bot.adminOnly);

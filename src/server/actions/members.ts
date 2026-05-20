@@ -14,8 +14,10 @@ import {
   reactivateUser,
   canHardDeleteUser,
   hardDeleteUser,
+  getUserById,
 } from '@/server/domain/users';
 import { z } from 'zod';
+import { syncAdminCommandsForUser } from '@/server/bot/admin-commands';
 
 export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
   const adminAction = makeAdminAction(deps);
@@ -27,20 +29,26 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
 
   const deactivateMember = adminAction(async ({ db }, input: { id: string }) => {
     const id = idSchema.parse(input.id);
-    return deactivateUser(db, id);
+    const updated = await deactivateUser(db, id);
+    await syncAdminCommandsForUser(updated);
+    return updated;
   });
 
   const reactivateMember = adminAction(async ({ db }, input: { id: string }) => {
     const id = idSchema.parse(input.id);
-    return reactivateUser(db, id);
+    const updated = await reactivateUser(db, id);
+    await syncAdminCommandsForUser(updated);
+    return updated;
   });
 
   const editMember = adminAction(async ({ db }, input: z.infer<typeof editMemberSchema>) => {
     const parsed = editMemberSchema.parse(input);
-    return updateUserProfile(db, parsed.id, {
+    const updated = await updateUserProfile(db, parsed.id, {
       displayName: parsed.displayName,
       role: parsed.role,
     });
+    await syncAdminCommandsForUser(updated);
+    return updated;
   });
 
   const deleteMember = adminAction(async ({ user, db }, input: { id: string }) => {
@@ -52,7 +60,9 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
     if (reason) {
       throw new ActionError('FORBIDDEN', reason);
     }
+    const target = await getUserById(db, id);
     await hardDeleteUser(db, id);
+    if (target) await syncAdminCommandsForUser({ ...target, role: 'member', isActive: false });
     return { ok: true as const };
   });
 

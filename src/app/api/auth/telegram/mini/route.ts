@@ -6,6 +6,7 @@ import { getDb } from '@/server/db/client';
 import { getUserByTelegramId } from '@/server/domain/users';
 import { createSession } from '@/server/domain/sessions';
 import { bootstrapAdminIfNeeded } from '@/server/domain/bootstrap';
+import { syncAdminCommandsForUser } from '@/server/bot/admin-commands';
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       photoUrl: verify.user.photo_url ?? null,
     });
     user = await getUserByTelegramId(db, verify.user.id);
+    if (user) await syncAdminCommandsForUser(user);
   }
   if (!user) {
     return new NextResponse('Not a team member', { status: 403 });

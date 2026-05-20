@@ -3,6 +3,7 @@ import type { InlineKeyboardButton } from 'grammy/types';
 import type { BotContext } from '../middleware';
 import { env } from '@/server/env';
 import { botMessages } from '../i18n';
+import { renderTeamOverview } from './team';
 
 export function registerMenuHandler(bot: Bot<BotContext>) {
   bot.command('menu', async (ctx) => {
@@ -19,6 +20,7 @@ export function registerMenuHandler(bot: Bot<BotContext>) {
     ];
     if (ctx.currentUser.role === 'admin') {
       buttons.push(
+        [{ text: m.bot.menuBtnTeamOverview, callback_data: 'menu:team' }],
         [{ text: m.bot.menuBtnNewCharge, callback_data: 'menu:charge' }, { text: m.bot.menuBtnRecordPayment, callback_data: 'menu:pay' }],
         [{ text: m.bot.menuBtnRecordSpending, callback_data: 'menu:spend' }, { text: m.bot.menuBtnInvite, callback_data: 'menu:invite' }],
       );
@@ -51,6 +53,13 @@ export function registerMenuHandler(bot: Bot<BotContext>) {
   bot.callbackQuery('menu:info', async (ctx) => {
     const { m } = botMessages(ctx);
     await ctx.answerCallbackQuery({ text: m.bot.menuTypeInfo });
+  });
+
+  bot.callbackQuery('menu:team', async (ctx) => {
+    const { m } = botMessages(ctx);
+    await ctx.answerCallbackQuery();
+    if (ctx.currentUser?.role !== 'admin') { await ctx.reply(m.bot.adminsOnlyShort); return; }
+    await ctx.reply(await renderTeamOverview(ctx));
   });
 
   bot.callbackQuery('menu:charge', async (ctx) => {

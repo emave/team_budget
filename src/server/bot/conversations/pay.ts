@@ -8,8 +8,10 @@ import { getOrCreateSettings } from '@/server/domain/settings';
 import { botMessages } from '../i18n';
 import { getNotifier } from '../notifications';
 import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
+import { hydrateConversationCtx } from './hydrate';
 
 export async function payConversation(conversation: BotConversation, ctx: BotContext) {
+  await hydrateConversationCtx(ctx);
   const { m } = botMessages(ctx);
   if (ctx.currentUser?.role !== 'admin') {
     await ctx.reply(m.bot.adminOnly);

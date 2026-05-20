@@ -5,6 +5,7 @@ import { consumeInvite, findOpenInviteByToken } from '@/server/domain/invites';
 import { createUser, getUserByTelegramId, updateUserLocale } from '@/server/domain/users';
 import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
 import { botMessages } from '../i18n';
+import { syncAdminCommandsForUser } from '../admin-commands';
 
 export interface StartOptions {
   bootstrapAdminTelegramId: number;
@@ -70,7 +71,10 @@ export function registerStartHandler(bot: Bot<BotContext>, opts: StartOptions) {
       if (result.created) {
         // Persist locale on the freshly bootstrapped admin
         const u = await getUserByTelegramId(ctx.db, tgFrom.id);
-        if (u) await updateUserLocale(ctx.db, u.id, detectedLocale);
+        if (u) {
+          await updateUserLocale(ctx.db, u.id, detectedLocale);
+          await syncAdminCommandsForUser(u);
+        }
         await ctx.reply(detectedMessages.bot.start.welcomeAdmin);
         return;
       }
