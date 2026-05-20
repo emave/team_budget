@@ -101,6 +101,16 @@ export const MESSAGES_RU: Messages = {
     colMember: 'Участник',
     colRole: 'Роль',
     colStatus: 'Статус',
+    pendingInvitesTitle: 'Активные приглашения',
+    noPendingInvites: 'Активных приглашений нет.',
+    colHint: 'Подсказка имени',
+    colCreated: 'Создано',
+    colActions: 'Действия',
+    hintEmpty: '—',
+    copyLink: 'Копировать ссылку',
+    copied: 'Скопировано',
+    revoke: 'Отозвать',
+    confirmRevoke: 'Отозвать приглашение? Ссылка перестанет работать.',
   },
 
   charges: {

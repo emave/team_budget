@@ -97,6 +97,16 @@ export const MESSAGES_EN = {
     colMember: 'Member',
     colRole: 'Role',
     colStatus: 'Status',
+    pendingInvitesTitle: 'Pending invites',
+    noPendingInvites: 'No pending invites.',
+    colHint: 'Display name hint',
+    colCreated: 'Created',
+    colActions: 'Actions',
+    hintEmpty: '—',
+    copyLink: 'Copy link',
+    copied: 'Copied',
+    revoke: 'Revoke',
+    confirmRevoke: 'Revoke this invite? The link will stop working.',
   },
 
   charges: {

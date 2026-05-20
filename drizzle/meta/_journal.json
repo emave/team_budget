@@ -15,6 +15,13 @@
       "when": 1779300718137,
       "tag": "0001_glamorous_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779307686901,
+      "tag": "0002_tiny_iron_lad",
+      "breakpoints": true
     }
   ]
 }

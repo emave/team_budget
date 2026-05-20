@@ -10,6 +10,9 @@ import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { InviteButton } from './invite-button';
 import { MembersTable, type MemberRow } from './members-table';
+import { PendingInvitesTable, type PendingInviteRow } from './pending-invites-table';
+import { listPendingInvites } from '@/server/domain/invites';
+import { SectionHeading } from '@/ui/heading';
 
 export default async function MembersPage() {
   const me = await requireUser();
@@ -31,12 +34,28 @@ export default async function MembersPage() {
     };
   });
 
+  const isAdmin = me.role === 'admin';
+  const pendingInvites: PendingInviteRow[] = isAdmin
+    ? (await listPendingInvites(db)).map((i) => ({
+        id: i.id,
+        token: i.token,
+        displayNameHint: i.displayNameHint,
+        createdAt: i.createdAt,
+      }))
+    : [];
+
   return (
     <div>
-      <PageHeader title={m.members.title} actions={me.role === 'admin' ? <InviteButton /> : null} />
-      <Panel>
+      <PageHeader title={m.members.title} actions={isAdmin ? <InviteButton /> : null} />
+      <Panel marginBottom={isAdmin ? 16 : 0}>
         <MembersTable rows={shaped} />
       </Panel>
+      {isAdmin && (
+        <Panel>
+          <SectionHeading>{m.members.pendingInvitesTitle}</SectionHeading>
+          <PendingInvitesTable rows={pendingInvites} />
+        </Panel>
+      )}
     </div>
   );
 }

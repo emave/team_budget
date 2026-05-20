@@ -7,7 +7,7 @@ import {
   idSchema,
   roleSchema,
 } from '@/shared/schemas';
-import { createInvite } from '@/server/domain/invites';
+import { createInvite, revokeInvite as domainRevokeInvite } from '@/server/domain/invites';
 import {
   changeRole as domainChangeRole,
   deactivateUser,
@@ -39,7 +39,12 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
     return domainChangeRole(db, id, role);
   });
 
-  return { inviteMember, deactivateMember, reactivateMember, changeMemberRole };
+  const revokeInvite = adminAction(async ({ db }, input: { id: string }) => {
+    const id = idSchema.parse(input.id);
+    return domainRevokeInvite(db, id);
+  });
+
+  return { inviteMember, deactivateMember, reactivateMember, changeMemberRole, revokeInvite };
 }
 
 const prod = makeMemberActions();
@@ -47,3 +52,4 @@ export const inviteMember = prod.inviteMember;
 export const deactivateMember = prod.deactivateMember;
 export const reactivateMember = prod.reactivateMember;
 export const changeMemberRole = prod.changeMemberRole;
+export const revokeInvite = prod.revokeInvite;

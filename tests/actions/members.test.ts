@@ -59,4 +59,22 @@ describe('member actions', () => {
     const actions = makeMemberActions({ getDb: () => db });
     await expect(actions.inviteMember({})).rejects.toThrow(/admin required/);
   });
+
+  it('admin can revoke an invite', async () => {
+    const actions = makeMemberActions({ getDb: () => db });
+    const inv = await actions.inviteMember({ displayNameHint: 'Vasya' });
+    const revoked = await actions.revokeInvite({ id: inv.id });
+    expect(revoked.revokedAt).toBeTruthy();
+  });
+
+  it('member cannot revoke an invite', async () => {
+    const adminActions = makeMemberActions({ getDb: () => db });
+    const inv = await adminActions.inviteMember({});
+
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const s = await createSession(db, m.id);
+    cookieRef.value = signCookie(s.token, SECRET);
+    const memberActions = makeMemberActions({ getDb: () => db });
+    await expect(memberActions.revokeInvite({ id: inv.id })).rejects.toThrow(/admin required/);
+  });
 });

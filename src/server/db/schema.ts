@@ -31,6 +31,7 @@ export const invites = sqliteTable('invites', {
   consumedByUserId: text('consumed_by_user_id').references(() => users.id),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   consumedAt: text('consumed_at'),
+  revokedAt: text('revoked_at'),
 });
 
 export const settings = sqliteTable('settings', {

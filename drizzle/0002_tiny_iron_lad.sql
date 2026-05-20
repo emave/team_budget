@@ -1,0 +1,1 @@
+ALTER TABLE `invites` ADD `revoked_at` text;

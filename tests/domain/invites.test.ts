@@ -5,6 +5,8 @@ import {
   createInvite,
   findOpenInviteByToken,
   consumeInvite,
+  listPendingInvites,
+  revokeInvite,
 } from '@/server/domain/invites';
 
 describe('invites', () => {
@@ -71,5 +73,37 @@ describe('invites', () => {
     });
     await consumeInvite(db, inv.token, u1.id);
     await expect(consumeInvite(db, inv.token, u2.id)).rejects.toThrow();
+  });
+
+  it('listPendingInvites returns only invites that are neither consumed nor revoked', async () => {
+    const pending = await createInvite(db, { createdByUserId: adminId, displayNameHint: 'A' });
+    const consumed = await createInvite(db, { createdByUserId: adminId, displayNameHint: 'B' });
+    const revoked = await createInvite(db, { createdByUserId: adminId, displayNameHint: 'C' });
+    const u = await createUser(db, { telegramUserId: 99, displayName: 'B', role: 'member' });
+    await consumeInvite(db, consumed.token, u.id);
+    await revokeInvite(db, revoked.id);
+
+    const list = await listPendingInvites(db);
+    expect(list.map((i) => i.id)).toEqual([pending.id]);
+  });
+
+  it('revokeInvite makes findOpenInviteByToken return undefined', async () => {
+    const inv = await createInvite(db, { createdByUserId: adminId });
+    await revokeInvite(db, inv.id);
+    expect(await findOpenInviteByToken(db, inv.token)).toBeUndefined();
+  });
+
+  it('revokeInvite throws on already-consumed invite', async () => {
+    const inv = await createInvite(db, { createdByUserId: adminId });
+    const u = await createUser(db, { telegramUserId: 99, displayName: 'X', role: 'member' });
+    await consumeInvite(db, inv.token, u.id);
+    await expect(revokeInvite(db, inv.id)).rejects.toThrow(/already consumed/);
+  });
+
+  it('revokeInvite is idempotent for already-revoked invites', async () => {
+    const inv = await createInvite(db, { createdByUserId: adminId });
+    const first = await revokeInvite(db, inv.id);
+    const second = await revokeInvite(db, inv.id);
+    expect(second.revokedAt).toBe(first.revokedAt);
   });
 });

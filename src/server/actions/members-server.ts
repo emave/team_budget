@@ -19,3 +19,7 @@ export async function reactivateMember(input: { id: string }) {
 export async function changeMemberRole(input: { id: string; role: 'admin' | 'member' }) {
   return m.changeMemberRole(input);
 }
+
+export async function revokeInvite(input: { id: string }) {
+  return m.revokeInvite(input);
+}
