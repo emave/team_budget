@@ -3,6 +3,9 @@ import cron from 'node-cron';
 import { users } from '@/server/db/schema';
 import type { Db } from '@/server/domain/types';
 import { currentBillingPeriod, generateMonthlyDues } from '@/server/domain/dues';
+import { getNotifier } from '../bot/notifications';
+import { getOrCreateSettings } from '../domain/settings';
+import { formatCents } from '@/shared/format';
 
 export interface RunOptions {
   now?: Date;
@@ -17,7 +20,18 @@ async function pickSystemAdmin(db: Db): Promise<string> {
 export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
   const period = currentBillingPeriod(opts.now);
   const adminId = await pickSystemAdmin(db);
-  return generateMonthlyDues(db, { period, createdByUserId: adminId });
+  const result = await generateMonthlyDues(db, { period, createdByUserId: adminId });
+
+  if (result.createdCount > 0 && process.env.SKIP_BOT !== '1') {
+    try {
+      const settings = await getOrCreateSettings(db);
+      await getNotifier().notifyAllActive(
+        `📅 Monthly dues for ${period} have been added (${formatCents(settings.monthlyDuesAmount, settings.currency)}). Type /balance to see total.`,
+      );
+    } catch (err) { console.error('[dues] notify failed:', err); }
+  }
+
+  return result;
 }
 
 let scheduled = false;

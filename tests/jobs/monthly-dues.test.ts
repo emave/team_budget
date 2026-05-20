@@ -9,6 +9,7 @@ describe('runMonthlyDuesOnce', () => {
   let db: TestDb;
   let adminId: string;
   beforeEach(async () => {
+    process.env.SKIP_BOT = '1';
     db = createTestDb();
     adminId = (
       await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })

@@ -19,6 +19,7 @@ describe('settings + categories actions', () => {
   let adminId: string;
 
   beforeEach(async () => {
+    process.env.SKIP_BOT = '1';
     db = createTestDb();
     process.env.SESSION_SECRET = SECRET;
     adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
