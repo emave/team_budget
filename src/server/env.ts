@@ -8,7 +8,6 @@ const EnvSchema = z.object({
   BOT_USERNAME: z.string().min(1),
   BOOTSTRAP_ADMIN_TELEGRAM_ID: z.coerce.number().int().positive(),
   NEXT_PUBLIC_BASE_URL: z.string().url(),
-  CURRENCY: z.string().length(3).default('USD'),
   SESSION_SECRET: z.string().min(32),
   STATS_TOKEN: z.string().min(16).optional(),
 });
@@ -37,7 +36,6 @@ export function envForTest(overrides: Partial<Env> = {}): Env {
     BOT_USERNAME: 'test_bot',
     BOOTSTRAP_ADMIN_TELEGRAM_ID: '1',
     NEXT_PUBLIC_BASE_URL: 'http://localhost:3000',
-    CURRENCY: 'USD',
     SESSION_SECRET: 'a'.repeat(32),
     ...overrides,
   });

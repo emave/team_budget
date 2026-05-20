@@ -1,4 +1,4 @@
-import { and, count, eq, gt, isNull, sum } from 'drizzle-orm';
+import { count, eq, gt, isNull, sum } from 'drizzle-orm';
 import { charges, invites, sessions, users } from '@/server/db/schema';
 import type { Db } from './types';
 import { getPotBalances } from './pots';
