@@ -114,4 +114,27 @@ describe('pots', () => {
     await cancelSpending(db, s.id);
     expect(await getPotBalances(db)).toEqual({ cash: 0, card: 0 });
   });
+
+  it('returns opening balances when there are no movements', async () => {
+    const { updatePotOpenings } = await import('@/server/domain/settings');
+    await updatePotOpenings(db, 50000, 25000);
+    expect(await getPotBalances(db)).toEqual({ cash: 50000, card: 25000 });
+  });
+
+  it('adds openings to payments and subtracts spendings/borrows', async () => {
+    const { updatePotOpenings } = await import('@/server/domain/settings');
+    await updatePotOpenings(db, 10000, 0);
+    const c = await createAdhocCharge(db, {
+      userId: memberId, amount: 4000, description: 'a', createdByUserId: adminId,
+    });
+    await recordPayment(db, {
+      payerUserId: memberId, method: 'cash', amount: 4000,
+      allocations: [{ chargeId: c.id, amount: 4000 }], createdByUserId: adminId,
+    });
+    await recordSpending(db, {
+      pot: 'cash', amount: 1500, description: 's', createdByUserId: adminId,
+    });
+    // opening 10000 + payment 4000 − spending 1500 = 12500
+    expect((await getPotBalances(db)).cash).toBe(12500);
+  });
 });

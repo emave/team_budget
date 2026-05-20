@@ -1,17 +1,23 @@
 import { z } from 'zod';
 
-export const moneySchema = z.preprocess(
-  (v) => {
-    if (typeof v === 'string') {
-      const trimmed = v.trim();
-      if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return v;
-      const [w, f = ''] = trimmed.split('.');
-      return Number(w) * 100 + Number(f.padEnd(2, '0'));
-    }
-    return v;
-  },
-  z.number().int().positive(),
-);
+const toCents = (v: unknown) => {
+  if (typeof v === 'string') {
+    const trimmed = v.trim();
+    if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return v;
+    const [w, f = ''] = trimmed.split('.');
+    return Number(w) * 100 + Number(f.padEnd(2, '0'));
+  }
+  return v;
+};
+
+export const moneySchema = z.preprocess(toCents, z.number().int().positive());
+
+export const nonNegativeMoneySchema = z.preprocess(toCents, z.number().int().nonnegative());
+
+export const updatePotOpeningsSchema = z.object({
+  cashCents: nonNegativeMoneySchema,
+  cardCents: nonNegativeMoneySchema,
+});
 
 export const idSchema = z.string().uuid();
 

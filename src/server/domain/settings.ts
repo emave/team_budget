@@ -30,3 +30,18 @@ export async function setLastDuesGeneratedFor(db: Db, period: string | null) {
     .run();
   return (await getOrCreateSettings(db))!;
 }
+
+export async function updatePotOpenings(db: Db, cashCents: number, cardCents: number) {
+  if (!Number.isInteger(cashCents) || cashCents < 0) {
+    throw new Error(`cashCents must be a non-negative integer`);
+  }
+  if (!Number.isInteger(cardCents) || cardCents < 0) {
+    throw new Error(`cardCents must be a non-negative integer`);
+  }
+  await getOrCreateSettings(db);
+  db.update(settings)
+    .set({ cashOpeningCents: cashCents, cardOpeningCents: cardCents })
+    .where(eq(settings.id, 1))
+    .run();
+  return (await getOrCreateSettings(db))!;
+}
