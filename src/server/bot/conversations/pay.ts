@@ -5,11 +5,14 @@ import { parseDollarsToCents, formatCents } from '@/shared/format';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
 import { getOrCreateSettings } from '@/server/domain/settings';
+import { botMessages } from '../i18n';
 import { getNotifier } from '../notifications';
+import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
 
 export async function payConversation(conversation: BotConversation, ctx: BotContext) {
+  const { m } = botMessages(ctx);
   if (ctx.currentUser?.role !== 'admin') {
-    await ctx.reply('This command is for admins only.');
+    await ctx.reply(m.bot.adminOnly);
     return;
   }
   const adminId = ctx.currentUser.id;
@@ -18,15 +21,15 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
   // Step 1: payer
   const members = await listActiveMembers(ctx.db);
   if (members.length === 0) {
-    await ctx.reply('No active members.');
+    await ctx.reply(m.bot.pay.noActiveMembers);
     return;
   }
   const memberKb = new InlineKeyboard();
-  members.forEach((m, i) => {
-    memberKb.text(m.displayName, `pay:m:${m.id}`);
+  members.forEach((mm, i) => {
+    memberKb.text(mm.displayName, `pay:m:${mm.id}`);
     if ((i + 1) % 2 === 0) memberKb.row();
   });
-  await ctx.reply('Who paid?', { reply_markup: memberKb });
+  await ctx.reply(m.bot.pay.whoPaid, { reply_markup: memberKb });
   const memCtx = await conversation.waitForCallbackQuery(/^pay:m:(.+)$/);
   await memCtx.answerCallbackQuery();
   const payerId = memCtx.match[1]!;
@@ -34,26 +37,26 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
   // Step 2: amount
   const debt = await getMemberOutstandingDebt(ctx.db, payerId);
   if (debt === 0) {
-    await ctx.reply('That member is settled. Aborted.');
+    await ctx.reply(m.bot.pay.settledAborted);
     return;
   }
-  await ctx.reply(`They owe ${formatCents(debt, settings.currency)}. Amount paid?`);
+  await ctx.reply(m.bot.pay.owesAmountPrompt(formatCents(debt, settings.currency)));
   const amountCtx = await conversation.waitFor('message:text');
   let cents: number;
   try {
     cents = parseDollarsToCents(amountCtx.message.text);
   } catch {
-    await ctx.reply('Invalid amount. Aborted.');
+    await ctx.reply(m.bot.pay.invalidAmount);
     return;
   }
   if (cents > debt) {
-    await ctx.reply(`Amount exceeds outstanding debt (${formatCents(debt, settings.currency)}). Aborted.`);
+    await ctx.reply(m.bot.pay.exceedsDebt(formatCents(debt, settings.currency)));
     return;
   }
 
   // Step 3: method
-  await ctx.reply('Cash or card?', {
-    reply_markup: new InlineKeyboard().text('💵 Cash', 'pay:method:cash').text('💳 Card', 'pay:method:card'),
+  await ctx.reply(m.bot.pay.cashOrCard, {
+    reply_markup: new InlineKeyboard().text(m.bot.pay.btnCash, 'pay:method:cash').text(m.bot.pay.btnCard, 'pay:method:card'),
   });
   const methodCtx = await conversation.waitForCallbackQuery(/^pay:method:(cash|card)$/);
   await methodCtx.answerCallbackQuery();
@@ -72,14 +75,14 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
   });
 
   const remaining = debt - cents;
-  await ctx.reply(
-    `✅ Recorded ${method} payment of ${formatCents(cents, settings.currency)}. Remaining: ${formatCents(remaining, settings.currency)}.`,
-  );
+  const formattedAmount = formatCents(cents, settings.currency);
+  const formattedRemaining = formatCents(remaining, settings.currency);
+  await ctx.reply(m.bot.pay.recorded(method, formattedAmount, formattedRemaining));
   try {
-    await getNotifier().notifyUser(
-      payerId,
-      `💵 Payment ${formatCents(cents, settings.currency)} (${method}) recorded. Remaining: ${formatCents(remaining, settings.currency)}.`,
-    );
+    await getNotifier().notifyUser(payerId, (recipient) => {
+      const recipientLocale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+      return getMessages(recipientLocale).bot.pay.notifyPaid(formattedAmount, method, formattedRemaining);
+    });
   } catch (err) {
     console.error('[pay] notify failed:', err);
   }

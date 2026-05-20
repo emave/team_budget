@@ -36,7 +36,7 @@ function balanceUpdate(fromId: number) {
     update_id: 1,
     message: {
       message_id: 1, date: Math.floor(Date.now() / 1000),
-      from: { id: fromId, is_bot: false, first_name: 'X' },
+      from: { id: fromId, is_bot: false, first_name: 'X', language_code: 'en' },
       chat: { id: fromId, type: 'private' as const, first_name: 'X' },
       text: '/balance',
       entities: [{ type: 'bot_command' as const, offset: 0, length: 8 }],

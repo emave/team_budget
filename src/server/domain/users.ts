@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { users } from '@/server/db/schema';
+import type { Locale } from '@/shared/i18n';
 import type { Db } from './types';
 
 export type Role = 'admin' | 'member';
@@ -11,6 +12,7 @@ export interface CreateUserInput {
   displayName: string;
   photoUrl?: string | null;
   role: Role;
+  locale?: Locale | null;
 }
 
 export async function createUser(db: Db, input: CreateUserInput) {
@@ -24,6 +26,7 @@ export async function createUser(db: Db, input: CreateUserInput) {
       photoUrl: input.photoUrl ?? null,
       role: input.role,
       isActive: true,
+      locale: input.locale ?? null,
     })
     .run();
   const row = db.select().from(users).where(eq(users.id, id)).get();
@@ -69,4 +72,8 @@ export async function changeRole(db: Db, id: string, role: Role) {
 
 export async function listActiveMembers(db: Db) {
   return db.select().from(users).where(eq(users.isActive, true)).all();
+}
+
+export async function updateUserLocale(db: Db, id: string, locale: Locale) {
+  db.update(users).set({ locale }).where(eq(users.id, id)).run();
 }

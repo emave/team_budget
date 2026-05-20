@@ -8,8 +8,10 @@ import {
   changeMemberRole,
 } from '@/server/actions/members-server';
 import { useRouter } from 'next/navigation';
+import { useMessages } from '@/app/_i18n-provider';
 
 export function AdminControls({ user }: { user: { id: string; isActive: boolean; role: 'admin' | 'member' } }) {
+  const m = useMessages();
   const router = useRouter();
   const deactivate = useMutation({ mutationFn: () => deactivateMember({ id: user.id }), onSuccess: () => router.refresh() });
   const reactivate = useMutation({ mutationFn: () => reactivateMember({ id: user.id }), onSuccess: () => router.refresh() });
@@ -22,15 +24,15 @@ export function AdminControls({ user }: { user: { id: string; isActive: boolean;
     <div style={{ display: 'flex', gap: 8 }}>
       {user.isActive ? (
         <Button kind={KIND.secondary} onClick={() => deactivate.mutate()} isLoading={deactivate.isPending}>
-          Deactivate
+          {m.members.deactivate}
         </Button>
       ) : (
         <Button kind={KIND.secondary} onClick={() => reactivate.mutate()} isLoading={reactivate.isPending}>
-          Reactivate
+          {m.members.reactivate}
         </Button>
       )}
       <Button kind={KIND.secondary} onClick={() => toggleRole.mutate()} isLoading={toggleRole.isPending}>
-        Make {user.role === 'admin' ? 'member' : 'admin'}
+        {user.role === 'admin' ? m.members.makeMember : m.members.makeAdmin}
       </Button>
     </div>
   );

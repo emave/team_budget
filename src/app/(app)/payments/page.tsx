@@ -5,20 +5,24 @@ import { listAllPayments } from '@/server/domain/payments';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { users } from '@/server/db/schema';
 import { formatCents } from '@/shared/format';
+import { resolveLocaleForRequest } from '@/server/i18n/resolve';
+import { formatDateTime, getMessages } from '@/shared/i18n';
 import { CancelPaymentButton } from './cancel-button';
 
 export default async function PaymentsPage() {
   const me = await requireUser();
   const db = getDb();
   const settings = await getOrCreateSettings(db);
+  const locale = await resolveLocaleForRequest();
+  const m = getMessages(locale);
   const rows = await listAllPayments(db);
   const names = new Map(db.select({ id: users.id, displayName: users.displayName }).from(users).all().map((u) => [u.id, u.displayName]));
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Payments</h2>
-        {me.role === 'admin' && <Link href="/payments/new">+ Record payment</Link>}
+        <h2 style={{ margin: 0 }}>{m.payments.title}</h2>
+        {me.role === 'admin' && <Link href="/payments/new">{m.payments.record}</Link>}
       </div>
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20 }}>
         {rows.map((p) => (
@@ -38,14 +42,14 @@ export default async function PaymentsPage() {
             <span>{p.method}</span>
             <span>{formatCents(p.amount, settings.currency)}</span>
             <span style={{ color: p.cancelledAt ? '#6b7280' : '#16a34a' }}>
-              {p.cancelledAt ? 'cancelled' : new Date(p.receivedAt).toLocaleString()}
+              {p.cancelledAt ? m.common.cancelled : formatDateTime(p.receivedAt, locale)}
             </span>
             <span>
               {me.role === 'admin' && !p.cancelledAt && <CancelPaymentButton id={p.id} />}
             </span>
           </div>
         ))}
-        {rows.length === 0 && <div style={{ color: '#6b7280' }}>No payments.</div>}
+        {rows.length === 0 && <div style={{ color: '#6b7280' }}>{m.payments.none}</div>}
       </div>
     </div>
   );

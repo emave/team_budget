@@ -1,6 +1,7 @@
 import type { NextFunction } from 'grammy';
 import type { BotContext } from './context';
 import { getUserByTelegramId } from '@/server/domain/users';
+import { botMessages } from './i18n';
 
 export type { BotContext } from './context';
 
@@ -16,7 +17,8 @@ export async function identifyUser(ctx: BotContext, next: NextFunction) {
 
 export async function requireAdmin(ctx: BotContext, next: NextFunction) {
   if (ctx.currentUser?.role !== 'admin') {
-    await ctx.reply('This command is for admins only.');
+    const { m } = botMessages(ctx);
+    await ctx.reply(m.bot.adminOnly);
     return;
   }
   await next();
@@ -24,7 +26,8 @@ export async function requireAdmin(ctx: BotContext, next: NextFunction) {
 
 export async function requireMember(ctx: BotContext, next: NextFunction) {
   if (!ctx.currentUser) {
-    await ctx.reply('You are not a team member yet. Ask your admin for an invite link.');
+    const { m } = botMessages(ctx);
+    await ctx.reply(m.bot.notMember);
     return;
   }
   await next();

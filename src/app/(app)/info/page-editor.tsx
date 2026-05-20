@@ -8,10 +8,12 @@ import { Textarea } from 'baseui/textarea';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { upsertInfoPage, deleteInfoPage } from '@/server/actions/info-pages-server';
+import { useMessages } from '@/app/_i18n-provider';
 
 interface Page { id: string; title: string; body: string }
 
 export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Page }) {
+  const m = useMessages();
   const router = useRouter();
   const [title, setTitle] = useState(page?.title ?? '');
   const [body, setBody] = useState(page?.body ?? '');
@@ -29,27 +31,27 @@ export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Pag
   if (mode === 'edit' && !open) {
     return (
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <Button kind={KIND.tertiary} onClick={() => setOpen(true)}>Edit</Button>
-        <Button kind={KIND.tertiary} onClick={() => remove.mutate()} isLoading={remove.isPending}>Delete</Button>
+        <Button kind={KIND.tertiary} onClick={() => setOpen(true)}>{m.info.edit}</Button>
+        <Button kind={KIND.tertiary} onClick={() => remove.mutate()} isLoading={remove.isPending}>{m.info.deleteBtn}</Button>
       </div>
     );
   }
 
   return (
     <div style={{ display: 'grid', gap: 12, marginTop: 8 }}>
-      <FormControl label="Title">
+      <FormControl label={m.info.titleLabel}>
         <Input value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
       </FormControl>
-      <FormControl label="Body (Markdown)">
+      <FormControl label={m.info.bodyLabel}>
         <Textarea value={body} onChange={(e) => setBody(e.currentTarget.value)} rows={6} />
       </FormControl>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button onClick={() => save.mutate()} isLoading={save.isPending} disabled={!title}>
-          {mode === 'create' ? 'Create' : 'Save'}
+          {mode === 'create' ? m.info.create : m.info.save}
         </Button>
         {mode === 'edit' && (
           <Button kind={KIND.tertiary} onClick={() => { setOpen(false); setTitle(page?.title ?? ''); setBody(page?.body ?? ''); }}>
-            Cancel
+            {m.info.cancel}
           </Button>
         )}
       </div>

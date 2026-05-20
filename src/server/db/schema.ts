@@ -11,6 +11,7 @@ export const users = sqliteTable('users', {
   photoUrl: text('photo_url'),
   role: text('role', { enum: ['admin', 'member'] }).notNull(),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  locale: text('locale', { enum: ['en', 'ru'] }),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   deactivatedAt: text('deactivated_at'),
 });

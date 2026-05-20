@@ -10,7 +10,7 @@ function makeUpdate(fromId: number, text: string) {
     message: {
       message_id: 1,
       date: Math.floor(Date.now() / 1000),
-      from: { id: fromId, is_bot: false, first_name: 'X' },
+      from: { id: fromId, is_bot: false, first_name: 'X', language_code: 'en' },
       chat: { id: fromId, type: 'private' as const, first_name: 'X' },
       text,
     },

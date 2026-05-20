@@ -9,6 +9,7 @@ import { Select } from 'baseui/select';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { recordPayment, suggestFifoAllocation } from '@/server/actions/payments-server';
+import { useMessages } from '@/app/_i18n-provider';
 
 type Member = { id: string; displayName: string };
 
@@ -20,6 +21,7 @@ interface FormValues {
 }
 
 export function RecordPaymentForm({ members }: { members: Member[] }) {
+  const m = useMessages();
   const router = useRouter();
   const { register, handleSubmit, watch, setValue } = useForm<FormValues>({ defaultValues: { payerUserId: '', method: 'cash', amount: '' } });
   const payer = watch('payerUserId');
@@ -49,37 +51,37 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
 
   return (
     <form onSubmit={handleSubmit((v) => submit.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 560 }}>
-      <FormControl label="Payer">
+      <FormControl label={m.payments.payerLabel}>
         <Select
-          options={members.map((m) => ({ id: m.id, label: m.displayName }))}
-          value={payer ? [{ id: payer, label: members.find((m) => m.id === payer)?.displayName ?? '' }] : []}
+          options={members.map((mm) => ({ id: mm.id, label: mm.displayName }))}
+          value={payer ? [{ id: payer, label: members.find((mm) => mm.id === payer)?.displayName ?? '' }] : []}
           onChange={({ value }) => setValue('payerUserId', String(value[0]?.id ?? ''))}
         />
       </FormControl>
-      <FormControl label="Method">
+      <FormControl label={m.payments.methodLabel}>
         <Select
-          options={[{ id: 'cash', label: 'Cash' }, { id: 'card', label: 'Card' }]}
-          value={[{ id: method, label: method === 'cash' ? 'Cash' : 'Card' }]}
+          options={[{ id: 'cash', label: m.common.methodCash }, { id: 'card', label: m.common.methodCard }]}
+          value={[{ id: method, label: method === 'cash' ? m.common.methodCash : m.common.methodCard }]}
           onChange={({ value }) => setValue('method', (value[0]?.id as 'cash' | 'card') ?? 'cash')}
         />
       </FormControl>
-      <FormControl label="Amount">
+      <FormControl label={m.payments.amountLabel}>
         <Input {...(register('amount') as object)} placeholder="0.00" />
       </FormControl>
-      <FormControl label="Note (optional)">
+      <FormControl label={m.payments.noteLabel}>
         <Input {...(register('note') as object)} />
       </FormControl>
 
       <div style={{ display: 'flex', gap: 8 }}>
         <Button type="button" onClick={() => suggest.mutate()} disabled={!payer || !amount}>
-          Suggest FIFO allocation
+          {m.payments.suggestFifo}
         </Button>
         {allocError && <span style={{ color: '#dc2626' }}>{allocError}</span>}
       </div>
 
       {allocations && (
         <div style={{ background: '#f9fafb', padding: 12, borderRadius: 4, fontSize: 13 }}>
-          <strong>Allocations:</strong>
+          <strong>{m.payments.allocationsHeading}</strong>
           {allocations.map((a, i) => (
             <div key={i}>
               {a.chargeId.slice(0, 8)} — {a.amount / 100}
@@ -89,7 +91,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
       )}
 
       <Button type="submit" isLoading={submit.isPending} disabled={!payer || !amount || !allocations}>
-        Record payment
+        {m.payments.submit}
       </Button>
       {submit.isError && <div style={{ color: '#dc2626' }}>{(submit.error as Error).message}</div>}
     </form>

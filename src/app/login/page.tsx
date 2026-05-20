@@ -1,14 +1,18 @@
 import { env } from '@/server/env';
+import { resolveLocaleForRequest } from '@/server/i18n/resolve';
+import { getMessages } from '@/shared/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export default function LoginPage() {
+export default async function LoginPage() {
   const e = env();
+  const locale = await resolveLocaleForRequest();
+  const m = getMessages(locale);
   return (
     <main style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 16 }}>
       <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: 8 }}>Team Budget</h1>
-        <p style={{ color: '#666', marginBottom: 24 }}>Sign in with your Telegram account.</p>
+        <h1 style={{ marginBottom: 8 }}>{m.auth.loginTitle}</h1>
+        <p style={{ color: '#666', marginBottom: 24 }}>{m.auth.loginSubtitle}</p>
         <div
           dangerouslySetInnerHTML={{
             __html: `

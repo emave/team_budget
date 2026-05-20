@@ -1,5 +1,20 @@
 import type { ReactNode } from 'react';
 import { formatCents } from '@/shared/format';
+import { formatDateTime, getMessages, type Locale, type Messages } from '@/shared/i18n';
+
+const TYPE_KEYS: Record<string, keyof Messages['charges']> = {
+  adhoc: 'typeAdhoc',
+  split: 'typeSplit',
+  pot_borrow: 'typePotBorrow',
+  monthly_dues: 'typeMonthlyDues',
+  out_of_bounds: 'typeOutOfBounds',
+};
+
+const STATUS_KEYS: Record<string, keyof Messages['charges']> = {
+  open: 'statusOpen',
+  paid: 'statusPaid',
+  cancelled: 'statusCancelled',
+};
 
 export function ChargeRow({
   type,
@@ -9,6 +24,7 @@ export function ChargeRow({
   createdAt,
   userDisplayName,
   currency,
+  locale,
   actions,
 }: {
   type: string;
@@ -18,8 +34,12 @@ export function ChargeRow({
   createdAt: string;
   userDisplayName: string;
   currency: string;
+  locale: Locale;
   actions?: ReactNode;
 }) {
+  const m = getMessages(locale);
+  const typeLabel = (TYPE_KEYS[type] && (m.charges[TYPE_KEYS[type]!] as string)) || type;
+  const statusLabel = (STATUS_KEYS[status] && (m.charges[STATUS_KEYS[status]!] as string)) || status;
   return (
     <div
       style={{
@@ -32,11 +52,11 @@ export function ChargeRow({
         alignItems: 'center',
       }}
     >
-      <span style={{ color: '#6b7280' }}>{type}</span>
+      <span style={{ color: '#6b7280' }}>{typeLabel}</span>
       <span>{description} — {userDisplayName}</span>
       <span>{formatCents(amount, currency)}</span>
-      <span style={{ color: status === 'paid' ? '#16a34a' : status === 'cancelled' ? '#6b7280' : '#dc2626' }}>{status}</span>
-      <span style={{ color: '#6b7280' }}>{new Date(createdAt).toLocaleString()}</span>
+      <span style={{ color: status === 'paid' ? '#16a34a' : status === 'cancelled' ? '#6b7280' : '#dc2626' }}>{statusLabel}</span>
+      <span style={{ color: '#6b7280' }}>{formatDateTime(createdAt, locale)}</span>
       <span>{actions}</span>
     </div>
   );

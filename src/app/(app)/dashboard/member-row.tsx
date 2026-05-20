@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { formatCents } from '@/shared/format';
+import { getMessages, type Locale } from '@/shared/i18n';
 
 export function MemberRow({
   id,
@@ -7,13 +8,16 @@ export function MemberRow({
   role,
   debt,
   currency,
+  locale,
 }: {
   id: string;
   displayName: string;
   role: 'admin' | 'member';
   debt: number;
   currency: string;
+  locale: Locale;
 }) {
+  const m = getMessages(locale);
   return (
     <Link
       href={`/members/${id}`}
@@ -27,10 +31,10 @@ export function MemberRow({
       }}
     >
       <span>
-        {displayName} · {role}
+        {displayName}{m.common.sep}{role}
       </span>
       <span style={{ color: debt > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
-        {debt > 0 ? `owes ${formatCents(debt, currency)}` : 'settled'}
+        {debt > 0 ? m.common.owesAmount(formatCents(debt, currency)) : m.common.settled}
       </span>
     </Link>
   );

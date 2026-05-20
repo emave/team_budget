@@ -3,6 +3,7 @@ import { Bot, session } from 'grammy';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { env } from '@/server/env';
 import { getDb } from '@/server/db/client';
+import { getMessages, LOCALES } from '@/shared/i18n';
 import { identifyUser, type BotContext } from './middleware';
 import { registerStartHandler } from './handlers/start';
 import { registerHelpHandler } from './handlers/help';
@@ -11,6 +12,7 @@ import { registerBalanceHandler } from './handlers/balance';
 import { registerHistoryHandler } from './handlers/history';
 import { registerInfoHandler } from './handlers/info';
 import { registerInviteHandler } from './handlers/invite';
+import { registerLanguageHandler } from './handlers/language';
 import { spendConversation } from './conversations/spend';
 import { payConversation } from './conversations/pay';
 import { chargeConversation } from './conversations/charge';
@@ -43,11 +45,38 @@ export function getBot(): Bot<BotContext> {
     registerHistoryHandler(_bot);
     registerInfoHandler(_bot);
     registerInviteHandler(_bot);
+    registerLanguageHandler(_bot);
   }
   return _bot;
 }
 
+async function publishCommands(bot: Bot<BotContext>) {
+  const commands = (locale: 'en' | 'ru') => {
+    const d = getMessages(locale).bot.cmdDescriptions;
+    return [
+      { command: 'menu', description: d.menu },
+      { command: 'balance', description: d.balance },
+      { command: 'history', description: d.history },
+      { command: 'info', description: d.info },
+      { command: 'help', description: d.help },
+      { command: 'language', description: d.language },
+    ];
+  };
+  // Default scope uses English so unknown-locale users still get a sensible list.
+  await bot.api.setMyCommands(commands('en'));
+  // Per-language overrides (Telegram supports per-language_code commands).
+  for (const loc of LOCALES) {
+    try {
+      await bot.api.setMyCommands(commands(loc), { language_code: loc });
+    } catch (err) {
+      console.error(`[bot] setMyCommands(${loc}) failed:`, err);
+    }
+  }
+}
+
 export async function startBot() {
   const bot = getBot();
+  try { await publishCommands(bot); }
+  catch (err) { console.error('[bot] publishCommands failed:', err); }
   await bot.start({ drop_pending_updates: true });
 }

@@ -8,6 +8,7 @@ import { Select } from 'baseui/select';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { recordSpending } from '@/server/actions/spendings-server';
+import { useMessages } from '@/app/_i18n-provider';
 
 type Cat = { id: string; name: string };
 
@@ -19,12 +20,13 @@ interface FormValues {
 }
 
 export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
+  const m = useMessages();
   const router = useRouter();
   const { register, handleSubmit, watch, setValue } = useForm<FormValues>({ defaultValues: { pot: 'cash', amount: '', description: '' } });
   const pot = watch('pot');
   const catId = watch('categoryId');
 
-  const m = useMutation({
+  const mut = useMutation({
     mutationFn: (v: FormValues) =>
       recordSpending({
         pot: v.pot,
@@ -36,30 +38,30 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
   });
 
   return (
-    <form onSubmit={handleSubmit((v) => m.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 480 }}>
-      <FormControl label="Pot">
+    <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 480 }}>
+      <FormControl label={m.spendings.potLabel}>
         <Select
-          options={[{ id: 'cash', label: 'Cash' }, { id: 'card', label: 'Card' }]}
-          value={[{ id: pot, label: pot === 'cash' ? 'Cash' : 'Card' }]}
+          options={[{ id: 'cash', label: m.common.methodCash }, { id: 'card', label: m.common.methodCard }]}
+          value={[{ id: pot, label: pot === 'cash' ? m.common.methodCash : m.common.methodCard }]}
           onChange={({ value }) => setValue('pot', (value[0]?.id as 'cash' | 'card') ?? 'cash')}
         />
       </FormControl>
-      <FormControl label="Amount">
+      <FormControl label={m.spendings.amountLabel}>
         <Input {...(register('amount') as object)} placeholder="0.00" />
       </FormControl>
-      <FormControl label="Description">
+      <FormControl label={m.spendings.descriptionLabel}>
         <Input {...(register('description') as object)} />
       </FormControl>
-      <FormControl label="Category (optional)">
+      <FormControl label={m.spendings.categoryLabel}>
         <Select
-          options={[{ id: '', label: '— none —' }, ...categories.map((c) => ({ id: c.id, label: c.name }))]}
-          value={catId !== undefined ? [{ id: catId, label: categories.find((c) => c.id === catId)?.name ?? '— none —' }] : []}
+          options={[{ id: '', label: m.common.none_em_dash }, ...categories.map((c) => ({ id: c.id, label: c.name }))]}
+          value={catId !== undefined ? [{ id: catId, label: categories.find((c) => c.id === catId)?.name ?? m.common.none_em_dash }] : []}
           onChange={({ value }) => setValue('categoryId', value[0]?.id ? String(value[0].id) : undefined)}
-          placeholder="None"
+          placeholder={m.spendings.categoryPlaceholder}
         />
       </FormControl>
-      <Button type="submit" isLoading={m.isPending}>Record spending</Button>
-      {m.isError && <div style={{ color: '#dc2626' }}>{(m.error as Error).message}</div>}
+      <Button type="submit" isLoading={mut.isPending}>{m.spendings.submit}</Button>
+      {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </form>
   );
 }

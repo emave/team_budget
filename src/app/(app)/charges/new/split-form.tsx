@@ -8,10 +8,12 @@ import { Checkbox } from 'baseui/checkbox';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { createSplitCharge } from '@/server/actions/charges-server';
+import { useMessages } from '@/app/_i18n-provider';
 
 type Member = { id: string; displayName: string };
 
 export function SplitForm({ members }: { members: Member[] }) {
+  const m = useMessages();
   const router = useRouter();
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
@@ -27,7 +29,7 @@ export function SplitForm({ members }: { members: Member[] }) {
     amount: overrides[id] ? overrides[id] : String(perDefault.toFixed(2)),
   }));
 
-  const m = useMutation({
+  const mut = useMutation({
     mutationFn: () =>
       createSplitCharge({
         description,
@@ -38,14 +40,14 @@ export function SplitForm({ members }: { members: Member[] }) {
 
   return (
     <div style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
-      <FormControl label="Description">
+      <FormControl label={m.charges.descriptionLabel}>
         <Input value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
       </FormControl>
-      <FormControl label="Total amount (defaults to equal split)">
-        <Input value={total} onChange={(e) => setTotal(e.currentTarget.value)} placeholder="e.g. 480.00" />
+      <FormControl label={m.charges.totalAmountLabel}>
+        <Input value={total} onChange={(e) => setTotal(e.currentTarget.value)} placeholder={m.charges.totalPlaceholder} />
       </FormControl>
       <div>
-        <h4>Members</h4>
+        <h4>{m.charges.membersSectionTitle}</h4>
         {members.map((mm) => {
           const checked = !!selected[mm.id];
           return (
@@ -63,10 +65,10 @@ export function SplitForm({ members }: { members: Member[] }) {
           );
         })}
       </div>
-      <Button onClick={() => m.mutate()} disabled={selectedIds.length === 0 || !description}>
-        Create split charge
+      <Button onClick={() => mut.mutate()} disabled={selectedIds.length === 0 || !description}>
+        {m.charges.submitSplit}
       </Button>
-      {m.isError && <div style={{ color: '#dc2626' }}>{(m.error as Error).message}</div>}
+      {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </div>
   );
 }

@@ -4,11 +4,13 @@ import type { BotContext } from '../middleware';
 import { charges, payments } from '@/server/db/schema';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
+import { botMessages } from '../i18n';
 
 export function registerHistoryHandler(bot: Bot<BotContext>) {
   bot.command('history', async (ctx) => {
+    const { m } = botMessages(ctx);
     if (!ctx.currentUser) {
-      await ctx.reply('You are not a team member yet. Ask your admin for an invite link.');
+      await ctx.reply(m.bot.notMember);
       return;
     }
     const settings = await getOrCreateSettings(ctx.db);
@@ -28,14 +30,20 @@ export function registerHistoryHandler(bot: Bot<BotContext>) {
       .all();
 
     const events = [
-      ...myCharges.map((c) => ({ at: c.createdAt, line: `🧾 ${formatCents(c.amount, settings.currency)} — ${c.description} [${c.status}]` })),
-      ...myPayments.map((p) => ({ at: p.createdAt, line: `💵 ${formatCents(p.amount, settings.currency)} (${p.method})${p.cancelledAt ? ' [cancelled]' : ''}` })),
+      ...myCharges.map((c) => ({
+        at: c.createdAt,
+        line: m.bot.historyChargeLine(formatCents(c.amount, settings.currency), c.description, c.status),
+      })),
+      ...myPayments.map((p) => ({
+        at: p.createdAt,
+        line: m.bot.historyPaymentLine(formatCents(p.amount, settings.currency), p.method, !!p.cancelledAt),
+      })),
     ].sort((a, b) => (b.at > a.at ? 1 : -1)).slice(0, 10);
 
     if (events.length === 0) {
-      await ctx.reply('No recent activity.');
+      await ctx.reply(m.bot.historyEmpty);
       return;
     }
-    await ctx.reply(`📜 Recent activity:\n${events.map((e) => e.line).join('\n')}`);
+    await ctx.reply(`${m.bot.historyHeading}\n${events.map((e) => e.line).join('\n')}`);
   });
 }

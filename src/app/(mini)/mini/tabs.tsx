@@ -2,23 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const TABS = [
-  { href: '/mini', label: 'Home' },
-  { href: '/mini/charges', label: 'Charges' },
-  { href: '/mini/payments', label: 'Payments' },
-  { href: '/mini/info', label: 'Info' },
-];
+import { useMessages } from '@/app/_i18n-provider';
 
 export function MiniTabs() {
+  const m = useMessages();
   const pathname = usePathname();
+  const tabs = [
+    { href: '/mini', label: m.mini.tabHome },
+    { href: '/mini/charges', label: m.mini.tabCharges },
+    { href: '/mini/payments', label: m.mini.tabPayments },
+    { href: '/mini/info', label: m.mini.tabInfo },
+  ];
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      display: 'grid', gridTemplateColumns: `repeat(${TABS.length}, 1fr)`,
+      display: 'grid', gridTemplateColumns: `repeat(${tabs.length}, 1fr)`,
       background: '#fff', borderTop: '1px solid #e5e7eb', padding: '8px 0',
     }}>
-      {TABS.map((t) => {
+      {tabs.map((t) => {
         const active = pathname === t.href;
         return (
           <Link key={t.href} href={t.href} style={{

@@ -12,7 +12,7 @@ function makeStart(fromId: number, payload?: string) {
     message: {
       message_id: 1,
       date: Math.floor(Date.now() / 1000),
-      from: { id: fromId, is_bot: false, first_name: 'Vasya' },
+      from: { id: fromId, is_bot: false, first_name: 'Vasya', language_code: 'en' },
       chat: { id: fromId, type: 'private' as const, first_name: 'Vasya' },
       text: payload ? `/start ${payload}` : '/start',
       entities: [{ type: 'bot_command' as const, offset: 0, length: 6 }],
