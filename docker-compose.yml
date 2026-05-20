@@ -1,7 +1,6 @@
 services:
   team-budget:
-    build: .
-    image: team-budget:latest
+    image: ghcr.io/emave/team-budget:latest
     container_name: team-budget
     restart: unless-stopped
     ports:
@@ -15,6 +14,8 @@ services:
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
       - CURRENCY=${CURRENCY:-USD}
       - SESSION_SECRET=${SESSION_SECRET}
+      - STATS_TOKEN=${STATS_TOKEN}
     volumes:
       - ./data:/data
-    command: ["node", "server.js"]
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
