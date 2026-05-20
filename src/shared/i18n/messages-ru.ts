@@ -210,6 +210,11 @@ export const MESSAGES_RU: Messages = {
   settings: {
     title: 'Настройки',
     monthlyDuesHeading: 'Ежемесячный взнос',
+    potOpeningsHeading: 'Начальные суммы по кассам',
+    potOpeningsCashLabel: 'Наличные',
+    potOpeningsCardLabel: 'Карта',
+    potOpeningsSave: 'Сохранить остатки',
+    potOpeningsSaved: 'Сохранено.',
     currentLabel: (amount: string) => `Сейчас: ${amount}`,
     saveAmount: 'Сохранить сумму',
     generateNow: 'Начислить взносы сейчас',

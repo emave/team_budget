@@ -206,6 +206,11 @@ export const MESSAGES_EN = {
   settings: {
     title: 'Settings',
     monthlyDuesHeading: 'Monthly dues',
+    potOpeningsHeading: 'Opening pot balances',
+    potOpeningsCashLabel: 'Cash pot',
+    potOpeningsCardLabel: 'Card pot',
+    potOpeningsSave: 'Save openings',
+    potOpeningsSaved: 'Saved.',
     currentLabel: (amount: string) => `Current: ${amount}`,
     saveAmount: 'Save amount',
     generateNow: 'Generate dues now',
