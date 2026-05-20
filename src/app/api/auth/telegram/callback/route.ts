@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
   const session = await createSession(db, user.id);
   const cookieValue = signCookie(session.token, e.SESSION_SECRET);
-  const res = NextResponse.redirect(new URL('/', req.url));
+  const res = NextResponse.redirect(new URL('/', e.NEXT_PUBLIC_BASE_URL));
   res.cookies.set('tb_session', cookieValue, {
     httpOnly: true,
     secure: e.NODE_ENV === 'production',
