@@ -11,13 +11,10 @@ export function parseAmount(input: string | number): Cents {
   return cents;
 }
 
-const SYMBOL: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
-
-export function formatAmount(cents: Cents, currency: string): string {
-  const sym = SYMBOL[currency] ?? `${currency} `;
+export function formatAmount(cents: Cents): string {
   const sign = cents < 0 ? '-' : '';
   const abs = Math.abs(cents);
-  const dollars = Math.floor(abs / 100);
+  const whole = Math.floor(abs / 100);
   const remainder = abs % 100;
-  return `${sign}${sym}${dollars}.${remainder.toString().padStart(2, '0')}`;
+  return `${sign}${whole}.${remainder.toString().padStart(2, '0')} р.`;
 }
