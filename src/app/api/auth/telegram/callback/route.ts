@@ -5,6 +5,7 @@ import { signCookie } from '@/server/auth/session-cookie';
 import { getDb } from '@/server/db/client';
 import { getUserByTelegramId } from '@/server/domain/users';
 import { createSession } from '@/server/domain/sessions';
+import { bootstrapAdminIfNeeded } from '@/server/domain/bootstrap';
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -25,7 +26,19 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getDb();
-  const user = await getUserByTelegramId(db, input.id);
+  let user = await getUserByTelegramId(db, input.id);
+  if (!user && input.id === e.BOOTSTRAP_ADMIN_TELEGRAM_ID) {
+    await bootstrapAdminIfNeeded(db, {
+      telegramUserId: input.id,
+      displayName:
+        [input.first_name, input.last_name].filter(Boolean).join(' ') ||
+        input.username ||
+        'Admin',
+      telegramUsername: input.username ?? null,
+      photoUrl: input.photo_url ?? null,
+    });
+    user = await getUserByTelegramId(db, input.id);
+  }
   if (!user) {
     return new NextResponse(
       'You are not a team member. Ask your admin to send you an invite link via the bot.',

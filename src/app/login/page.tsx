@@ -1,5 +1,7 @@
 import { env } from '@/server/env';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const e = env();
   return (

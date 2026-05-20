@@ -1,12 +1,13 @@
 # syntax=docker/dockerfile:1.6
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat python3 make g++ sqlite
+RUN npm install -g pnpm@11.0.8
 
 # Deps stage
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Build stage
 FROM base AS builder
@@ -22,7 +23,7 @@ ENV NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ENV SESSION_SECRET=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ENV SKIP_BOT=1
 ENV SKIP_CRON=1
-RUN corepack enable && pnpm build
+RUN pnpm build
 
 # Runtime stage
 FROM base AS runner
