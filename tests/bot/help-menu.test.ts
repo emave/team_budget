@@ -7,6 +7,12 @@ import { registerHelpHandler } from '@/server/bot/handlers/help';
 import { registerMenuHandler } from '@/server/bot/handlers/menu';
 
 function setup(db: TestDb) {
+  process.env.BOT_TOKEN = 'test:0123456789';
+  process.env.BOT_USERNAME = 'test_bot';
+  process.env.BOOTSTRAP_ADMIN_TELEGRAM_ID = '1';
+  process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
+  process.env.SESSION_SECRET = 'a'.repeat(32);
+
   const replies: string[] = [];
   const bot = new Bot<BotContext>('123:abc', {
     botInfo: {
