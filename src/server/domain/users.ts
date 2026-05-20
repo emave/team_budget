@@ -63,8 +63,15 @@ export async function reactivateUser(db: Db, id: string) {
   return row;
 }
 
-export async function changeRole(db: Db, id: string, role: Role) {
-  db.update(users).set({ role }).where(eq(users.id, id)).run();
+export async function updateUserProfile(
+  db: Db,
+  id: string,
+  patch: { displayName: string; role: Role },
+) {
+  db.update(users)
+    .set({ displayName: patch.displayName, role: patch.role })
+    .where(eq(users.id, id))
+    .run();
   const row = db.select().from(users).where(eq(users.id, id)).get();
   if (!row) throw new Error('user not found');
   return row;

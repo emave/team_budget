@@ -5,7 +5,7 @@ import {
   getUserByTelegramId,
   deactivateUser,
   reactivateUser,
-  changeRole,
+  updateUserProfile,
 } from '@/server/domain/users';
 
 describe('users domain', () => {
@@ -50,14 +50,27 @@ describe('users domain', () => {
     expect(on.deactivatedAt).toBeNull();
   });
 
-  it('changes role', async () => {
+  it('updates display name and role together', async () => {
     const u = await createUser(db, {
       telegramUserId: 42,
       displayName: 'Alice',
       role: 'member',
     });
-    const promoted = await changeRole(db, u.id, 'admin');
-    expect(promoted.role).toBe('admin');
+    const updated = await updateUserProfile(db, u.id, {
+      displayName: 'Alice II',
+      role: 'admin',
+    });
+    expect(updated.displayName).toBe('Alice II');
+    expect(updated.role).toBe('admin');
+  });
+
+  it('updateUserProfile throws when user is missing', async () => {
+    await expect(
+      updateUserProfile(db, '00000000-0000-0000-0000-000000000000', {
+        displayName: 'Ghost',
+        role: 'member',
+      }),
+    ).rejects.toThrow(/user not found/);
   });
 
   it('rejects duplicate telegram id', async () => {
