@@ -1,0 +1,20 @@
+services:
+  team-budget:
+    build: .
+    image: team-budget:latest
+    container_name: team-budget
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=/data/team_budget.db
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_USERNAME=${BOT_USERNAME}
+      - BOOTSTRAP_ADMIN_TELEGRAM_ID=${BOOTSTRAP_ADMIN_TELEGRAM_ID}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+      - CURRENCY=${CURRENCY:-USD}
+      - SESSION_SECRET=${SESSION_SECRET}
+    volumes:
+      - ./data:/data
+    command: ["node", "server.js"]
