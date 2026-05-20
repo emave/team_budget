@@ -37,9 +37,10 @@ export const invites = sqliteTable('invites', {
 export const settings = sqliteTable('settings', {
   id: integer('id').primaryKey(), // always 1
   monthlyDuesAmount: integer('monthly_dues_amount').notNull().default(0),
-  currency: text('currency').notNull().default('USD'),
   dueDay: integer('due_day').notNull().default(1),
   lastDuesGeneratedFor: text('last_dues_generated_for'),
+  cashOpeningCents: integer('cash_opening_cents').notNull().default(0),
+  cardOpeningCents: integer('card_opening_cents').notNull().default(0),
 });
 
 export const categories = sqliteTable('categories', {

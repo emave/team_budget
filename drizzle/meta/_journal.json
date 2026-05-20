@@ -22,6 +22,13 @@
       "when": 1779307686901,
       "tag": "0002_tiny_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1779313756442,
+      "tag": "0003_lowly_the_liberteens",
+      "breakpoints": true
     }
   ]
 }
