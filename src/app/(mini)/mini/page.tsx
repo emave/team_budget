@@ -20,7 +20,7 @@ export default async function MiniDashboard() {
         <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6b7280' }}>
           {debt > 0 ? 'You owe' : 'Settled'}
         </div>
-        <div style={{ fontSize: 28, fontWeight: 700 }}>{formatCents(debt, settings.currency)}</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: debt > 0 ? '#991b1b' : '#166534' }}>{formatCents(debt, settings.currency)}</div>
       </div>
       {user.role === 'admin' && (
         <div style={{ padding: 12, background: '#f9fafb', borderRadius: 8, fontSize: 13, marginBottom: 12 }}>

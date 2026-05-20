@@ -23,12 +23,9 @@ export function MiniInit() {
     Object.entries(tg.themeParams).forEach(([k, v]) => {
       document.body.style.setProperty(`--tg-${k.replace(/_/g, '-')}`, v);
     });
-    if (tg.themeParams.bg_color) {
-      document.body.style.background = tg.themeParams.bg_color;
-    }
-    if (tg.themeParams.text_color) {
-      document.body.style.color = tg.themeParams.text_color;
-    }
+    // UI is light-only; force a readable surface regardless of Telegram dark mode.
+    document.body.style.background = '#ffffff';
+    document.body.style.color = '#111827';
   }, []);
   return null;
 }
