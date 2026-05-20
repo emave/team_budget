@@ -3,6 +3,8 @@ services:
     image: ghcr.io/emave/team-budget:latest
     container_name: team-budget
     restart: unless-stopped
+    networks:
+      - tbnet
     ports:
       - "3000:3000"
     environment:
@@ -19,3 +21,7 @@ services:
       - ./data:/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+
+networks:
+  tbnet:
+    external: true
