@@ -27,7 +27,11 @@ RUN pnpm build
 
 # Runtime stage
 FROM base AS runner
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
 ENV NODE_ENV=production
+ENV GIT_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

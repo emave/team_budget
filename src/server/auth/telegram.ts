@@ -38,3 +38,51 @@ export function verifyTelegramAuth(input: TelegramAuthData, botToken: string): V
   }
   return { ok: true, data: { ...input, hash } };
 }
+
+export interface MiniAppUser {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+}
+
+export type VerifyMiniResult =
+  | { ok: true; user: MiniAppUser; authDate: number }
+  | { ok: false; reason: string };
+
+export function verifyMiniAppInitData(initData: string, botToken: string): VerifyMiniResult {
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash) return { ok: false, reason: 'missing hash' };
+
+  const authDate = Number(params.get('auth_date'));
+  if (!Number.isFinite(authDate)) return { ok: false, reason: 'missing auth_date' };
+  const age = Math.floor(Date.now() / 1000) - authDate;
+  if (age > MAX_AGE_SECONDS) return { ok: false, reason: 'auth_date too old' };
+
+  params.delete('hash');
+  const dataCheck = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+
+  const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
+  const expected = createHmac('sha256', secret).update(dataCheck).digest();
+  const got = Buffer.from(hash, 'hex');
+  if (expected.length !== got.length || !timingSafeEqual(expected, got)) {
+    return { ok: false, reason: 'signature mismatch' };
+  }
+
+  const userJson = params.get('user');
+  if (!userJson) return { ok: false, reason: 'missing user' };
+  let user: MiniAppUser;
+  try {
+    user = JSON.parse(userJson) as MiniAppUser;
+  } catch {
+    return { ok: false, reason: 'invalid user JSON' };
+  }
+  if (typeof user.id !== 'number') return { ok: false, reason: 'invalid user.id' };
+
+  return { ok: true, user, authDate };
+}

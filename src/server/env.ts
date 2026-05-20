@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_BASE_URL: z.string().url(),
   CURRENCY: z.string().length(3).default('USD'),
   SESSION_SECRET: z.string().min(32),
+  STATS_TOKEN: z.string().min(16).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

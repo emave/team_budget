@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 
 interface TelegramWebApp {
+  initData: string;
   ready: () => void;
   expand: () => void;
   themeParams: Record<string, string>;
