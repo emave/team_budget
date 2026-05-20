@@ -2,14 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { formatCents, parseDollarsToCents } from '@/shared/format';
 
 describe('formatCents', () => {
-  it('formats USD with sign', () => {
-    expect(formatCents(12345, 'USD')).toBe('$123.45');
-    expect(formatCents(0, 'USD')).toBe('$0.00');
-    expect(formatCents(-50, 'USD')).toBe('-$0.50');
+  it('renders BYN with suffix', () => {
+    expect(formatCents(12345)).toBe('123.45 р.');
+    expect(formatCents(0)).toBe('0.00 р.');
+    expect(formatCents(100)).toBe('1.00 р.');
   });
 
-  it('falls back to code for unknown currency', () => {
-    expect(formatCents(100, 'BYN')).toBe('BYN 1.00');
+  it('preserves sign for negatives', () => {
+    expect(formatCents(-50)).toBe('-0.50 р.');
+    expect(formatCents(-12345)).toBe('-123.45 р.');
   });
 });
 

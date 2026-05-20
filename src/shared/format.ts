@@ -1,12 +1,9 @@
-const SYMBOL: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
-
-export function formatCents(cents: number, currency: string): string {
-  const sym = SYMBOL[currency] ?? `${currency} `;
+export function formatCents(cents: number): string {
   const sign = cents < 0 ? '-' : '';
   const abs = Math.abs(cents);
-  const dollars = Math.floor(abs / 100);
+  const whole = Math.floor(abs / 100);
   const rem = abs % 100;
-  return `${sign}${sym}${dollars}.${rem.toString().padStart(2, '0')}`;
+  return `${sign}${whole}.${rem.toString().padStart(2, '0')} р.`;
 }
 
 export function parseDollarsToCents(input: string): number {
