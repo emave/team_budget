@@ -8,6 +8,7 @@ import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { SectionHeading } from '@/ui/heading';
 import { DuesForm } from './dues-form';
+import { PotOpeningsForm } from './pot-openings-form';
 import { CategoriesList } from './categories-list';
 
 export default async function SettingsPage() {
@@ -23,6 +24,10 @@ export default async function SettingsPage() {
       <Panel marginBottom={16}>
         <SectionHeading>{m.settings.monthlyDuesHeading}</SectionHeading>
         <DuesForm currentCents={s.monthlyDuesAmount} />
+      </Panel>
+      <Panel marginBottom={16}>
+        <SectionHeading>{m.settings.potOpeningsHeading}</SectionHeading>
+        <PotOpeningsForm cashCents={s.cashOpeningCents} cardCents={s.cardOpeningCents} />
       </Panel>
       <Panel>
         <SectionHeading>{m.settings.categoriesHeading}</SectionHeading>
