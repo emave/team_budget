@@ -21,6 +21,7 @@ services:
       - ./data:/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=meelofon"
 
 networks:
   tbnet:
