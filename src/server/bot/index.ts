@@ -12,6 +12,7 @@ import { registerHistoryHandler } from './handlers/history';
 import { registerInfoHandler } from './handlers/info';
 import { registerInviteHandler } from './handlers/invite';
 import { spendConversation } from './conversations/spend';
+import { payConversation } from './conversations/pay';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -27,6 +28,8 @@ export function getBot(): Bot<BotContext> {
     _bot.use(identifyUser);
     _bot.use(createConversation(spendConversation, 'spend'));
     _bot.command('spend', async (ctx) => { await ctx.conversation.enter('spend'); });
+    _bot.use(createConversation(payConversation, 'pay'));
+    _bot.command('pay', async (ctx) => { await ctx.conversation.enter('pay'); });
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
