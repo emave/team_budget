@@ -22,6 +22,7 @@ describe('charge actions', () => {
   beforeEach(async () => {
     db = createTestDb();
     process.env.SESSION_SECRET = SECRET;
+    process.env.SKIP_BOT = '1';
     adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
     memberA = (await createUser(db, { telegramUserId: 2, displayName: 'A1', role: 'member' })).id;
     memberB = (await createUser(db, { telegramUserId: 3, displayName: 'B1', role: 'member' })).id;
