@@ -96,22 +96,31 @@ See [`docs/superpowers/specs/2026-05-19-team-budget-design.md`](docs/superpowers
    DATABASE_URL=./data/team_budget.db pnpm db:migrate
    ```
 
-### Run
+### Run (first time on the host)
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 docker compose logs -f
 ```
 
+The container's entrypoint applies database migrations against the `./data` volume on every start (idempotent — drizzle skips already-applied migrations), then starts the Next.js server.
+
 Visit your HTTPS URL. On first `/start` to your bot in Telegram, you (the bootstrap admin) will be created.
 
-### Upgrades
+### Subsequent deploys
 
-```bash
-git pull
-DATABASE_URL=./data/team_budget.db pnpm db:migrate  # only when schema changes
-docker compose up -d --build
+Push to `main`. GitHub Actions builds and pushes a new image to `ghcr.io/emave/team-budget:latest`. Watchtower on the host polls GHCR (5-min default in this setup) and rolls the container automatically.
+
+### Rolling back
+
+To pin to a previous build, edit `docker-compose.yml` on the host:
+
+```yaml
+image: ghcr.io/emave/team-budget:sha-<full-commit-sha>
 ```
+
+Then `docker compose up -d`. The sha tag is published for every main commit.
 
 ### Backups
 
