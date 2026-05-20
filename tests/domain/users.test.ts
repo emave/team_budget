@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { createTestDb, type TestDb } from '../helpers/db';
 import * as schema from '@/server/db/schema';
 import {
@@ -8,6 +9,7 @@ import {
   reactivateUser,
   updateUserProfile,
   canHardDeleteUser,
+  hardDeleteUser,
 } from '@/server/domain/users';
 
 describe('users domain', () => {
@@ -150,5 +152,29 @@ describe('users domain', () => {
       consumedByUserId: u.id, consumedAt: '2026-01-01T00:00:00Z',
     }).run();
     expect(await canHardDeleteUser(db, u.id)).toBe('has_invites');
+  });
+
+  it('hardDeleteUser removes the user and their sessions', async () => {
+    const u = await createUser(db, { telegramUserId: 42, displayName: 'A', role: 'member' });
+    db.insert(schema.sessions).values({
+      token: 'tok', userId: u.id, expiresAt: '2099-01-01T00:00:00Z',
+    }).run();
+
+    await hardDeleteUser(db, u.id);
+
+    expect(db.select().from(schema.users).where(eq(schema.users.id, u.id)).get()).toBeUndefined();
+    expect(db.select().from(schema.sessions).where(eq(schema.sessions.userId, u.id)).get())
+      .toBeUndefined();
+  });
+
+  it('hardDeleteUser refuses when references remain', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'X', role: 'admin' });
+    const u = await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' });
+    db.insert(schema.charges).values({
+      id: 'c1', userId: u.id, type: 'adhoc', amount: 100,
+      description: 'd', createdByUserId: admin.id,
+    }).run();
+
+    await expect(hardDeleteUser(db, u.id)).rejects.toThrow(/cannot delete/i);
   });
 });

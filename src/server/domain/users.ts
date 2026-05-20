@@ -2,6 +2,7 @@ import { eq, or } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import {
   users,
+  sessions,
   charges,
   payments,
   spendings,
@@ -131,6 +132,13 @@ export async function canHardDeleteUser(
   if (hasInvite) return 'has_invites';
 
   return null;
+}
+
+export async function hardDeleteUser(db: Db, id: string) {
+  const reason = await canHardDeleteUser(db, id);
+  if (reason) throw new Error(`cannot delete: ${reason}`);
+  db.delete(sessions).where(eq(sessions.userId, id)).run();
+  db.delete(users).where(eq(users.id, id)).run();
 }
 
 export async function listActiveMembers(db: Db) {
