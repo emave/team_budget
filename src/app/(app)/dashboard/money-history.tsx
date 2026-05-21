@@ -229,7 +229,7 @@ function EventCard({ ev }: { ev: Movement }) {
 }
 
 function PotBadge({ label }: { label: string }) {
-  return <Tag closeable={false} kind="warning" variant="solid">{label}</Tag>;
+  return <Tag closeable={false} kind="warning">{label}</Tag>;
 }
 
 const cellHeaderStickyBoth: React.CSSProperties = {

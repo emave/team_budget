@@ -3,28 +3,37 @@ import { getDb } from '@/server/db/client';
 import { getPotBalances } from '@/server/domain/pots';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
-import { recentActivity } from '@/server/domain/activity';
+import { listMoneyMovements } from '@/server/domain/movements';
+import { resolveDashboardRange } from '@/shared/date-range';
 import { formatCents } from '@/shared/format';
-import { formatDateTime, getMessages } from '@/shared/i18n';
+import { getMessages } from '@/shared/i18n';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { Panel } from '@/ui/panel';
 import { StatusCard } from '@/ui/status-card';
 import { SectionHeading } from '@/ui/heading';
 import { Muted } from '@/ui/text';
 import { PotCard } from './pot-card';
-import { ActivityFeed, type ActivityRow } from './activity';
+import { MoneyHistory } from './money-history';
 import { MembersTable, type MemberRow } from '../members/members-table';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { from?: string; to?: string };
+}) {
   const user = await requireUser();
   const db = getDb();
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
 
   if (user.role === 'admin') {
-    const [pots, members] = await Promise.all([getPotBalances(db), listActiveMembers(db)]);
+    const range = resolveDashboardRange({ from: searchParams.from, to: searchParams.to });
+    const [pots, members, movements] = await Promise.all([
+      getPotBalances(db),
+      listActiveMembers(db),
+      listMoneyMovements(db, { from: range.from, to: range.to }),
+    ]);
     const debts = await Promise.all(members.map((mm) => getMemberOutstandingDebt(db, mm.id)));
-    const events = await recentActivity(db, 10);
 
     const memberRows: MemberRow[] = members.map((mm, i) => {
       const debt = debts[i] ?? 0;
@@ -34,20 +43,6 @@ export default async function DashboardPage() {
         role: mm.role as 'admin' | 'member',
         isActive: true,
         debtFormatted: debt > 0 ? formatCents(debt) : null,
-      };
-    });
-
-    const activityRows: ActivityRow[] = events.map((e) => {
-      const eventText =
-        e.kind === 'charge'
-          ? m.dashboard.chargeLine(formatCents(e.amount), e.userDisplayName, e.description)
-          : e.kind === 'payment'
-            ? m.dashboard.paymentLine(e.payerDisplayName, formatCents(e.amount), e.method)
-            : m.dashboard.spendingLine(formatCents(e.amount), e.pot, e.description);
-      return {
-        key: `${e.kind}-${e.id}`,
-        event: eventText,
-        whenFormatted: formatDateTime(e.createdAt, locale),
       };
     });
 
@@ -61,7 +56,11 @@ export default async function DashboardPage() {
           <SectionHeading>{m.dashboard.membersHeading(members.length)}</SectionHeading>
           <MembersTable rows={memberRows} />
         </Panel>
-        <ActivityFeed rows={activityRows} />
+        <MoneyHistory
+          movements={movements}
+          range={{ from: range.from, to: range.to }}
+          clamped={range.clamped}
+        />
       </div>
     );
   }
@@ -78,10 +77,7 @@ export default async function DashboardPage() {
       <Panel>
         <SectionHeading>{m.dashboard.teamSummary}</SectionHeading>
         <Muted>
-          {m.dashboard.potsLine(
-            formatCents(pots.cash),
-            formatCents(pots.card),
-          )}
+          {m.dashboard.potsLine(formatCents(pots.cash), formatCents(pots.card))}
         </Muted>
       </Panel>
     </div>
