@@ -7,7 +7,7 @@ import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { RadioGroup, Radio } from 'baseui/radio';
 import { useMutation } from '@tanstack/react-query';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   deactivateMember,
   reactivateMember,
@@ -36,7 +36,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  const { register, control, handleSubmit, reset } = useForm<EditForm>({
+  const { control, handleSubmit, reset } = useForm<EditForm>({
     defaultValues: { displayName: user.displayName, role: user.role },
   });
 
@@ -122,7 +122,18 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             onSubmit={handleSubmit((v) => edit.mutate(v))}
           >
             <FormControl label={m.members.editDisplayNameLabel}>
-              <Input {...(register('displayName') as object)} />
+              <Controller
+                control={control}
+                name="displayName"
+                render={({ field }) => (
+                  <Input
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.currentTarget.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
+              />
             </FormControl>
             <FormControl label={m.members.roleLabel}>
               <Controller

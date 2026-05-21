@@ -19,7 +19,7 @@ export const updatePotOpeningsSchema = z.object({
   cardCents: nonNegativeMoneySchema,
 });
 
-export const idSchema = z.string().uuid();
+export const idSchema = z.string().min(1).max(64);
 
 export const potSchema = z.enum(['cash', 'card']);
 export const roleSchema = z.enum(['admin', 'member']);
