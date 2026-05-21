@@ -13,19 +13,28 @@ export function MiniTabs() {
     { href: '/mini/payments', label: m.mini.tabPayments },
     { href: '/mini/info', label: m.mini.tabInfo },
   ];
+  const onTap = () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    } catch {
+      /* ignore */
+    }
+  };
   return (
-    <nav style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0,
-      display: 'grid', gridTemplateColumns: `repeat(${tabs.length}, 1fr)`,
-      background: '#fff', borderTop: '1px solid #e5e7eb', padding: '8px 0',
-    }}>
+    <nav
+      className="mini-tabs"
+      style={{ display: 'grid', gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
+    >
       {tabs.map((t) => {
         const active = pathname === t.href;
         return (
-          <Link key={t.href} href={t.href} style={{
-            textAlign: 'center', color: active ? '#16a34a' : '#6b7280',
-            fontWeight: active ? 600 : 400, fontSize: 13, textDecoration: 'none',
-          }}>
+          <Link
+            key={t.href}
+            href={t.href}
+            className="mini-tabs__link"
+            data-active={active}
+            onClick={onTap}
+          >
             {t.label}
           </Link>
         );
