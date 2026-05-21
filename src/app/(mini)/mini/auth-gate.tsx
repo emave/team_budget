@@ -41,17 +41,17 @@ export function MiniAuthGate() {
     <main style={{ padding: 24, textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
       {state === 'no-telegram' && (
         <>
-          <h2 style={{ marginBottom: 8 }}>{m.mini.openInTelegramTitle}</h2>
-          <p style={{ color: '#666' }}>{m.mini.openInTelegramBody}</p>
+          <h2 style={{ marginBottom: 8, color: 'var(--mini-text)' }}>{m.mini.openInTelegramTitle}</h2>
+          <p style={{ color: 'var(--mini-hint)' }}>{m.mini.openInTelegramBody}</p>
         </>
       )}
       {(state === 'init' || state === 'authing') && (
-        <p style={{ color: '#666' }}>{m.mini.signingIn}</p>
+        <p style={{ color: 'var(--mini-hint)' }}>{m.mini.signingIn}</p>
       )}
       {state === 'error' && (
         <>
-          <h2 style={{ marginBottom: 8 }}>{m.mini.signInFailed}</h2>
-          <p style={{ color: '#b91c1c' }}>{msg}</p>
+          <h2 style={{ marginBottom: 8, color: 'var(--mini-text)' }}>{m.mini.signInFailed}</h2>
+          <p style={{ color: 'var(--mini-danger-fg)' }}>{msg}</p>
         </>
       )}
     </main>
