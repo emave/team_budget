@@ -58,23 +58,18 @@ export const MESSAGES_EN = {
   dashboard: {
     cashPot: 'Cash pot',
     cardPot: 'Card pot',
-    activityHeading: 'Recent activity',
-    noActivity: 'Nothing yet.',
+    movementsHeading: 'Money flow',
+    noMovements: 'Nothing in this period.',
+    rangeClamped: (maxDays: number) => `Range narrowed to last ${maxDays} days.`,
+    laneCashPot: 'Cash',
+    laneCardPot: 'Card',
     youOwe: (name: string) => `${name} — You owe`,
     youSettled: (name: string) => `${name} — Settled`,
     teamSummary: 'Team summary',
     potsLine: (cash: string, card: string) => `Cash pot ${cash} · Card pot ${card}`,
     membersHeading: (count: number) => `Members (${count})`,
-    chargeLine: (amount: string, name: string, desc: string) =>
-      `🧾 Charge ${amount} → ${name}: ${desc}`,
-    paymentLine: (payer: string, amount: string, method: string) =>
-      `💵 ${payer} paid ${amount} (${method})`,
-    spendingLine: (amount: string, pot: string, desc: string) =>
-      `🛒 ${amount} from ${pot}: ${desc}`,
     colMember: 'Member',
     colStatus: 'Status',
-    colEvent: 'Event',
-    colWhen: 'When',
   },
 
   members: {

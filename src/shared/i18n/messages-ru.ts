@@ -62,23 +62,18 @@ export const MESSAGES_RU: Messages = {
   dashboard: {
     cashPot: 'Касса (наличные)',
     cardPot: 'Касса (карта)',
-    activityHeading: 'Последние события',
-    noActivity: 'Событий пока нет.',
+    movementsHeading: 'Движение средств',
+    noMovements: 'За выбранный период ничего нет.',
+    rangeClamped: (maxDays: number) => `Период сокращён до последних ${maxDays} дней.`,
+    laneCashPot: 'Наличные',
+    laneCardPot: 'Карта',
     youOwe: (name: string) => `${name} — Ваш долг`,
     youSettled: (name: string) => `${name} — Долгов нет`,
     teamSummary: 'Сводка по команде',
     potsLine: (cash: string, card: string) => `Наличные ${cash} · Карта ${card}`,
     membersHeading: (count: number) => `Участники (${count})`,
-    chargeLine: (amount: string, name: string, desc: string) =>
-      `🧾 Начисление ${amount} → ${name}: ${desc}`,
-    paymentLine: (payer: string, amount: string, method: string) =>
-      `💵 ${payer} внёс ${amount} (${method})`,
-    spendingLine: (amount: string, pot: string, desc: string) =>
-      `🛒 ${amount} из ${pot}: ${desc}`,
     colMember: 'Участник',
     colStatus: 'Статус',
-    colEvent: 'Событие',
-    colWhen: 'Когда',
   },
 
   members: {
