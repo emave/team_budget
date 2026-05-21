@@ -7,6 +7,8 @@ import { getUserByTelegramId } from '@/server/domain/users';
 import { createSession } from '@/server/domain/sessions';
 import { bootstrapAdminIfNeeded } from '@/server/domain/bootstrap';
 import { syncAdminCommandsForUser } from '@/server/bot/admin-commands';
+import { seedLocaleIfMissing } from '@/server/auth/seed-locale';
+import { DEFAULT_LOCALE } from '@/shared/i18n';
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -40,6 +42,8 @@ export async function POST(req: NextRequest) {
     return new NextResponse('Not a team member', { status: 403 });
   }
 
+  user = await seedLocaleIfMissing(db, user, verify.user.language_code);
+
   const session = await createSession(db, user.id);
   const cookieValue = signCookie(session.token, e.SESSION_SECRET);
   const res = NextResponse.json({ ok: true });
@@ -49,6 +53,12 @@ export async function POST(req: NextRequest) {
     sameSite: 'lax',
     path: '/',
     expires: new Date(session.expiresAt),
+  });
+  res.cookies.set('tb_locale', user.locale ?? DEFAULT_LOCALE, {
+    httpOnly: false,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
   });
   return res;
 }
