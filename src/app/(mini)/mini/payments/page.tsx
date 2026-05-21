@@ -6,6 +6,9 @@ import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDate, getMessages } from '@/shared/i18n';
 import { MiniInit } from '../init';
 import { MiniTabs } from '../tabs';
+import { MiniSection } from '../../_components/mini-section';
+import { MiniRow } from '../../_components/mini-row';
+import { MiniEmpty } from '../../_components/mini-empty';
 
 export default async function MiniPaymentsPage() {
   const user = await requireUser();
@@ -16,19 +19,32 @@ export default async function MiniPaymentsPage() {
   return (
     <>
       <MiniInit />
-      <h2 style={{ fontSize: 18, margin: '0 0 12px' }}>{m.mini.yourPayments}</h2>
-      <div>
-        {rows.map((p) => (
-          <div key={p.id} style={{
-            display: 'flex', justifyContent: 'space-between',
-            padding: '8px 4px', borderTop: '1px solid #f3f4f6', fontSize: 13,
-          }}>
-            <span>{formatDate(p.receivedAt, locale)} · {p.method}</span>
-            <span>{formatCents(p.amount)}</span>
-          </div>
-        ))}
-        {rows.length === 0 && <div style={{ color: '#6b7280' }}>{m.mini.none}</div>}
-      </div>
+      <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
+        {m.mini.yourPayments}
+      </h2>
+      <MiniSection>
+        {rows.length === 0 ? (
+          <MiniEmpty>{m.mini.none}</MiniEmpty>
+        ) : (
+          rows.map((p) => {
+            const isCash = p.method === 'cash';
+            const methodLabel = isCash ? m.common.methodCash : m.common.methodCard;
+            const icon = isCash ? '💵' : '💳';
+            return (
+              <MiniRow
+                key={p.id}
+                title={
+                  <>
+                    {icon} {methodLabel}
+                  </>
+                }
+                subtitle={<span>{formatDate(p.receivedAt, locale)}</span>}
+                right={<span>{formatCents(p.amount)}</span>}
+              />
+            );
+          })
+        )}
+      </MiniSection>
       <MiniTabs />
     </>
   );
