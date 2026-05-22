@@ -66,7 +66,7 @@ Admin can create a single `adhoc` charge against one member for any reason, with
 ### 3.6 Payments
 
 - Recorded by admin with payer, method, amount, optional note.
-- A payment **must fully allocate** to one or more of the payer's open charges via `payment_allocations`. No floating credit in v1.
+- A payment **may partially or fully allocate** to one or more of the payer's open charges via `payment_allocations`. Any unallocated remainder becomes the payer's subscription-wallet credit (see [`2026-05-22-subscription-wallet-design.md`](2026-05-22-subscription-wallet-design.md)).
 - The UI defaults allocations to FIFO (oldest charges first); admin can rebalance manually before confirming.
 - Payment amount cannot exceed the member's total outstanding debt.
 
@@ -88,9 +88,10 @@ Semantics:
 
 ### 3.9 Derived values
 
-- **Cash pot** = Σ(cash payments) − Σ(cash spendings) − Σ(pot_borrow charges where `source_pot = cash`)
-- **Card pot** = Σ(card payments) − Σ(card spendings) − Σ(card pot_borrows)
+- **Cash pot** = Σ(cash payments where `exclude_from_pot=false`) − Σ(cash spendings) − Σ(pot_borrow charges where `source_pot = cash`) − Σ(cash refunds in `credit_movements` where `kind='refund'`)
+- **Card pot** = Σ(card payments where `exclude_from_pot=false`) − Σ(card spendings) − Σ(card pot_borrows) − Σ(card refunds)
 - **Member outstanding debt** = Σ for member's open charges of `(charge.amount − Σ allocations.amount for that charge)`
+- **Member subscription-wallet credit** = Σ for member's non-cancelled payments of `(payment.amount − Σ allocations.amount for that payment)` − Σ(member's non-cancelled `credit_movements`). See [`2026-05-22-subscription-wallet-design.md`](2026-05-22-subscription-wallet-design.md).
 - **Charge status** = `paid` when `Σ allocations.amount >= amount`, else `open` (unless explicitly `cancelled`)
 
 ## 4. Data Model
@@ -469,7 +470,6 @@ Items explicitly deferred:
 - Multi-team / multi-tenancy
 - Multi-currency or FX
 - Mid-month proration when a member joins
-- Floating credit / overpayments (every payment fully allocates)
 - Hard deletes — only `cancelled` status
 - Audit log of admin actions
 - Events bundling (e.g., "Game day 2026-06-12 had these expenses")
