@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDb, type TestDb } from '../helpers/db';
 import { createUser, deactivateUser } from '@/server/domain/users';
-import { updateMonthlyDuesAmount } from '@/server/domain/settings';
+import { getOrCreateSettings, updateMonthlyDuesAmount } from '@/server/domain/settings';
 import { chargeMemberDues, MemberAlreadyChargedError, generateMonthlyDues } from '@/server/domain/dues';
 import { charges } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -170,5 +170,43 @@ describe('chargeMemberDues', () => {
     await expect(
       chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
     ).rejects.toThrow(/not active/);
+  });
+
+  it('throws MemberAlreadyChargedError when an OPEN charge for the same period exists', async () => {
+    await chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId });
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
+    ).rejects.toBeInstanceOf(MemberAlreadyChargedError);
+  });
+
+  it('throws MemberAlreadyChargedError when a PAID charge for the same period exists', async () => {
+    const c = await chargeMemberDues(db, {
+      userId: memberId,
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+    db.update(charges).set({ status: 'paid' }).where(eq(charges.id, c.id)).run();
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
+    ).rejects.toBeInstanceOf(MemberAlreadyChargedError);
+  });
+
+  it('throws MemberAlreadyChargedError when a CANCELLED charge for the same period exists', async () => {
+    const c = await chargeMemberDues(db, {
+      userId: memberId,
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+    db.update(charges).set({ status: 'cancelled' }).where(eq(charges.id, c.id)).run();
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
+    ).rejects.toBeInstanceOf(MemberAlreadyChargedError);
+  });
+
+  it('does not modify settings.lastDuesGeneratedFor', async () => {
+    const before = (await getOrCreateSettings(db)).lastDuesGeneratedFor;
+    await chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId });
+    const after = (await getOrCreateSettings(db)).lastDuesGeneratedFor;
+    expect(after).toBe(before);
   });
 });
