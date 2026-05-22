@@ -64,22 +64,34 @@ describe('recordPayment', () => {
     expect((await getChargeById(db, c2.id))?.status).toBe('paid');
   });
 
-  it('rejects payment that does not fully allocate', async () => {
+  it('accepts a payment with allocations summing less than amount (remainder is credit)', async () => {
     const c = await createAdhocCharge(db, {
       userId: memberId,
       amount: 5000,
       description: 'a',
       createdByUserId: adminId,
     });
-    await expect(
-      recordPayment(db, {
-        payerUserId: memberId,
-        method: 'cash',
-        amount: 5000,
-        allocations: [{ chargeId: c.id, amount: 4000 }],
-        createdByUserId: adminId,
-      }),
-    ).rejects.toThrow(/fully allocate/i);
+    const result = await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      allocations: [{ chargeId: c.id, amount: 4000 }],
+      createdByUserId: adminId,
+    });
+    expect(result.payment.amount).toBe(5000);
+    expect(result.allocations.reduce((s, a) => s + a.amount, 0)).toBe(4000);
+  });
+
+  it('accepts a payment with zero allocations (pure credit deposit)', async () => {
+    const result = await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      allocations: [],
+      createdByUserId: adminId,
+    });
+    expect(result.payment.amount).toBe(5000);
+    expect(result.allocations.length).toBe(0);
   });
 
   it('rejects overallocating a single charge', async () => {

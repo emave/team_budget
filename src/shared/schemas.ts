@@ -29,9 +29,7 @@ export const recordPaymentSchema = z.object({
   method: potSchema,
   amount: moneySchema,
   note: z.string().optional(),
-  allocations: z
-    .array(z.object({ chargeId: idSchema, amount: moneySchema }))
-    .min(1),
+  allocations: z.array(z.object({ chargeId: idSchema, amount: moneySchema })),
 });
 
 export const recordSpendingSchema = z.object({
