@@ -1,11 +1,12 @@
-import { desc } from 'drizzle-orm';
-import { charges, payments, spendings, users } from '@/server/db/schema';
+import { desc, eq } from 'drizzle-orm';
+import { charges, payments, spendings, users, guests, guestDeposits } from '@/server/db/schema';
 import type { Db } from './types';
 
 export type ActivityEvent =
   | { kind: 'charge'; id: string; createdAt: string; amount: number; description: string; userDisplayName: string }
   | { kind: 'payment'; id: string; createdAt: string; amount: number; method: 'cash' | 'card'; payerDisplayName: string }
-  | { kind: 'spending'; id: string; createdAt: string; amount: number; pot: 'cash' | 'card'; description: string };
+  | { kind: 'spending'; id: string; createdAt: string; amount: number; pot: 'cash' | 'card'; description: string }
+  | { kind: 'guest_deposit'; id: string; createdAt: string; amount: number; method: 'cash' | 'card'; guestId: string | null; guestName: string | null };
 
 export async function recentActivity(db: Db, limit: number): Promise<ActivityEvent[]> {
   const cs = db
@@ -47,6 +48,21 @@ export async function recentActivity(db: Db, limit: number): Promise<ActivityEve
     .limit(limit)
     .all();
 
+  const gs = db
+    .select({
+      id: guestDeposits.id,
+      createdAt: guestDeposits.createdAt,
+      amount: guestDeposits.amount,
+      method: guestDeposits.method,
+      guestId: guestDeposits.guestId,
+      guestName: guests.name,
+    })
+    .from(guestDeposits)
+    .leftJoin(guests, eq(guests.id, guestDeposits.guestId))
+    .orderBy(desc(guestDeposits.createdAt))
+    .limit(limit)
+    .all();
+
   const userNames = new Map<string, string>();
   for (const u of db.select({ id: users.id, displayName: users.displayName }).from(users).all()) {
     userNames.set(u.id, u.displayName);
@@ -76,6 +92,15 @@ export async function recentActivity(db: Db, limit: number): Promise<ActivityEve
       amount: s.amount,
       pot: s.pot,
       description: s.description,
+    })),
+    ...gs.map((g): ActivityEvent => ({
+      kind: 'guest_deposit',
+      id: g.id,
+      createdAt: g.createdAt,
+      amount: g.amount,
+      method: g.method,
+      guestId: g.guestId,
+      guestName: g.guestName ?? null,
     })),
   ];
 

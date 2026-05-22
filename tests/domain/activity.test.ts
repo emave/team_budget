@@ -40,4 +40,19 @@ describe('recentActivity', () => {
     const events = await recentActivity(db, 3);
     expect(events.length).toBe(3);
   });
+
+  it('includes guest_deposit events with name resolution', async () => {
+    const { createGuest } = await import('@/server/domain/guests');
+    const { recordGuestDeposit } = await import('@/server/domain/guest-deposits');
+    const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
+    await recordGuestDeposit(db, { guestId: g.id, amount: 100, method: 'cash', createdByUserId: adminId });
+    await recordGuestDeposit(db, { amount: 200, method: 'card', createdByUserId: adminId });
+    const events = await recentActivity(db, 10);
+    const guests = events.filter((e) => e.kind === 'guest_deposit');
+    expect(guests.length).toBe(2);
+    const named = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id);
+    const anon = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === null);
+    expect(named && named.kind === 'guest_deposit' && named.guestName).toBe('Pasha');
+    expect(anon && anon.kind === 'guest_deposit' && anon.guestName).toBe(null);
+  });
 });
