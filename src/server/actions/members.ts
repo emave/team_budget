@@ -16,6 +16,7 @@ import {
   hardDeleteUser,
   getUserById,
 } from '@/server/domain/users';
+import { getCreditBalance } from '@/server/domain/credit';
 import { z } from 'zod';
 import { syncAdminCommandsForUser } from '@/server/bot/admin-commands';
 
@@ -27,12 +28,18 @@ export function makeMemberActions(deps: { getDb: () => Db } = { getDb: defaultGe
     return createInvite(db, { createdByUserId: user.id, displayNameHint: parsed.displayNameHint ?? null });
   });
 
-  const deactivateMember = adminAction(async ({ db }, input: { id: string }) => {
-    const id = idSchema.parse(input.id);
-    const updated = await deactivateUser(db, id);
-    await syncAdminCommandsForUser(updated);
-    return updated;
-  });
+  const deactivateMember = adminAction(
+    async ({ db }, input: { id: string; force?: boolean }) => {
+      const id = idSchema.parse(input.id);
+      const balance = await getCreditBalance(db, id);
+      if (balance > 0 && !input.force) {
+        return { requiresConfirmation: true as const, creditBalance: balance };
+      }
+      const updated = await deactivateUser(db, id);
+      await syncAdminCommandsForUser(updated);
+      return { requiresConfirmation: false as const, user: updated };
+    },
+  );
 
   const reactivateMember = adminAction(async ({ db }, input: { id: string }) => {
     const id = idSchema.parse(input.id);

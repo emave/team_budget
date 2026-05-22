@@ -41,8 +41,37 @@ describe('member actions', () => {
   it('admin can deactivate/reactivate', async () => {
     const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
     const actions = makeMemberActions({ getDb: () => db });
-    await actions.deactivateMember({ id: m.id });
+    const r = await actions.deactivateMember({ id: m.id });
+    expect(r).toMatchObject({ requiresConfirmation: false });
     await actions.reactivateMember({ id: m.id });
+  });
+
+  it('deactivate returns requiresConfirmation when member has credit', async () => {
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, {
+      payerUserId: m.id,
+      method: 'cash',
+      amount: 3000,
+      createdByUserId: adminId,
+    });
+    const actions = makeMemberActions({ getDb: () => db });
+    const r = await actions.deactivateMember({ id: m.id });
+    expect(r).toMatchObject({ requiresConfirmation: true, creditBalance: 3000 });
+  });
+
+  it('deactivate with force=true bypasses credit guard', async () => {
+    const m = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, {
+      payerUserId: m.id,
+      method: 'cash',
+      amount: 3000,
+      createdByUserId: adminId,
+    });
+    const actions = makeMemberActions({ getDb: () => db });
+    const r = await actions.deactivateMember({ id: m.id, force: true });
+    expect(r).toMatchObject({ requiresConfirmation: false });
   });
 
   it('admin can edit name and role together', async () => {

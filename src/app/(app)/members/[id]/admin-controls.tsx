@@ -35,14 +35,21 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
 
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [creditConfirm, setCreditConfirm] = useState<{ balance: number } | null>(null);
 
   const { control, handleSubmit, reset } = useForm<EditForm>({
     defaultValues: { displayName: user.displayName, role: user.role },
   });
 
   const deactivate = useMutation({
-    mutationFn: () => deactivateMember({ id: user.id }),
-    onSuccess: () => router.refresh(),
+    mutationFn: (force?: boolean) => deactivateMember({ id: user.id, force }),
+    onSuccess: (res) => {
+      if (res && 'requiresConfirmation' in res && res.requiresConfirmation) {
+        setCreditConfirm({ balance: res.creditBalance });
+        return;
+      }
+      router.refresh();
+    },
   });
   const reactivate = useMutation({
     mutationFn: () => reactivateMember({ id: user.id }),
@@ -83,7 +90,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
       {user.isActive ? (
         <Button
           kind={KIND.secondary}
-          onClick={() => deactivate.mutate()}
+          onClick={() => deactivate.mutate(undefined)}
           isLoading={deactivate.isPending}
         >
           {m.members.deactivate}
@@ -167,6 +174,29 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             isLoading={edit.isPending}
           >
             {m.common.save}
+          </ModalButton>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={creditConfirm !== null} onClose={() => setCreditConfirm(null)}>
+        <ModalHeader>{m.wallet.deactivateConfirmTitle}</ModalHeader>
+        <ModalBody>
+          {creditConfirm
+            ? m.wallet.deactivateConfirmBody(user.displayName, creditConfirm.balance)
+            : null}
+        </ModalBody>
+        <ModalFooter>
+          <ModalButton kind="tertiary" onClick={() => setCreditConfirm(null)}>
+            {m.common.cancel}
+          </ModalButton>
+          <ModalButton
+            onClick={() => {
+              setCreditConfirm(null);
+              deactivate.mutate(true);
+            }}
+            isLoading={deactivate.isPending}
+          >
+            {m.members.deactivate}
           </ModalButton>
         </ModalFooter>
       </Modal>
