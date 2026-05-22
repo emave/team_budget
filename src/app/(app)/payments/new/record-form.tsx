@@ -160,7 +160,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
             type="button"
             onClick={() => submitGuest.mutate()}
             isLoading={submitGuest.isPending}
-            disabled={!guestAmount || (!guestId && !guestQuery.trim() ? false : false)}
+            disabled={!guestAmount || submitGuest.isPending}
           >
             {m.guestDeposits.submit}
           </Button>
