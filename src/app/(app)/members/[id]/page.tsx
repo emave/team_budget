@@ -8,6 +8,7 @@ import {
 } from '@/server/domain/charges';
 import { listPaymentsByPayer } from '@/server/domain/payments';
 import { getCreditBalance, listCreditHistory } from '@/server/domain/credit';
+import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { formatDateTime, getMessages } from '@/shared/i18n';
@@ -16,6 +17,7 @@ import { Panel } from '@/ui/panel';
 import { StatusCard } from '@/ui/status-card';
 import { SectionHeading } from '@/ui/heading';
 import { AdminControls } from './admin-controls';
+import { ChargeDuesForm } from './charge-dues-form';
 import { OpenChargesTable, PaymentHistoryTable, type OpenChargeRow, type PaymentHistoryRow } from './detail-tables';
 import { WalletSection, type WalletHistoryItem, type WalletTransferOption } from './wallet-section';
 
@@ -39,6 +41,7 @@ export default async function MemberDetail({ params }: { params: { id: string } 
         .filter((mm) => mm.id !== u.id)
         .map((mm) => ({ id: mm.id, displayName: mm.displayName }))
     : [];
+  const settings = isAdmin ? await getOrCreateSettings(db) : null;
 
   const walletHistory: WalletHistoryItem[] = creditEvents.map((e): WalletHistoryItem => {
     if (e.kind === 'payment_deposit') {
@@ -156,6 +159,13 @@ export default async function MemberDetail({ params }: { params: { id: string } 
           transferOptions={transferOptions}
         />
       </Panel>
+
+      {isAdmin && settings && (
+        <Panel marginBottom={16}>
+          <SectionHeading>{m.members.dues.heading}</SectionHeading>
+          <ChargeDuesForm userId={u.id} monthlyDuesAmount={settings.monthlyDuesAmount} />
+        </Panel>
+      )}
 
       <Panel>
         <SectionHeading>{m.members.paymentHistory}</SectionHeading>
