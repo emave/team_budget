@@ -16,6 +16,8 @@ CREATE TABLE `credit_movements` (
 	FOREIGN KEY (`created_by_user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+ALTER TABLE `payments` ADD `exclude_from_pot` integer DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE `payments` ADD `transferred_from_user_id` text REFERENCES users(id);--> statement-breakpoint
 CREATE INDEX `credit_movements_user_id_idx` ON `credit_movements` (`user_id`);--> statement-breakpoint
 CREATE INDEX `credit_movements_kind_cancelled_at_idx` ON `credit_movements` (`kind`,`cancelled_at`);--> statement-breakpoint
 CREATE INDEX `credit_movements_group_id_idx` ON `credit_movements` (`group_id`);--> statement-breakpoint

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "92fd3ebd-46ac-404e-94d8-efeabbbd5559",
+  "id": "1d42f041-319f-42d8-b313-47aca9dea967",
   "prevId": "3d6d90a1-be32-41c5-a71a-5570d39c43a4",
   "tables": {
     "categories": {
@@ -758,6 +758,21 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "exclude_from_pot": {
+          "name": "exclude_from_pot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "transferred_from_user_id": {
+          "name": "transferred_from_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -781,6 +796,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payments_transferred_from_user_id_users_id_fk": {
+          "name": "payments_transferred_from_user_id_users_id_fk",
+          "tableFrom": "payments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "transferred_from_user_id"
           ],
           "columnsTo": [
             "id"

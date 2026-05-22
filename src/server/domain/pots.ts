@@ -13,7 +13,13 @@ async function sumPaymentsByMethod(db: Db, method: 'cash' | 'card'): Promise<num
   const row = db
     .select({ s: sum(payments.amount) })
     .from(payments)
-    .where(and(eq(payments.method, method), isNull(payments.cancelledAt)))
+    .where(
+      and(
+        eq(payments.method, method),
+        isNull(payments.cancelledAt),
+        eq(payments.excludeFromPot, false),
+      ),
+    )
     .get();
   return Number(row?.s ?? 0);
 }

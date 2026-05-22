@@ -10,6 +10,7 @@ import {
   recordCreditDeposit,
   applyCreditToCharge,
   refundCredit,
+  transferCredit,
 } from '@/server/domain/credit';
 import { getPotBalances } from '@/server/domain/pots';
 import {
@@ -262,5 +263,78 @@ describe('refundCredit', () => {
         createdByUserId: adminId,
       }),
     ).rejects.toThrow(/insufficient credit/i);
+  });
+});
+
+describe('transferCredit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let aId: string;
+  let bId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'Adm', role: 'admin' })).id;
+    aId = (await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' })).id;
+    bId = (await createUser(db, { telegramUserId: 3, displayName: 'B', role: 'member' })).id;
+  });
+
+  it('moves credit from A to B and leaves pots unchanged', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const beforePot = await getPotBalances(db);
+    await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    expect(await getCreditBalance(db, bId)).toBe(1500);
+    const afterPot = await getPotBalances(db);
+    expect(afterPot.cash).toBe(beforePot.cash);
+    expect(afterPot.card).toBe(beforePot.card);
+  });
+
+  it('rejects when from === to', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    await expect(
+      transferCredit(db, {
+        fromUserId: aId,
+        toUserId: aId,
+        amount: 100,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/same member|cannot transfer/i);
+  });
+
+  it('auto-applies received credit to open dues on the destination', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    // A and B each get a $15 dues charge. A has no credit yet, so charges open.
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    // recordCreditDeposit auto-applied $15 of A's deposit to A's own dues → A has $25 left.
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 2000,
+      createdByUserId: adminId,
+    });
+    // B receives $20, which auto-applies to B's $15 open dues → B has $5 left.
+    expect(await getCreditBalance(db, bId)).toBe(500);
   });
 });

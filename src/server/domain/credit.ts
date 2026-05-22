@@ -31,15 +31,11 @@ export async function getCreditBalance(db: Db, userId: string): Promise<number> 
     fromPayments += p.amount - Number(row?.s ?? 0);
   }
   const movs = db
-    .select({ kind: creditMovements.kind, amount: creditMovements.amount })
+    .select({ amount: creditMovements.amount })
     .from(creditMovements)
     .where(and(eq(creditMovements.userId, userId), isNull(creditMovements.cancelledAt)))
     .all();
-  let fromMovements = 0;
-  for (const m of movs) {
-    if (m.kind === 'transfer_in') fromMovements += m.amount;
-    else fromMovements -= m.amount;
-  }
+  const fromMovements = movs.reduce((s, m) => s - m.amount, 0);
   return fromPayments + fromMovements;
 }
 
@@ -195,6 +191,66 @@ export async function refundCredit(db: Db, input: RefundCreditInput) {
     })
     .run();
   return db.select().from(creditMovements).where(eq(creditMovements.id, id)).get()!;
+}
+
+export interface TransferCreditInput {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  note?: string;
+  occurredAt?: string;
+  createdByUserId: string;
+}
+
+export async function transferCredit(db: Db, input: TransferCreditInput) {
+  if (!Number.isInteger(input.amount) || input.amount <= 0) {
+    throw new Error(`amount must be positive integer, got ${input.amount}`);
+  }
+  if (input.fromUserId === input.toUserId) {
+    throw new Error('cannot transfer to the same member');
+  }
+  const fromBalance = await getCreditBalance(db, input.fromUserId);
+  if (fromBalance < input.amount) {
+    throw new Error(`insufficient credit: have ${fromBalance}, need ${input.amount}`);
+  }
+  const groupId = randomUUID();
+  const occurredAt = input.occurredAt ?? new Date().toISOString();
+  const destPaymentId = randomUUID();
+  db.transaction((tx) => {
+    tx.insert(creditMovements)
+      .values({
+        id: randomUUID(),
+        userId: input.fromUserId,
+        kind: 'transfer_out',
+        amount: input.amount,
+        method: null,
+        counterpartyUserId: input.toUserId,
+        groupId,
+        note: input.note ?? null,
+        occurredAt,
+        createdByUserId: input.createdByUserId,
+      })
+      .run();
+    tx.insert(payments)
+      .values({
+        id: destPaymentId,
+        payerUserId: input.toUserId,
+        method: 'cash',
+        amount: input.amount,
+        note: input.note ?? null,
+        receivedAt: occurredAt,
+        createdByUserId: input.createdByUserId,
+        excludeFromPot: true,
+        transferredFromUserId: input.fromUserId,
+      })
+      .run();
+  });
+  const destOpens = await listOpenChargesForMember(db, input.toUserId);
+  for (const c of destOpens) {
+    if (c.type !== 'monthly_dues') continue;
+    await consumeCreditForCharge(db, c.id);
+  }
+  return { groupId, destPaymentId };
 }
 
 async function consumeCreditForChargeAmount(

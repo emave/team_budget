@@ -75,6 +75,8 @@ export const payments = sqliteTable('payments', {
   cancelledAt: text('cancelled_at'),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+  excludeFromPot: integer('exclude_from_pot', { mode: 'boolean' }).notNull().default(false),
+  transferredFromUserId: text('transferred_from_user_id').references(() => users.id),
 });
 
 export const paymentAllocations = sqliteTable('payment_allocations', {
@@ -129,7 +131,7 @@ export const guestDeposits = sqliteTable('guest_deposits', {
 export const creditMovements = sqliteTable('credit_movements', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id),
-  kind: text('kind', { enum: ['refund', 'transfer_in', 'transfer_out'] }).notNull(),
+  kind: text('kind', { enum: ['refund', 'transfer_out'] }).notNull(),
   amount: integer('amount').notNull(),
   method: text('method', { enum: ['cash', 'card'] }),
   counterpartyUserId: text('counterparty_user_id').references(() => users.id),
