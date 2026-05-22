@@ -3,6 +3,7 @@
 import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
 import { Muted, StatusBadge } from '@/ui/text';
+import { StatusCancelledIcon } from '@/ui/icons';
 import { CancelPaymentButton } from './cancel-button';
 
 export interface PaymentRow {
@@ -31,7 +32,9 @@ export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
       <TableBuilderColumn header={m.payments.colWhen}>
         {(r: PaymentRow) =>
           r.cancelled ? (
-            <StatusBadge tone="neutral">{m.common.cancelled}</StatusBadge>
+            <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
+              {m.common.cancelled}
+            </StatusBadge>
           ) : (
             <Muted>{r.whenFormatted}</Muted>
           )

@@ -3,6 +3,7 @@
 import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
 import { Muted, StatusBadge } from '@/ui/text';
+import { StatusCancelledIcon } from '@/ui/icons';
 import { CancelSpendingButton } from './cancel-button';
 
 export interface SpendingRow {
@@ -35,7 +36,9 @@ export function SpendingsTable({ rows }: { rows: SpendingRow[] }) {
       <TableBuilderColumn header={m.spendings.colWhen}>
         {(r: SpendingRow) =>
           r.cancelled ? (
-            <StatusBadge tone="neutral">{m.common.cancelled}</StatusBadge>
+            <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
+              {m.common.cancelled}
+            </StatusBadge>
           ) : (
             <Muted>{r.whenFormatted}</Muted>
           )

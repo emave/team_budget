@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { LinkButton } from '@/ui/link-button';
+import { ActionNewIcon } from '@/ui/icons';
 import { ChargesTable, type ChargeRow } from './charges-table';
 
 export default async function ChargesPage({ searchParams }: { searchParams: { status?: 'open' | 'paid' | 'cancelled' } }) {
@@ -39,7 +40,13 @@ export default async function ChargesPage({ searchParams }: { searchParams: { st
       <PageHeader
         title={m.charges.title}
         subtitle={m.charges.subtitle}
-        actions={me.role === 'admin' ? <LinkButton href="/charges/new">{m.charges.newCharge}</LinkButton> : null}
+        actions={
+          me.role === 'admin' ? (
+            <LinkButton href="/charges/new" startEnhancer={<ActionNewIcon />}>
+              {m.charges.newCharge}
+            </LinkButton>
+          ) : null
+        }
       />
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, fontSize: 13 }}>
         <Link href="/charges">{m.charges.filterAll}</Link>

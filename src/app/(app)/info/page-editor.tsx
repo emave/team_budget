@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, KIND } from 'baseui/button';
+import { Button, KIND, SHAPE, SIZE } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { Textarea } from 'baseui/textarea';
@@ -9,6 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { upsertInfoPage, deleteInfoPage } from '@/server/actions/info-pages-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { ActionSaveIcon, RowDeleteIcon } from '@/ui/icons';
 
 interface Page { id: string; title: string; body: string }
 
@@ -32,7 +33,17 @@ export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Pag
     return (
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <Button kind={KIND.tertiary} onClick={() => setOpen(true)}>{m.info.edit}</Button>
-        <Button kind={KIND.tertiary} onClick={() => remove.mutate()} isLoading={remove.isPending}>{m.info.deleteBtn}</Button>
+        <Button
+          kind={KIND.tertiary}
+          size={SIZE.mini}
+          shape={SHAPE.square}
+          onClick={() => remove.mutate()}
+          isLoading={remove.isPending}
+          title={m.info.deleteBtn}
+          aria-label={m.info.deleteBtn}
+        >
+          <RowDeleteIcon size={14} />
+        </Button>
       </div>
     );
   }
@@ -46,7 +57,7 @@ export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Pag
         <Textarea value={body} onChange={(e) => setBody(e.currentTarget.value)} rows={6} />
       </FormControl>
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button onClick={() => save.mutate()} isLoading={save.isPending} disabled={!title}>
+        <Button startEnhancer={<ActionSaveIcon />} onClick={() => save.mutate()} isLoading={save.isPending} disabled={!title}>
           {mode === 'create' ? m.info.create : m.info.save}
         </Button>
         {mode === 'edit' && (

@@ -8,6 +8,7 @@ import { formatDateTime, getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { LinkButton } from '@/ui/link-button';
+import { ActionNewIcon } from '@/ui/icons';
 import { SpendingsTable, type SpendingRow } from './spendings-table';
 
 export default async function SpendingsPage() {
@@ -35,7 +36,13 @@ export default async function SpendingsPage() {
       <PageHeader
         title={m.spendings.title}
         subtitle={m.spendings.subtitle}
-        actions={me.role === 'admin' ? <LinkButton href="/spendings/new">{m.spendings.record}</LinkButton> : null}
+        actions={
+          me.role === 'admin' ? (
+            <LinkButton href="/spendings/new" startEnhancer={<ActionNewIcon />}>
+              {m.spendings.record}
+            </LinkButton>
+          ) : null
+        }
       />
       <Panel>
         <SpendingsTable rows={shaped} />

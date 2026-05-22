@@ -9,15 +9,17 @@ export function LinkButton({
   children,
   kind,
   size,
+  startEnhancer,
 }: {
   href: string;
   children: ReactNode;
   kind?: ButtonProps['kind'];
   size?: ButtonProps['size'];
+  startEnhancer?: ButtonProps['startEnhancer'];
 }) {
   return (
     <Link href={href} style={{ textDecoration: 'none' }}>
-      <Button kind={kind ?? KIND.primary} size={size ?? SIZE.compact}>
+      <Button kind={kind ?? KIND.primary} size={size ?? SIZE.compact} startEnhancer={startEnhancer}>
         {children}
       </Button>
     </Link>

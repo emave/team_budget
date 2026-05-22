@@ -3,6 +3,7 @@
 import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
 import { Muted, StatusBadge } from '@/ui/text';
+import { StatusOpenIcon, StatusPaidIcon, StatusCancelledIcon } from '@/ui/icons';
 import { CancelChargeButton } from './cancel-button';
 import type { Messages } from '@/shared/i18n';
 
@@ -48,7 +49,13 @@ export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
         {(r: ChargeRow) => {
           const label = STATUS_KEYS[r.status] ? (m.charges[STATUS_KEYS[r.status]!] as string) : r.status;
           const tone = r.status === 'paid' ? 'positive' : r.status === 'open' ? 'negative' : 'neutral';
-          return <StatusBadge tone={tone}>{label}</StatusBadge>;
+          const Icon =
+            r.status === 'paid' ? StatusPaidIcon : r.status === 'open' ? StatusOpenIcon : StatusCancelledIcon;
+          return (
+            <StatusBadge tone={tone} icon={<Icon size={14} />}>
+              {label}
+            </StatusBadge>
+          );
         }}
       </TableBuilderColumn>
       <TableBuilderColumn header={m.charges.colWhen}>

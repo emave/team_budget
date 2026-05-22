@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { inviteMember } from '@/server/actions/members-server';
 import { useMutation } from '@tanstack/react-query';
 import { useMessages } from '@/app/_i18n-provider';
+import { ActionInviteIcon } from '@/ui/icons';
 
 interface FormValues {
   displayNameHint: string;
@@ -30,7 +31,7 @@ export function InviteButton() {
 
   return (
     <>
-      <Button onClick={() => { setOpen(true); setLink(null); reset(); }}>{m.members.invite}</Button>
+      <Button startEnhancer={<ActionInviteIcon />} onClick={() => { setOpen(true); setLink(null); reset(); }}>{m.members.invite}</Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
         <ModalHeader>{m.members.inviteModalTitle}</ModalHeader>
         <ModalBody>

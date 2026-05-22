@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, KIND, SIZE } from 'baseui/button';
+import { Button, KIND, SHAPE, SIZE } from 'baseui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter, ModalButton } from 'baseui/modal';
 import { Input } from 'baseui/input';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { renameGuest } from '@/server/actions/guests-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { RowRenameIcon } from '@/ui/icons';
 
 export function RenameButton({ id, name }: { id: string; name: string }) {
   const m = useMessages();
@@ -20,8 +21,15 @@ export function RenameButton({ id, name }: { id: string; name: string }) {
   });
   return (
     <>
-      <Button kind={KIND.tertiary} size={SIZE.mini} onClick={() => { setValue(name); setOpen(true); }}>
-        {m.guests.btnRename}
+      <Button
+        kind={KIND.tertiary}
+        size={SIZE.mini}
+        shape={SHAPE.square}
+        onClick={() => { setValue(name); setOpen(true); }}
+        title={m.guests.btnRename}
+        aria-label={m.guests.btnRename}
+      >
+        <RowRenameIcon size={14} />
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
         <ModalHeader>{m.guests.renameModalTitle}</ModalHeader>

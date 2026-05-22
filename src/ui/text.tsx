@@ -28,12 +28,22 @@ export function Negative({ children, bold = false }: { children: ReactNode; bold
 
 export function StatusBadge({
   tone,
+  icon,
   children,
 }: {
   tone: 'positive' | 'negative' | 'neutral';
+  icon?: ReactNode;
   children: ReactNode;
 }) {
-  if (tone === 'positive') return <Positive bold>{children}</Positive>;
-  if (tone === 'negative') return <Negative bold>{children}</Negative>;
-  return <Muted>{children}</Muted>;
+  const content = icon ? (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      {icon}
+      {children}
+    </span>
+  ) : (
+    children
+  );
+  if (tone === 'positive') return <Positive bold>{content}</Positive>;
+  if (tone === 'negative') return <Negative bold>{content}</Negative>;
+  return <Muted>{content}</Muted>;
 }

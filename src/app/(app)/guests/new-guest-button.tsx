@@ -9,6 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { createGuest } from '@/server/actions/guests-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { ActionNewIcon } from '@/ui/icons';
 
 export function NewGuestButton() {
   const m = useMessages();
@@ -21,7 +22,7 @@ export function NewGuestButton() {
   });
   return (
     <>
-      <Button kind={KIND.primary} size={SIZE.compact} onClick={() => setOpen(true)}>
+      <Button kind={KIND.primary} size={SIZE.compact} startEnhancer={<ActionNewIcon />} onClick={() => setOpen(true)}>
         {m.guests.addNew}
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>

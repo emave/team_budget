@@ -1,10 +1,11 @@
 'use client';
 
-import { Button, KIND, SIZE } from 'baseui/button';
+import { Button, KIND, SHAPE, SIZE } from 'baseui/button';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { archiveGuest, unarchiveGuest } from '@/server/actions/guests-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { RowArchiveIcon, RowUnarchiveIcon } from '@/ui/icons';
 
 export function ArchiveButton({ id, archived }: { id: string; archived: boolean }) {
   const m = useMessages();
@@ -13,17 +14,22 @@ export function ArchiveButton({ id, archived }: { id: string; archived: boolean 
     mutationFn: () => (archived ? unarchiveGuest({ id }) : archiveGuest({ id })),
     onSuccess: () => router.refresh(),
   });
+  const label = archived ? m.guests.btnUnarchive : m.guests.btnArchive;
+  const Icon = archived ? RowUnarchiveIcon : RowArchiveIcon;
   return (
     <Button
       kind={KIND.tertiary}
       size={SIZE.mini}
+      shape={SHAPE.square}
       onClick={() => {
         if (!archived && !window.confirm(m.guests.confirmArchive)) return;
         mutate.mutate();
       }}
       isLoading={mutate.isPending}
+      title={label}
+      aria-label={label}
     >
-      {archived ? m.guests.btnUnarchive : m.guests.btnArchive}
+      <Icon size={14} />
     </Button>
   );
 }

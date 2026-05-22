@@ -8,6 +8,7 @@ import { formatDateTime, getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { LinkButton } from '@/ui/link-button';
+import { ActionNewIcon } from '@/ui/icons';
 import { PaymentsTable, type PaymentRow } from './payments-table';
 
 export default async function PaymentsPage() {
@@ -33,7 +34,13 @@ export default async function PaymentsPage() {
       <PageHeader
         title={m.payments.title}
         subtitle={m.payments.subtitle}
-        actions={me.role === 'admin' ? <LinkButton href="/payments/new">{m.payments.record}</LinkButton> : null}
+        actions={
+          me.role === 'admin' ? (
+            <LinkButton href="/payments/new" startEnhancer={<ActionNewIcon />}>
+              {m.payments.record}
+            </LinkButton>
+          ) : null
+        }
       />
       <Panel>
         <PaymentsTable rows={shaped} />
