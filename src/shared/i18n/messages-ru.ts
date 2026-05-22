@@ -17,6 +17,8 @@ export const MESSAGES_RU: Messages = {
     info: 'Информация',
     settings: 'Настройки',
     adminBadge: '(админ)',
+    menu: 'Меню',
+    close: 'Закрыть',
   },
 
   auth: {
@@ -75,6 +77,7 @@ export const MESSAGES_RU: Messages = {
     membersHeading: (count: number) => `Участники (${count})`,
     colMember: 'Участник',
     colStatus: 'Статус',
+    viewHistory: 'Открыть историю движений',
   },
 
   members: {

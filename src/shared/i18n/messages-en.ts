@@ -13,6 +13,8 @@ export const MESSAGES_EN = {
     info: 'Info',
     settings: 'Settings',
     adminBadge: '(admin)',
+    menu: 'Menu',
+    close: 'Close',
   },
 
   auth: {
@@ -71,6 +73,7 @@ export const MESSAGES_EN = {
     membersHeading: (count: number) => `Members (${count})`,
     colMember: 'Member',
     colStatus: 'Status',
+    viewHistory: 'View money history',
   },
 
   members: {
