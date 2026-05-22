@@ -120,6 +120,8 @@ export async function fifoAllocate(
   payerUserId: string,
   amount: number,
 ): Promise<AllocationInput[]> {
+  // Returns allocations covering up to `amount`. Any excess (amount > open debt)
+  // becomes the payer's subscription-wallet credit when the payment is recorded.
   let remaining = amount;
   const result: AllocationInput[] = [];
   const open = await listOpenChargesForMember(db, payerUserId);
@@ -131,11 +133,6 @@ export async function fifoAllocate(
     const take = Math.min(headroom, remaining);
     result.push({ chargeId: c.id, amount: take });
     remaining -= take;
-  }
-  if (remaining > 0) {
-    throw new Error(
-      `payment amount ${amount} exceeds total open debt by ${remaining}`,
-    );
   }
   return result;
 }
