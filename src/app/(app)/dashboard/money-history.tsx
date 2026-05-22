@@ -62,6 +62,8 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
           ? `member:${ev.payerUserId}`
           : ev.kind === 'guest_deposit'
           ? `pot:${ev.method}`
+          : ev.kind === 'credit_refund'
+          ? `pot:${ev.method}`
           : `pot:${ev.pot}`;
       const k = `${laneKey}|${day}`;
       const arr = map.get(k);
@@ -227,10 +229,13 @@ function EventCard({ ev }: { ev: Movement }) {
       ? (ev.note ?? '')
       : ev.kind === 'guest_deposit'
       ? (ev.note ?? '')
+      : ev.kind === 'credit_refund'
+      ? `Refund → ${ev.userDisplayName}${ev.note ? `: ${ev.note}` : ''}`
       : ev.description;
-  const sign = ev.kind === 'withdraw' ? '−' : '+';
-  const color = ev.kind === 'withdraw' ? '#991b1b' : '#065f46';
-  const bg = ev.kind === 'withdraw' ? '#fee2e2' : '#d1fae5';
+  const isOutflow = ev.kind === 'withdraw' || ev.kind === 'credit_refund';
+  const sign = isOutflow ? '−' : '+';
+  const color = isOutflow ? '#991b1b' : '#065f46';
+  const bg = isOutflow ? '#fee2e2' : '#d1fae5';
   return (
     <StatefulTooltip content={tooltip || null} showArrow>
       <div

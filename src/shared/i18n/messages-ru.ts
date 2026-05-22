@@ -463,4 +463,100 @@ export const MESSAGES_RU: Messages = {
       personalHeading: (name: string) => `👤 ${name}`,
     },
   },
+
+  wallet: {
+    title: 'Подписочный кошелёк',
+    balance: 'Баланс',
+    empty: 'Кошелёк пуст',
+    coversMonths: (count: number, amount: string) =>
+      `Покрывает ~${count} ${count === 1 ? 'месяц' : 'мес.'} взносов по ${amount}`,
+    depositCta: '+ Пополнить кошелёк',
+    refundCta: 'Вернуть',
+    transferCta: 'Перевести',
+    cancelCta: 'Отменить',
+    payFromCreditCta: (available: string) => `Оплатить из кошелька (доступно: ${available})`,
+    payFromCreditConfirm: (amount: string) =>
+      `Списать ${amount} из кошелька участника на этот долг?`,
+    depositToggle: 'Только пополнение (без погашения долгов)',
+    overAmountNote: (excess: string, member: string) =>
+      `${excess} зачислится в кошелёк ${member}`,
+    deactivateConfirmTitle: 'У участника есть остаток в кошельке',
+    deactivateConfirmBody: (name: string, balance: number) =>
+      `У ${name} ещё ${(balance / 100).toFixed(2)} в кошельке. Всё равно деактивировать?`,
+    dashboard: {
+      liabilityLabel: 'Предоплата участников (обязательства)',
+    },
+    members: {
+      column: 'Кошелёк',
+    },
+    section: {
+      heading: 'Подписочный кошелёк',
+      historyHeading: 'История кошелька',
+      noHistory: 'Активности в кошельке ещё нет.',
+    },
+    depositModal: {
+      title: 'Пополнить кошелёк',
+      amountLabel: 'Сумма',
+      methodLabel: 'Метод',
+      noteLabel: 'Заметка (необязательно)',
+    },
+    refundModal: {
+      title: 'Вернуть из кошелька',
+      amountLabel: 'Сумма',
+      methodLabel: 'Метод',
+      noteLabel: 'Заметка (необязательно)',
+    },
+    transferModal: {
+      title: 'Перевести кредит',
+      destLabel: 'Кому',
+      amountLabel: 'Сумма',
+      noteLabel: 'Заметка (необязательно)',
+    },
+    historyEvent: {
+      payment_deposit: (amount: string, method: string) => `Пополнение ${amount} (${method})`,
+      payment_consumption: (amount: string, desc: string) => `Списание ${amount} → ${desc}`,
+      refund: (amount: string, method: string) => `Возврат ${amount} через ${method}`,
+      transfer_in: (amount: string, counterparty: string) =>
+        `Получено ${amount} от ${counterparty}`,
+      transfer_out: (amount: string, counterparty: string) =>
+        `Отправлено ${amount} → ${counterparty}`,
+    },
+    notification: {
+      deposit: (amount: string, balance: string) =>
+        `${amount} зачислено в ваш кошелёк. Баланс: ${balance}.`,
+      autoAppliedDues: (period: string, amount: string, balance: string) =>
+        `Взносы за ${period} списаны из кошелька (${amount}). Баланс кошелька: ${balance}.`,
+      refund: (amount: string, method: string, balance: string) =>
+        `${amount} возвращено из вашего кошелька (${method}). Баланс кошелька: ${balance}.`,
+      transferReceived: (amount: string, counterparty: string) =>
+        `${amount} переведено в ваш кошелёк от ${counterparty}.`,
+      transferSent: (amount: string, counterparty: string) =>
+        `${amount} переведено из вашего кошелька → ${counterparty}.`,
+    },
+    bot: {
+      walletHeading: (balance: string) => `💰 Подписочный кошелёк: ${balance}`,
+      walletEmpty: 'Ваш кошелёк пуст.',
+      depositPick: 'Кому пополнить кошелёк:',
+      depositAmount: 'Сумма?',
+      depositMethod: 'Метод?',
+      depositNote: 'Заметка? (или /skip)',
+      depositConfirm: (name: string, amount: string, method: string) =>
+        `Пополнить ${amount} (${method}) кошелёк ${name}?`,
+      depositDone: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} зачислено в кошелёк ${name}. Баланс: ${balance}.`,
+      refundPick: 'Кому возврат:',
+      refundNoneAvailable: 'Нет участников с положительным балансом в кошельке.',
+      refundAmount: 'Сумма?',
+      refundMethod: 'Возврат через?',
+      refundNote: 'Заметка? (или /skip)',
+      refundConfirm: (name: string, amount: string, method: string) =>
+        `Вернуть ${amount} (${method}) из кошелька ${name}?`,
+      refundDone: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} возвращено из кошелька ${name}. Баланс: ${balance}.`,
+      payOverpaymentPrompt: (excess: string, name: string) =>
+        `Сумма на ${excess} больше открытого долга. Зачислить излишек в кошелёк ${name}?`,
+      btnYes: 'Да',
+      btnNo: 'Нет',
+    },
+  },
 };
