@@ -7,7 +7,11 @@ import {
   getCreditBalance,
   listMemberCreditBalances,
   getTotalCreditLiability,
+  recordCreditDeposit,
 } from '@/server/domain/credit';
+import { getChargeById, listOpenChargesForMember } from '@/server/domain/charges';
+import { generateMonthlyDues } from '@/server/domain/dues';
+import { updateMonthlyDuesAmount } from '@/server/domain/settings';
 
 describe('credit balance reads', () => {
   let db: TestDb;
@@ -83,5 +87,45 @@ describe('credit balance reads', () => {
       createdByUserId: adminId,
     });
     expect(await getTotalCreditLiability(db)).toBe(4000);
+  });
+});
+
+describe('recordCreditDeposit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('creates a zero-allocation payment and increases credit', async () => {
+    const r = await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 6000,
+      createdByUserId: adminId,
+    });
+    expect(r.payment.amount).toBe(6000);
+    expect(r.allocations.length).toBe(0);
+    expect(await getCreditBalance(db, memberId)).toBe(6000);
+  });
+
+  it('auto-applies to existing open dues charges (FIFO by charge createdAt)', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await generateMonthlyDues(db, { period: '2026-04', createdByUserId: adminId });
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    const opens = await listOpenChargesForMember(db, memberId);
+    expect(opens.length).toBe(2);
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    expect((await getChargeById(db, opens[0].id))?.status).toBe('paid');
+    expect((await getChargeById(db, opens[1].id))?.status).toBe('paid');
+    expect(await getCreditBalance(db, memberId)).toBe(1000);
   });
 });
