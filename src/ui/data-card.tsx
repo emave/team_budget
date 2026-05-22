@@ -7,13 +7,22 @@ import { useStyletron } from 'baseui';
 interface DataCardProps {
   title: ReactNode;
   titleRight?: ReactNode;
+  inlineAction?: ReactNode;
   subtitle?: ReactNode;
   badges?: ReactNode;
   actions?: ReactNode;
   href?: string;
 }
 
-export function DataCard({ title, titleRight, subtitle, badges, actions, href }: DataCardProps) {
+export function DataCard({
+  title,
+  titleRight,
+  inlineAction,
+  subtitle,
+  badges,
+  actions,
+  href,
+}: DataCardProps) {
   const [css, theme] = useStyletron();
 
   const cardCss = css({
@@ -32,7 +41,7 @@ export function DataCard({ title, titleRight, subtitle, badges, actions, href }:
   const titleRowCss = css({
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: '12px',
     minWidth: 0,
   });
@@ -45,6 +54,13 @@ export function DataCard({ title, titleRight, subtitle, badges, actions, href }:
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     minWidth: 0,
+  });
+
+  const rightGroupCss = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexShrink: 0,
   });
 
   const titleRightCss = css({
@@ -79,7 +95,14 @@ export function DataCard({ title, titleRight, subtitle, badges, actions, href }:
     <>
       <div className={titleRowCss}>
         <div className={titleCss}>{title}</div>
-        {titleRight ? <div className={titleRightCss}>{titleRight}</div> : null}
+        {titleRight || inlineAction ? (
+          <div className={rightGroupCss}>
+            {titleRight ? <div className={titleRightCss}>{titleRight}</div> : null}
+            {inlineAction ? (
+              <div onClick={(e: MouseEvent) => e.stopPropagation()}>{inlineAction}</div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       {subtitle ? <div className={subtitleCss}>{subtitle}</div> : null}
       {badges ? <div className={badgesCss}>{badges}</div> : null}

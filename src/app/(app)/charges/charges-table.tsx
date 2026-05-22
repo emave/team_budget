@@ -55,24 +55,19 @@ export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
           r.type !== 'monthly_dues' &&
           (r.creditAvailableCents ?? 0) > 0 &&
           (r.remainingCents ?? 0) > 0;
-        const actions =
-          canPayFromCredit || r.showCancel ? (
-            <>
-              {canPayFromCredit && (
-                <PayFromCreditButton
-                  chargeId={r.id}
-                  remainingCents={r.remainingCents ?? 0}
-                  creditAvailableCents={r.creditAvailableCents ?? 0}
-                />
-              )}
-              {r.showCancel ? <CancelChargeButton id={r.id} /> : null}
-            </>
-          ) : null;
+        const actions = canPayFromCredit ? (
+          <PayFromCreditButton
+            chargeId={r.id}
+            remainingCents={r.remainingCents ?? 0}
+            creditAvailableCents={r.creditAvailableCents ?? 0}
+          />
+        ) : null;
         return (
           <DataCard
             key={r.id}
             title={`${r.description} — ${r.userDisplayName}`}
             titleRight={r.amountFormatted}
+            inlineAction={r.showCancel ? <CancelChargeButton id={r.id} /> : null}
             subtitle={`${typeLabel} · ${r.whenFormatted}`}
             badges={
               <StatusBadge tone={tone} icon={<Icon size={14} />}>

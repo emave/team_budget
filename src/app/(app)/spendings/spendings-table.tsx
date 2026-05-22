@@ -37,7 +37,7 @@ export function SpendingsTable({ rows }: { rows: SpendingRow[] }) {
                 </StatusBadge>
               ) : null
             }
-            actions={r.showCancel ? <CancelSpendingButton id={r.id} /> : null}
+            inlineAction={r.showCancel ? <CancelSpendingButton id={r.id} /> : null}
           />
         );
       })}

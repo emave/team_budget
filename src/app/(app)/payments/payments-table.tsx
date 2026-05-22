@@ -34,7 +34,7 @@ export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
               </StatusBadge>
             ) : null
           }
-          actions={r.showCancel ? <CancelPaymentButton id={r.id} /> : null}
+          inlineAction={r.showCancel ? <CancelPaymentButton id={r.id} /> : null}
         />
       ))}
     </DataList>
