@@ -242,6 +242,7 @@ export async function transferCredit(db: Db, input: TransferCreditInput) {
         createdByUserId: input.createdByUserId,
         excludeFromPot: true,
         transferredFromUserId: input.fromUserId,
+        transferGroupId: groupId,
       })
       .run();
   });
@@ -251,6 +252,60 @@ export async function transferCredit(db: Db, input: TransferCreditInput) {
     await consumeCreditForCharge(db, c.id);
   }
   return { groupId, destPaymentId };
+}
+
+export async function cancelCreditMovement(db: Db, id: string) {
+  const row = db.select().from(creditMovements).where(eq(creditMovements.id, id)).get();
+  if (!row) throw new Error(`credit movement ${id} not found`);
+  if (row.cancelledAt) return row;
+
+  const now = new Date().toISOString();
+  // For a transfer_out, also cancel the paired destination payment (excludeFromPot row).
+  let pairedPaymentId: string | null = null;
+  if (row.kind === 'transfer_out' && row.groupId) {
+    const paired = db
+      .select({ id: payments.id, cancelledAt: payments.cancelledAt })
+      .from(payments)
+      .where(eq(payments.transferGroupId, row.groupId))
+      .get();
+    pairedPaymentId = paired?.id ?? null;
+  }
+
+  db.transaction((tx) => {
+    tx.update(creditMovements)
+      .set({ cancelledAt: now })
+      .where(eq(creditMovements.id, id))
+      .run();
+    if (pairedPaymentId) {
+      tx.update(payments)
+        .set({ cancelledAt: now })
+        .where(and(eq(payments.id, pairedPaymentId), isNull(payments.cancelledAt)))
+        .run();
+    }
+  });
+
+  const touchedUsers = new Set<string>([row.userId]);
+  if (row.counterpartyUserId) touchedUsers.add(row.counterpartyUserId);
+  for (const userId of touchedUsers) {
+    const balance = await getCreditBalance(db, userId);
+    if (balance < 0) {
+      // Roll back
+      db.transaction((tx) => {
+        tx.update(creditMovements)
+          .set({ cancelledAt: null })
+          .where(eq(creditMovements.id, id))
+          .run();
+        if (pairedPaymentId) {
+          tx.update(payments)
+            .set({ cancelledAt: null })
+            .where(eq(payments.id, pairedPaymentId))
+            .run();
+        }
+      });
+      throw new Error(`cancellation would push member ${userId} credit below zero`);
+    }
+  }
+  return db.select().from(creditMovements).where(eq(creditMovements.id, id)).get()!;
 }
 
 async function consumeCreditForChargeAmount(

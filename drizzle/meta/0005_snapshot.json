@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1d42f041-319f-42d8-b313-47aca9dea967",
+  "id": "3889114b-04b0-4df3-90cd-1326c2f78a6a",
   "prevId": "3d6d90a1-be32-41c5-a71a-5570d39c43a4",
   "tables": {
     "categories": {
@@ -769,6 +769,13 @@
         },
         "transferred_from_user_id": {
           "name": "transferred_from_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "transfer_group_id": {
+          "name": "transfer_group_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

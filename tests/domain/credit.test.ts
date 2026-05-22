@@ -11,7 +11,10 @@ import {
   applyCreditToCharge,
   refundCredit,
   transferCredit,
+  cancelCreditMovement,
 } from '@/server/domain/credit';
+import { creditMovements } from '@/server/db/schema';
+import { and, eq } from 'drizzle-orm';
 import { getPotBalances } from '@/server/domain/pots';
 import {
   createPotBorrow,
@@ -336,5 +339,111 @@ describe('transferCredit', () => {
     });
     // B receives $20, which auto-applies to B's $15 open dues → B has $5 left.
     expect(await getCreditBalance(db, bId)).toBe(500);
+  });
+});
+
+describe('cancelCreditMovement', () => {
+  let db: TestDb;
+  let adminId: string;
+  let aId: string;
+  let bId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'Adm', role: 'admin' })).id;
+    aId = (await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' })).id;
+    bId = (await createUser(db, { telegramUserId: 3, displayName: 'B', role: 'member' })).id;
+  });
+
+  it('reverses a refund: credit and pot restored', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const beforePot = await getPotBalances(db);
+    const refund = await refundCredit(db, {
+      userId: aId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    await cancelCreditMovement(db, refund.id);
+    expect(await getCreditBalance(db, aId)).toBe(5000);
+    const afterPot = await getPotBalances(db);
+    expect(afterPot.cash).toBe(beforePot.cash);
+  });
+
+  it('reverses a transfer: source credit restored, dest credit removed', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const { groupId } = await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    expect(await getCreditBalance(db, bId)).toBe(1500);
+    const transferOut = db
+      .select()
+      .from(creditMovements)
+      .where(eq(creditMovements.groupId, groupId))
+      .get()!;
+    await cancelCreditMovement(db, transferOut.id);
+    expect(await getCreditBalance(db, aId)).toBe(4000);
+    expect(await getCreditBalance(db, bId)).toBe(0);
+  });
+
+  it('idempotent for already-cancelled movement', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const refund = await refundCredit(db, {
+      userId: aId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    await cancelCreditMovement(db, refund.id);
+    await expect(cancelCreditMovement(db, refund.id)).resolves.not.toThrow();
+  });
+
+  it('rejects cancellation that would push a member below zero', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const { groupId } = await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    // B spends all $15 received via refund — pulls pot down by $15
+    await refundCredit(db, {
+      userId: bId,
+      amount: 1500,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, bId)).toBe(0);
+    const transferOut = db
+      .select()
+      .from(creditMovements)
+      .where(and(eq(creditMovements.groupId, groupId), eq(creditMovements.kind, 'transfer_out')))
+      .get()!;
+    await expect(cancelCreditMovement(db, transferOut.id)).rejects.toThrow(
+      /negative|below zero|insufficient/i,
+    );
   });
 });
