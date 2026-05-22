@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import cron from 'node-cron';
+import type { Charge } from '@/server/domain/charges';
 import { charges, users } from '@/server/db/schema';
 import type { Db } from '@/server/domain/types';
 import { currentBillingPeriod, generateMonthlyDues } from '@/server/domain/dues';
@@ -19,6 +20,26 @@ async function pickSystemAdmin(db: Db): Promise<string> {
   return admin.id;
 }
 
+export async function notifyDuesCreated(db: Db, charge: Charge): Promise<void> {
+  if (process.env.SKIP_BOT === '1') return;
+  if (charge.status === 'paid') {
+    const balance = await getCreditBalance(db, charge.userId);
+    await getNotifier().notifyUser(charge.userId, (recipient) => {
+      const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+      return getMessages(locale).wallet.notification.autoAppliedDues(
+        charge.billingPeriod ?? '',
+        formatCents(charge.amount),
+        formatCents(balance),
+      );
+    });
+    return;
+  }
+  await getNotifier().notifyUser(
+    charge.userId,
+    `🧾 Monthly dues for ${charge.billingPeriod} have been added (${formatCents(charge.amount)}). Type /balance to see total.`,
+  );
+}
+
 export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
   const period = currentBillingPeriod(opts.now);
   const adminId = await pickSystemAdmin(db);
@@ -32,7 +53,7 @@ export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
       );
 
       const paidFromWallet = db
-        .select({ userId: charges.userId, amount: charges.amount })
+        .select()
         .from(charges)
         .where(
           and(
@@ -42,16 +63,8 @@ export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
           ),
         )
         .all();
-      for (const r of paidFromWallet) {
-        const balance = await getCreditBalance(db, r.userId);
-        await getNotifier().notifyUser(r.userId, (recipient) => {
-          const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
-          return getMessages(locale).wallet.notification.autoAppliedDues(
-            period,
-            formatCents(r.amount),
-            formatCents(balance),
-          );
-        });
+      for (const c of paidFromWallet) {
+        await notifyDuesCreated(db, c);
       }
     } catch (err) { console.error('[dues] notify failed:', err); }
   }
