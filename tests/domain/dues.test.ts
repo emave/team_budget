@@ -209,4 +209,21 @@ describe('chargeMemberDues', () => {
     const after = (await getOrCreateSettings(db)).lastDuesGeneratedFor;
     expect(after).toBe(before);
   });
+
+  it('auto-consumes wallet credit when sufficient (charge is paid)', async () => {
+    const { recordCreditDeposit } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+
+    const c = await chargeMemberDues(db, {
+      userId: memberId,
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+    expect(c.status).toBe('paid');
+  });
 });
