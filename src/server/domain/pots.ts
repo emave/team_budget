@@ -1,6 +1,7 @@
 import { and, eq, isNull, sum } from 'drizzle-orm';
 import { charges, payments, spendings } from '@/server/db/schema';
 import { getOrCreateSettings } from './settings';
+import { sumGuestDepositsByMethod } from './guest-deposits';
 import type { Db } from './types';
 
 export interface PotBalances {
@@ -36,17 +37,23 @@ async function sumPotBorrows(db: Db, pot: 'cash' | 'card'): Promise<number> {
 }
 
 export async function getPotBalances(db: Db): Promise<PotBalances> {
-  const [s, cashIn, cashOut, cashBorrow, cardIn, cardOut, cardBorrow] = await Promise.all([
+  const [
+    s,
+    cashIn, cashOut, cashBorrow, cashGuest,
+    cardIn, cardOut, cardBorrow, cardGuest,
+  ] = await Promise.all([
     getOrCreateSettings(db),
     sumPaymentsByMethod(db, 'cash'),
     sumSpendingsByPot(db, 'cash'),
     sumPotBorrows(db, 'cash'),
+    sumGuestDepositsByMethod(db, 'cash'),
     sumPaymentsByMethod(db, 'card'),
     sumSpendingsByPot(db, 'card'),
     sumPotBorrows(db, 'card'),
+    sumGuestDepositsByMethod(db, 'card'),
   ]);
   return {
-    cash: s.cashOpeningCents + cashIn - cashOut - cashBorrow,
-    card: s.cardOpeningCents + cardIn - cardOut - cardBorrow,
+    cash: s.cashOpeningCents + cashIn + cashGuest - cashOut - cashBorrow,
+    card: s.cardOpeningCents + cardIn + cardGuest - cardOut - cardBorrow,
   };
 }

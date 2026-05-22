@@ -137,4 +137,15 @@ describe('pots', () => {
     // opening 10000 + payment 4000 − spending 1500 = 12500
     expect((await getPotBalances(db)).cash).toBe(12500);
   });
+
+  it('includes guest deposits in pot balances and excludes cancelled', async () => {
+    const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
+    await recordGuestDeposit(db, { amount: 1500, method: 'cash', createdByUserId: adminId });
+    await recordGuestDeposit(db, { amount: 500, method: 'card', createdByUserId: adminId });
+    const cancelled = await recordGuestDeposit(db, { amount: 999, method: 'cash', createdByUserId: adminId });
+    await cancelGuestDeposit(db, cancelled.id);
+    const bal = await getPotBalances(db);
+    expect(bal.cash).toBe(1500);
+    expect(bal.card).toBe(500);
+  });
 });
