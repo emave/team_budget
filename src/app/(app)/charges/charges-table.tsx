@@ -1,8 +1,9 @@
 'use client';
 
-import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
-import { Muted, StatusBadge } from '@/ui/text';
+import { DataList } from '@/ui/data-list';
+import { DataCard } from '@/ui/data-card';
+import { StatusBadge } from '@/ui/text';
 import { StatusOpenIcon, StatusPaidIcon, StatusCancelledIcon } from '@/ui/icons';
 import { CancelChargeButton } from './cancel-button';
 import { PayFromCreditButton } from './pay-from-credit-button';
@@ -38,49 +39,50 @@ const STATUS_KEYS: Record<string, keyof Messages['charges']> = {
 export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
   const m = useMessages();
   return (
-    <TableBuilder data={rows} emptyMessage={m.charges.none}>
-      <TableBuilderColumn header={m.charges.colType}>
-        {(r: ChargeRow) => <Muted>{TYPE_KEYS[r.type] ? (m.charges[TYPE_KEYS[r.type]!] as string) : r.type}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.charges.colDescription}>
-        {(r: ChargeRow) => <>{r.description} — {r.userDisplayName}</>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.charges.colAmount} numeric>
-        {(r: ChargeRow) => r.amountFormatted}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.charges.colStatus}>
-        {(r: ChargeRow) => {
-          const label = STATUS_KEYS[r.status] ? (m.charges[STATUS_KEYS[r.status]!] as string) : r.status;
-          const tone = r.status === 'paid' ? 'positive' : r.status === 'open' ? 'negative' : 'neutral';
-          const Icon =
-            r.status === 'paid' ? StatusPaidIcon : r.status === 'open' ? StatusOpenIcon : StatusCancelledIcon;
-          return (
-            <StatusBadge tone={tone} icon={<Icon size={14} />}>
-              {label}
-            </StatusBadge>
-          );
-        }}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.charges.colWhen}>
-        {(r: ChargeRow) => <Muted>{r.whenFormatted}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.common.colActions}>
-        {(r: ChargeRow) => (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {r.status === 'open' &&
-              r.type !== 'monthly_dues' &&
-              (r.creditAvailableCents ?? 0) > 0 &&
-              (r.remainingCents ?? 0) > 0 && (
+    <DataList emptyMessage={m.charges.none} isEmpty={rows.length === 0}>
+      {rows.map((r) => {
+        const typeLabel = TYPE_KEYS[r.type]
+          ? (m.charges[TYPE_KEYS[r.type]!] as string)
+          : r.type;
+        const statusLabel = STATUS_KEYS[r.status]
+          ? (m.charges[STATUS_KEYS[r.status]!] as string)
+          : r.status;
+        const tone = r.status === 'paid' ? 'positive' : r.status === 'open' ? 'negative' : 'neutral';
+        const Icon =
+          r.status === 'paid' ? StatusPaidIcon : r.status === 'open' ? StatusOpenIcon : StatusCancelledIcon;
+        const canPayFromCredit =
+          r.status === 'open' &&
+          r.type !== 'monthly_dues' &&
+          (r.creditAvailableCents ?? 0) > 0 &&
+          (r.remainingCents ?? 0) > 0;
+        const actions =
+          canPayFromCredit || r.showCancel ? (
+            <>
+              {canPayFromCredit && (
                 <PayFromCreditButton
                   chargeId={r.id}
                   remainingCents={r.remainingCents ?? 0}
                   creditAvailableCents={r.creditAvailableCents ?? 0}
                 />
               )}
-            {r.showCancel ? <CancelChargeButton id={r.id} /> : null}
-          </div>
-        )}
-      </TableBuilderColumn>
-    </TableBuilder>
+              {r.showCancel ? <CancelChargeButton id={r.id} /> : null}
+            </>
+          ) : null;
+        return (
+          <DataCard
+            key={r.id}
+            title={`${r.description} — ${r.userDisplayName}`}
+            titleRight={r.amountFormatted}
+            subtitle={`${typeLabel} · ${r.whenFormatted}`}
+            badges={
+              <StatusBadge tone={tone} icon={<Icon size={14} />}>
+                {statusLabel}
+              </StatusBadge>
+            }
+            actions={actions}
+          />
+        );
+      })}
+    </DataList>
   );
 }

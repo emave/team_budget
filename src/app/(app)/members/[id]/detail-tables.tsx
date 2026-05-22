@@ -1,8 +1,8 @@
 'use client';
 
-import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
-import { Muted } from '@/ui/text';
+import { DataList } from '@/ui/data-list';
+import { DataCard } from '@/ui/data-card';
 
 export interface OpenChargeRow {
   id: string;
@@ -20,30 +20,26 @@ export interface PaymentHistoryRow {
 export function OpenChargesTable({ rows }: { rows: OpenChargeRow[] }) {
   const m = useMessages();
   return (
-    <TableBuilder data={rows} emptyMessage={m.common.none}>
-      <TableBuilderColumn header={m.common.colDescription}>
-        {(r: OpenChargeRow) => r.description}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.common.colAmount} numeric>
-        {(r: OpenChargeRow) => r.amountFormatted}
-      </TableBuilderColumn>
-    </TableBuilder>
+    <DataList emptyMessage={m.common.none} isEmpty={rows.length === 0}>
+      {rows.map((r) => (
+        <DataCard key={r.id} title={r.description} titleRight={r.amountFormatted} />
+      ))}
+    </DataList>
   );
 }
 
 export function PaymentHistoryTable({ rows }: { rows: PaymentHistoryRow[] }) {
   const m = useMessages();
   return (
-    <TableBuilder data={rows} emptyMessage={m.common.none}>
-      <TableBuilderColumn header={m.common.colWhen}>
-        {(r: PaymentHistoryRow) => <Muted>{r.whenFormatted}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.payments.colMethod}>
-        {(r: PaymentHistoryRow) => <Muted>{r.method}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.common.colAmount} numeric>
-        {(r: PaymentHistoryRow) => r.amountFormatted}
-      </TableBuilderColumn>
-    </TableBuilder>
+    <DataList emptyMessage={m.common.none} isEmpty={rows.length === 0}>
+      {rows.map((r) => (
+        <DataCard
+          key={r.id}
+          title={r.method}
+          titleRight={r.amountFormatted}
+          subtitle={r.whenFormatted}
+        />
+      ))}
+    </DataList>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
-import { Muted, StatusBadge } from '@/ui/text';
+import { DataList } from '@/ui/data-list';
+import { DataCard } from '@/ui/data-card';
+import { StatusBadge } from '@/ui/text';
 import { StatusCancelledIcon } from '@/ui/icons';
 import { CancelPaymentButton } from './cancel-button';
 
@@ -19,30 +20,23 @@ export interface PaymentRow {
 export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
   const m = useMessages();
   return (
-    <TableBuilder data={rows} emptyMessage={m.payments.none}>
-      <TableBuilderColumn header={m.payments.colPayer}>
-        {(r: PaymentRow) => r.payerDisplayName}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.payments.colMethod}>
-        {(r: PaymentRow) => <Muted>{r.method}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.payments.colAmount} numeric>
-        {(r: PaymentRow) => r.amountFormatted}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.payments.colWhen}>
-        {(r: PaymentRow) =>
-          r.cancelled ? (
-            <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
-              {m.common.cancelled}
-            </StatusBadge>
-          ) : (
-            <Muted>{r.whenFormatted}</Muted>
-          )
-        }
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.common.colActions}>
-        {(r: PaymentRow) => (r.showCancel ? <CancelPaymentButton id={r.id} /> : null)}
-      </TableBuilderColumn>
-    </TableBuilder>
+    <DataList emptyMessage={m.payments.none} isEmpty={rows.length === 0}>
+      {rows.map((r) => (
+        <DataCard
+          key={r.id}
+          title={r.payerDisplayName}
+          titleRight={r.amountFormatted}
+          subtitle={`${r.method} · ${r.whenFormatted}`}
+          badges={
+            r.cancelled ? (
+              <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
+                {m.common.cancelled}
+              </StatusBadge>
+            ) : null
+          }
+          actions={r.showCancel ? <CancelPaymentButton id={r.id} /> : null}
+        />
+      ))}
+    </DataList>
   );
 }

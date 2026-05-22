@@ -1,8 +1,9 @@
 'use client';
 
-import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { useMessages } from '@/app/_i18n-provider';
-import { Muted, StatusBadge } from '@/ui/text';
+import { DataList } from '@/ui/data-list';
+import { DataCard } from '@/ui/data-card';
+import { StatusBadge } from '@/ui/text';
 import { StatusCancelledIcon } from '@/ui/icons';
 import { CancelSpendingButton } from './cancel-button';
 
@@ -20,33 +21,26 @@ export interface SpendingRow {
 export function SpendingsTable({ rows }: { rows: SpendingRow[] }) {
   const m = useMessages();
   return (
-    <TableBuilder data={rows} emptyMessage={m.spendings.none}>
-      <TableBuilderColumn header={m.spendings.colPot}>
-        {(r: SpendingRow) => <Muted>{r.pot}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.spendings.colDescription}>
-        {(r: SpendingRow) => r.description}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.spendings.colCategory}>
-        {(r: SpendingRow) => <Muted>{r.category}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.spendings.colAmount} numeric>
-        {(r: SpendingRow) => r.amountFormatted}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.spendings.colWhen}>
-        {(r: SpendingRow) =>
-          r.cancelled ? (
-            <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
-              {m.common.cancelled}
-            </StatusBadge>
-          ) : (
-            <Muted>{r.whenFormatted}</Muted>
-          )
-        }
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.common.colActions}>
-        {(r: SpendingRow) => (r.showCancel ? <CancelSpendingButton id={r.id} /> : null)}
-      </TableBuilderColumn>
-    </TableBuilder>
+    <DataList emptyMessage={m.spendings.none} isEmpty={rows.length === 0}>
+      {rows.map((r) => {
+        const subtitleParts = [r.pot, r.category, r.whenFormatted].filter(Boolean);
+        return (
+          <DataCard
+            key={r.id}
+            title={r.description}
+            titleRight={r.amountFormatted}
+            subtitle={subtitleParts.join(' · ')}
+            badges={
+              r.cancelled ? (
+                <StatusBadge tone="neutral" icon={<StatusCancelledIcon size={14} />}>
+                  {m.common.cancelled}
+                </StatusBadge>
+              ) : null
+            }
+            actions={r.showCancel ? <CancelSpendingButton id={r.id} /> : null}
+          />
+        );
+      })}
+    </DataList>
   );
 }

@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Button, KIND, SIZE } from 'baseui/button';
-import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { revokeInvite } from '@/server/actions/members-server';
 import { useLocale, useMessages } from '@/app/_i18n-provider';
 import { formatDate } from '@/shared/i18n';
+import { DataList } from '@/ui/data-list';
+import { DataCard } from '@/ui/data-card';
 import { Muted } from '@/ui/text';
 
 export interface PendingInviteRow {
@@ -26,19 +27,16 @@ export function PendingInvitesTable({ rows }: { rows: PendingInviteRow[] }) {
   const m = useMessages();
   const locale = useLocale();
   return (
-    <TableBuilder data={rows} emptyMessage={m.members.noPendingInvites}>
-      <TableBuilderColumn header={m.members.colHint}>
-        {(r: PendingInviteRow) =>
-          r.displayNameHint ? r.displayNameHint : <Muted>{m.members.hintEmpty}</Muted>
-        }
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.members.colCreated}>
-        {(r: PendingInviteRow) => <Muted>{formatDate(r.createdAt, locale)}</Muted>}
-      </TableBuilderColumn>
-      <TableBuilderColumn header={m.members.colActions}>
-        {(r: PendingInviteRow) => <RowActions row={r} />}
-      </TableBuilderColumn>
-    </TableBuilder>
+    <DataList emptyMessage={m.members.noPendingInvites} isEmpty={rows.length === 0}>
+      {rows.map((r) => (
+        <DataCard
+          key={r.id}
+          title={r.displayNameHint ? r.displayNameHint : <Muted>{m.members.hintEmpty}</Muted>}
+          subtitle={formatDate(r.createdAt, locale)}
+          actions={<RowActions row={r} />}
+        />
+      ))}
+    </DataList>
   );
 }
 
@@ -58,7 +56,7 @@ function RowActions({ row }: { row: PendingInviteRow }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard may be blocked; ignore — user can still read the link from the modal
+      // clipboard may be blocked; ignore
     }
   }
 
@@ -68,7 +66,7 @@ function RowActions({ row }: { row: PendingInviteRow }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <>
       <Button kind={KIND.secondary} size={SIZE.compact} onClick={onCopy}>
         {copied ? m.members.copied : m.members.copyLink}
       </Button>
@@ -80,6 +78,6 @@ function RowActions({ row }: { row: PendingInviteRow }) {
       >
         {m.members.revoke}
       </Button>
-    </div>
+    </>
   );
 }
