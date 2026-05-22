@@ -41,14 +41,20 @@ describe('payment actions', () => {
     expect(r.payment.method).toBe('cash');
   });
 
-  it('suggestFifoAllocation returns FIFO breakdown', async () => {
+  it('listOpenChargesForPayer returns open charges with remaining amounts', async () => {
     const c1 = await createAdhocCharge(db, { userId: memberId, amount: 100, description: 'a', createdByUserId: adminId });
     const c2 = await createAdhocCharge(db, { userId: memberId, amount: 100, description: 'b', createdByUserId: adminId });
     const a = makePaymentActions({ getDb: () => db });
-    const r = await a.suggestFifoAllocation({ payerUserId: memberId, amount: 150 });
-    expect(r).toEqual([
-      { chargeId: c1.id, amount: 100 },
-      { chargeId: c2.id, amount: 50 },
+    await a.recordPayment({
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 40,
+      allocations: [{ chargeId: c1.id, amount: 40 }],
+    });
+    const r = await a.listOpenChargesForPayer({ payerUserId: memberId });
+    expect(r.map((c) => ({ id: c.id, remaining: c.remainingCents }))).toEqual([
+      { id: c1.id, remaining: 60 },
+      { id: c2.id, remaining: 100 },
     ]);
   });
 

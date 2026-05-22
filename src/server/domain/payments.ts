@@ -115,18 +115,27 @@ export async function listPaymentsByPayer(db: Db, payerUserId: string) {
     .all();
 }
 
+export type ChargeType = 'monthly_dues' | 'out_of_bounds' | 'adhoc' | 'pot_borrow';
+
+export interface FifoAllocateOptions {
+  chargeTypes?: ChargeType[];
+}
+
 export async function fifoAllocate(
   db: Db,
   payerUserId: string,
   amount: number,
+  opts: FifoAllocateOptions = {},
 ): Promise<AllocationInput[]> {
   // Returns allocations covering up to `amount`. Any excess (amount > open debt)
   // becomes the payer's subscription-wallet credit when the payment is recorded.
   let remaining = amount;
   const result: AllocationInput[] = [];
   const open = await listOpenChargesForMember(db, payerUserId);
+  const typeFilter = opts.chargeTypes ? new Set<string>(opts.chargeTypes) : null;
   for (const c of open) {
     if (remaining <= 0) break;
+    if (typeFilter && !typeFilter.has(c.type)) continue;
     const already = await sumAllocationsForCharge(db, c.id);
     const headroom = c.amount - already;
     if (headroom <= 0) continue;

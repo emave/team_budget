@@ -169,8 +169,16 @@ export const MESSAGES_RU: Messages = {
     methodLabel: 'Способ',
     amountLabel: 'Сумма',
     noteLabel: 'Заметка (необязательно)',
-    suggestFifo: 'Подобрать распределение (FIFO)',
-    allocationsHeading: 'Распределение:',
+    allocationsHeading: 'Распределение',
+    allocCharge: 'Начисление',
+    allocRemaining: 'Открыто',
+    allocAmount: 'Сумма',
+    allocTotal: (sum: string, amount: string) => `Распределено: ${sum} / ${amount}`,
+    excessToWallet: (excess: string, member: string) =>
+      `Излишек: ${excess} → кошелёк ${member}`,
+    allocationsExceed: 'Распределено больше суммы',
+    noOpenChargesHint: (member: string) =>
+      `Открытых начислений нет. Сумма поступит в кошелёк ${member} и автоматически покроет ближайшую месячную подписку.`,
     submit: 'Записать платёж',
   },
 
@@ -389,17 +397,26 @@ export const MESSAGES_RU: Messages = {
       noActiveMembers: 'Активных участников нет.',
       whoPaid: 'Кто внёс платёж?',
       settledAborted: 'У этого участника нет долгов. Действие отменено.',
-      owesAmountPrompt: (amount: string) => `Долг: ${amount}. Какая сумма внесена?`,
+      subscriptionDebtPrompt: (amount: string) =>
+        `Открытая подписка: ${amount}. Какая сумма внесена?`,
+      noSubscriptionDebtConfirm: (name: string) =>
+        `У ${name} нет открытой подписки. Записать платёж как пополнение кошелька?`,
+      depositAmountPrompt: 'Сколько внести?',
+      depositedToWallet: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} зачислено в кошелёк ${name}. Баланс: ${balance}.`,
       invalidAmount: 'Некорректная сумма. Действие отменено.',
       exceedsDebt: (amount: string) =>
-        `Сумма превышает текущий долг (${amount}). Действие отменено.`,
+        `Сумма превышает открытую подписку (${amount}). Действие отменено.`,
+      cancelled: 'Отменено.',
       cashOrCard: 'Наличные или карта?',
       btnCash: '💵 Наличные',
       btnCard: '💳 Карта',
       recorded: (method: string, amount: string, remaining: string) =>
-        `✅ Записан платёж ${method} на ${amount}. Остаток: ${remaining}.`,
+        `✅ Записан платёж ${method} на ${amount}. Остаток подписки: ${remaining}.`,
       notifyPaid: (amount: string, method: string, remaining: string) =>
-        `💵 Платёж ${amount} (${method}) записан. Остаток: ${remaining}.`,
+        `💵 Платёж ${amount} (${method}) записан. Остаток подписки: ${remaining}.`,
+      notifyDeposit: (amount: string, method: string, balance: string) =>
+        `💰 ${amount} (${method}) зачислено в ваш кошелёк. Баланс: ${balance}.`,
     },
     guestDeposit: {
       amountPrompt: 'Сумма? (например, 30.00)',
@@ -480,7 +497,6 @@ export const MESSAGES_RU: Messages = {
     payFromCreditCta: (available: string) => `Оплатить из кошелька (доступно: ${available})`,
     payFromCreditConfirm: (amount: string) =>
       `Списать ${amount} из кошелька участника на этот долг?`,
-    depositToggle: 'Только пополнение (без погашения долгов)',
     overAmountNote: (excess: string, member: string) =>
       `${excess} зачислится в кошелёк ${member}`,
     deactivateConfirmTitle: 'У участника есть остаток в кошельке',
@@ -557,7 +573,7 @@ export const MESSAGES_RU: Messages = {
       refundDone: (name: string, amount: string, balance: string) =>
         `✅ ${amount} возвращено из кошелька ${name}. Баланс: ${balance}.`,
       payOverpaymentPrompt: (excess: string, name: string) =>
-        `Сумма на ${excess} больше открытого долга. Зачислить излишек в кошелёк ${name}?`,
+        `Сумма на ${excess} больше открытой подписки. Зачислить излишек в кошелёк ${name}?`,
       btnYes: 'Да',
       btnNo: 'Нет',
     },

@@ -3,7 +3,7 @@
 import {
   recordPayment as r,
   cancelPayment as c,
-  suggestFifoAllocation as s,
+  listOpenChargesForPayer as l,
 } from './payments';
 
 export async function recordPayment(input: unknown) {
@@ -12,6 +12,6 @@ export async function recordPayment(input: unknown) {
 export async function cancelPayment(input: { id: string }) {
   return c(input);
 }
-export async function suggestFifoAllocation(input: unknown) {
-  return s(input as never);
+export async function listOpenChargesForPayer(input: { payerUserId: string }) {
+  return l(input as never);
 }

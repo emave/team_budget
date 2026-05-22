@@ -3,15 +3,29 @@ import { z } from 'zod';
 import { makeAdminAction } from './_wrapper';
 import { getDb as defaultGetDb } from '@/server/db/client';
 import type { Db } from '@/server/domain/types';
-import { recordPaymentSchema, idSchema, moneySchema } from '@/shared/schemas';
+import { recordPaymentSchema, idSchema } from '@/shared/schemas';
 import {
   recordPayment as domainRecord,
   cancelPayment as domainCancel,
-  fifoAllocate,
 } from '@/server/domain/payments';
 import { getNotifier } from '@/server/bot/notifications';
 import { formatCents } from '@/shared/format';
-import { getMemberOutstandingDebt } from '@/server/domain/charges';
+import {
+  getMemberOutstandingDebt,
+  listOpenChargesForMember,
+  sumAllocationsForCharge,
+} from '@/server/domain/charges';
+
+export interface OpenChargeForPayer {
+  id: string;
+  type: 'monthly_dues' | 'out_of_bounds' | 'adhoc' | 'pot_borrow';
+  description: string;
+  amount: number;
+  allocatedCents: number;
+  remainingCents: number;
+  billingPeriod: string | null;
+  createdAt: string;
+}
 
 export function makePaymentActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
   const adminAction = makeAdminAction(deps);
@@ -36,16 +50,33 @@ export function makePaymentActions(deps: { getDb: () => Db } = { getDb: defaultG
     return domainCancel(db, id);
   });
 
-  const suggestSchema = z.object({ payerUserId: idSchema, amount: moneySchema });
-  const suggestFifoAllocation = adminAction(async ({ db }, input: unknown) => {
-    const p = suggestSchema.parse(input);
-    return fifoAllocate(db, p.payerUserId, p.amount);
+  const listOpenChargesSchema = z.object({ payerUserId: idSchema });
+  const listOpenChargesForPayer = adminAction(async ({ db }, input: unknown) => {
+    const { payerUserId } = listOpenChargesSchema.parse(input);
+    const charges = await listOpenChargesForMember(db, payerUserId);
+    const out: OpenChargeForPayer[] = [];
+    for (const c of charges) {
+      const allocated = await sumAllocationsForCharge(db, c.id);
+      const remaining = c.amount - allocated;
+      if (remaining <= 0) continue;
+      out.push({
+        id: c.id,
+        type: c.type,
+        description: c.description,
+        amount: c.amount,
+        allocatedCents: allocated,
+        remainingCents: remaining,
+        billingPeriod: c.billingPeriod,
+        createdAt: c.createdAt,
+      });
+    }
+    return out;
   });
 
-  return { recordPayment, cancelPayment, suggestFifoAllocation };
+  return { recordPayment, cancelPayment, listOpenChargesForPayer };
 }
 
 const prod = makePaymentActions();
 export const recordPayment = prod.recordPayment;
 export const cancelPayment = prod.cancelPayment;
-export const suggestFifoAllocation = prod.suggestFifoAllocation;
+export const listOpenChargesForPayer = prod.listOpenChargesForPayer;

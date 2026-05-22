@@ -169,6 +169,17 @@ export async function getMemberOutstandingDebt(db: Db, userId: string): Promise<
   return total;
 }
 
+export async function getMemberSubscriptionDebt(db: Db, userId: string): Promise<number> {
+  const open = await listOpenChargesForMember(db, userId);
+  let total = 0;
+  for (const c of open) {
+    if (c.type !== 'monthly_dues') continue;
+    const allocated = await sumAllocationsForCharge(db, c.id);
+    total += c.amount - allocated;
+  }
+  return total;
+}
+
 export interface SplitAllocation {
   userId: string;
   amount: number;

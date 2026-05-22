@@ -165,8 +165,16 @@ export const MESSAGES_EN = {
     methodLabel: 'Method',
     amountLabel: 'Amount',
     noteLabel: 'Note (optional)',
-    suggestFifo: 'Suggest FIFO allocation',
-    allocationsHeading: 'Allocations:',
+    allocationsHeading: 'Allocations',
+    allocCharge: 'Charge',
+    allocRemaining: 'Open',
+    allocAmount: 'Amount',
+    allocTotal: (sum: string, amount: string) => `Allocated: ${sum} / ${amount}`,
+    excessToWallet: (excess: string, member: string) =>
+      `Excess: ${excess} → ${member}'s wallet`,
+    allocationsExceed: 'Allocations exceed amount',
+    noOpenChargesHint: (member: string) =>
+      `No open charges. The amount will go to ${member}'s wallet and auto-cover the next monthly subscription.`,
     submit: 'Record payment',
   },
 
@@ -383,16 +391,26 @@ Admin commands (admin only):
       noActiveMembers: 'No active members.',
       whoPaid: 'Who paid?',
       settledAborted: 'That member is settled. Aborted.',
-      owesAmountPrompt: (amount: string) => `They owe ${amount}. Amount paid?`,
+      subscriptionDebtPrompt: (amount: string) =>
+        `Open subscription: ${amount}. Amount paid?`,
+      noSubscriptionDebtConfirm: (name: string) =>
+        `${name} has no open subscription. Record the payment as a wallet deposit?`,
+      depositAmountPrompt: 'How much to deposit?',
+      depositedToWallet: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} added to ${name}'s wallet. Balance: ${balance}.`,
       invalidAmount: 'Invalid amount. Aborted.',
-      exceedsDebt: (amount: string) => `Amount exceeds outstanding debt (${amount}). Aborted.`,
+      exceedsDebt: (amount: string) =>
+        `Amount exceeds open subscription (${amount}). Aborted.`,
+      cancelled: 'Cancelled.',
       cashOrCard: 'Cash or card?',
       btnCash: '💵 Cash',
       btnCard: '💳 Card',
       recorded: (method: string, amount: string, remaining: string) =>
-        `✅ Recorded ${method} payment of ${amount}. Remaining: ${remaining}.`,
+        `✅ Recorded ${method} payment of ${amount}. Subscription remaining: ${remaining}.`,
       notifyPaid: (amount: string, method: string, remaining: string) =>
-        `💵 Payment ${amount} (${method}) recorded. Remaining: ${remaining}.`,
+        `💵 Payment ${amount} (${method}) recorded. Subscription remaining: ${remaining}.`,
+      notifyDeposit: (amount: string, method: string, balance: string) =>
+        `💰 ${amount} (${method}) added to your subscription wallet. Balance: ${balance}.`,
     },
     guestDeposit: {
       amountPrompt: 'Amount? (e.g., 30.00)',
@@ -472,7 +490,6 @@ Admin commands (admin only):
     payFromCreditCta: (available: string) => `Pay from credit (${available} available)`,
     payFromCreditConfirm: (amount: string) =>
       `Apply ${amount} from this member's wallet to this charge?`,
-    depositToggle: 'Deposit only (no charges to settle)',
     overAmountNote: (excess: string, member: string) =>
       `${excess} will be added to ${member}'s subscription wallet`,
     deactivateConfirmTitle: 'This member has credit',
@@ -549,7 +566,7 @@ Admin commands (admin only):
       refundDone: (name: string, amount: string, balance: string) =>
         `✅ ${amount} refunded from ${name}'s wallet. Balance: ${balance}.`,
       payOverpaymentPrompt: (excess: string, name: string) =>
-        `Amount is ${excess} more than open debt. Deposit excess to ${name}'s wallet?`,
+        `Amount is ${excess} more than open subscription. Deposit excess to ${name}'s wallet?`,
       btnYes: 'Yes',
       btnNo: 'No',
     },
