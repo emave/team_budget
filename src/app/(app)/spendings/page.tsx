@@ -34,6 +34,7 @@ export default async function SpendingsPage() {
     <div>
       <PageHeader
         title={m.spendings.title}
+        subtitle={m.spendings.subtitle}
         actions={me.role === 'admin' ? <LinkButton href="/spendings/new">{m.spendings.record}</LinkButton> : null}
       />
       <Panel>

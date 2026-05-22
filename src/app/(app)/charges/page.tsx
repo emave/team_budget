@@ -38,6 +38,7 @@ export default async function ChargesPage({ searchParams }: { searchParams: { st
     <div>
       <PageHeader
         title={m.charges.title}
+        subtitle={m.charges.subtitle}
         actions={me.role === 'admin' ? <LinkButton href="/charges/new">{m.charges.newCharge}</LinkButton> : null}
       />
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, fontSize: 13 }}>

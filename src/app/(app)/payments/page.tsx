@@ -32,6 +32,7 @@ export default async function PaymentsPage() {
     <div>
       <PageHeader
         title={m.payments.title}
+        subtitle={m.payments.subtitle}
         actions={me.role === 'admin' ? <LinkButton href="/payments/new">{m.payments.record}</LinkButton> : null}
       />
       <Panel>
