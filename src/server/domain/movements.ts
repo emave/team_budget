@@ -1,5 +1,12 @@
 import { and, eq, gte, isNull, lte } from 'drizzle-orm';
-import { payments, spendings, users, guests, guestDeposits } from '@/server/db/schema';
+import {
+  payments,
+  spendings,
+  users,
+  guests,
+  guestDeposits,
+  creditMovements,
+} from '@/server/db/schema';
 import type { Db } from './types';
 
 export type Movement =
@@ -30,6 +37,16 @@ export type Movement =
       amount: number;
       pot: 'cash' | 'card';
       description: string;
+    }
+  | {
+      kind: 'credit_refund';
+      id: string;
+      at: string;
+      amount: number;
+      method: 'cash' | 'card';
+      userId: string;
+      userDisplayName: string;
+      note: string | null;
     };
 
 export async function listMoneyMovements(
@@ -54,8 +71,31 @@ export async function listMoneyMovements(
     .where(
       and(
         isNull(payments.cancelledAt),
+        eq(payments.excludeFromPot, false),
         gte(payments.receivedAt, fromBound),
         lte(payments.receivedAt, toBound),
+      ),
+    )
+    .all();
+
+  const rfs = db
+    .select({
+      id: creditMovements.id,
+      at: creditMovements.occurredAt,
+      amount: creditMovements.amount,
+      method: creditMovements.method,
+      userId: creditMovements.userId,
+      userDisplayName: users.displayName,
+      note: creditMovements.note,
+    })
+    .from(creditMovements)
+    .innerJoin(users, eq(users.id, creditMovements.userId))
+    .where(
+      and(
+        eq(creditMovements.kind, 'refund'),
+        isNull(creditMovements.cancelledAt),
+        gte(creditMovements.occurredAt, fromBound),
+        lte(creditMovements.occurredAt, toBound),
       ),
     )
     .all();
@@ -113,6 +153,11 @@ export async function listMoneyMovements(
     ...ss.map((s): Movement => ({
       kind: 'withdraw',
       id: s.id, at: s.at, amount: s.amount, pot: s.pot, description: s.description,
+    })),
+    ...rfs.map((r): Movement => ({
+      kind: 'credit_refund',
+      id: r.id, at: r.at, amount: r.amount, method: r.method!,
+      userId: r.userId, userDisplayName: r.userDisplayName, note: r.note,
     })),
   ];
 
