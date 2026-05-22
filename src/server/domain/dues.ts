@@ -31,41 +31,21 @@ export async function generateMonthlyDues(
     throw new Error('monthly_dues_amount must be set to a positive value before generating');
   }
 
-  const existing = db
-    .select({ userId: charges.userId })
-    .from(charges)
-    .where(and(eq(charges.type, 'monthly_dues'), eq(charges.billingPeriod, input.period)))
-    .all();
-  const have = new Set(existing.map((r) => r.userId));
-
   const active = db.select().from(users).where(eq(users.isActive, true)).all();
 
   let created = 0;
-  const createdIds: string[] = [];
-  db.transaction((tx) => {
-    for (const u of active) {
-      if (have.has(u.id)) continue;
-      const id = randomUUID();
-      tx.insert(charges)
-        .values({
-          id,
-          userId: u.id,
-          type: 'monthly_dues',
-          amount: s.monthlyDuesAmount,
-          description: `Monthly dues — ${input.period}`,
-          billingPeriod: input.period,
-          status: 'open',
-          createdByUserId: input.createdByUserId,
-        })
-        .run();
-      createdIds.push(id);
+  for (const u of active) {
+    try {
+      await chargeMemberDues(db, {
+        userId: u.id,
+        period: input.period,
+        createdByUserId: input.createdByUserId,
+      });
       created += 1;
+    } catch (err) {
+      if (err instanceof MemberAlreadyChargedError) continue;
+      throw err;
     }
-  });
-
-  const { consumeCreditForCharge } = await import('./credit');
-  for (const id of createdIds) {
-    await consumeCreditForCharge(db, id);
   }
 
   await setLastDuesGeneratedFor(db, input.period);
