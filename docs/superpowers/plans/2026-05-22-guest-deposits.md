@@ -26,6 +26,7 @@
 ## Task 1: Schema and migration
 
 **Files:**
+
 - Modify: [src/server/db/schema.ts](../../../src/server/db/schema.ts) — append two new table definitions at the end.
 - Create: `drizzle/0004_guests_and_guest_deposits.sql` (final name may differ — drizzle-kit picks the slug).
 - Create: `drizzle/meta/0004_snapshot.json` and update `drizzle/meta/_journal.json` (drizzle-kit generates).
@@ -39,8 +40,12 @@ export const guests = sqliteTable('guests', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  createdByUserId: text('created_by_user_id')
+    .notNull()
+    .references(() => users.id),
 });
 
 export const guestDeposits = sqliteTable('guest_deposits', {
@@ -51,8 +56,12 @@ export const guestDeposits = sqliteTable('guest_deposits', {
   note: text('note'),
   receivedAt: text('received_at').notNull(),
   cancelledAt: text('cancelled_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  createdByUserId: text('created_by_user_id')
+    .notNull()
+    .references(() => users.id),
 });
 ```
 
@@ -90,6 +99,7 @@ git commit -m "feat(schema): add guests and guest_deposits tables"
 ## Task 2: Domain — guests CRUD
 
 **Files:**
+
 - Create: `src/server/domain/guests.ts`
 - Test: `tests/domain/guests.test.ts`
 
@@ -242,6 +252,7 @@ git commit -m "feat(domain): guests CRUD with archive"
 ## Task 3: Domain — guest deposits
 
 **Files:**
+
 - Create: `src/server/domain/guest-deposits.ts`
 - Test: `tests/domain/guest-deposits.test.ts`
 
@@ -328,7 +339,11 @@ describe('guest-deposits domain', () => {
   });
 
   it('cancel is idempotent and excludes from sums', async () => {
-    const d = await recordGuestDeposit(db, { amount: 1000, method: 'cash', createdByUserId: adminId });
+    const d = await recordGuestDeposit(db, {
+      amount: 1000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
     await recordGuestDeposit(db, { amount: 2000, method: 'cash', createdByUserId: adminId });
     expect(await sumGuestDepositsByMethod(db, 'cash')).toBe(3000);
     await cancelGuestDeposit(db, d.id);
@@ -338,7 +353,12 @@ describe('guest-deposits domain', () => {
 
   it('list filters by guestId and excludes cancelled when asked', async () => {
     const g = await createGuest(db, { name: 'P', createdByUserId: adminId });
-    const a = await recordGuestDeposit(db, { guestId: g.id, amount: 100, method: 'cash', createdByUserId: adminId });
+    const a = await recordGuestDeposit(db, {
+      guestId: g.id,
+      amount: 100,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
     await recordGuestDeposit(db, { amount: 200, method: 'cash', createdByUserId: adminId });
     await cancelGuestDeposit(db, a.id);
     const all = await listGuestDeposits(db);
@@ -475,6 +495,7 @@ git commit -m "feat(domain): record/cancel/list/sum guest deposits"
 ## Task 4: Domain — guest deposit summary for matrix view
 
 **Files:**
+
 - Modify: `src/server/domain/guest-deposits.ts`
 - Test: `tests/domain/guest-deposits.test.ts` (extend)
 
@@ -483,41 +504,55 @@ git commit -m "feat(domain): record/cancel/list/sum guest deposits"
 Append to `tests/domain/guest-deposits.test.ts` inside the existing `describe`:
 
 ```ts
-  it('guestDepositSummary aggregates by date and guest', async () => {
-    const { guestDepositSummary } = await import('@/server/domain/guest-deposits');
-    const g1 = await createGuest(db, { name: 'P', createdByUserId: adminId });
-    const g2 = await createGuest(db, { name: 'V', createdByUserId: adminId });
-    await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 1000, method: 'cash',
-      receivedAt: '2026-05-15T10:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 500, method: 'cash',
-      receivedAt: '2026-05-15T18:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      guestId: g2.id, amount: 3000, method: 'card',
-      receivedAt: '2026-05-15T11:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      amount: 700, method: 'cash',
-      receivedAt: '2026-05-16T09:00:00.000Z', createdByUserId: adminId,
-    });
-    const cancelled = await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 999, method: 'cash',
-      receivedAt: '2026-05-15T12:00:00.000Z', createdByUserId: adminId,
-    });
-    await cancelGuestDeposit(db, cancelled.id);
-
-    const rows = await guestDepositSummary(db, { from: '2026-05-15', to: '2026-05-16' });
-    // Two deposits for g1 on 2026-05-15 collapse to 1500; cancelled excluded.
-    const find = (date: string, guestId: string | null) =>
-      rows.find((r) => r.date === date && r.guestId === guestId)?.amount;
-    expect(find('2026-05-15', g1.id)).toBe(1500);
-    expect(find('2026-05-15', g2.id)).toBe(3000);
-    expect(find('2026-05-16', null)).toBe(700);
-    expect(rows.length).toBe(3);
+it('guestDepositSummary aggregates by date and guest', async () => {
+  const { guestDepositSummary } = await import('@/server/domain/guest-deposits');
+  const g1 = await createGuest(db, { name: 'P', createdByUserId: adminId });
+  const g2 = await createGuest(db, { name: 'V', createdByUserId: adminId });
+  await recordGuestDeposit(db, {
+    guestId: g1.id,
+    amount: 1000,
+    method: 'cash',
+    receivedAt: '2026-05-15T10:00:00.000Z',
+    createdByUserId: adminId,
   });
+  await recordGuestDeposit(db, {
+    guestId: g1.id,
+    amount: 500,
+    method: 'cash',
+    receivedAt: '2026-05-15T18:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  await recordGuestDeposit(db, {
+    guestId: g2.id,
+    amount: 3000,
+    method: 'card',
+    receivedAt: '2026-05-15T11:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  await recordGuestDeposit(db, {
+    amount: 700,
+    method: 'cash',
+    receivedAt: '2026-05-16T09:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  const cancelled = await recordGuestDeposit(db, {
+    guestId: g1.id,
+    amount: 999,
+    method: 'cash',
+    receivedAt: '2026-05-15T12:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  await cancelGuestDeposit(db, cancelled.id);
+
+  const rows = await guestDepositSummary(db, { from: '2026-05-15', to: '2026-05-16' });
+  // Two deposits for g1 on 2026-05-15 collapse to 1500; cancelled excluded.
+  const find = (date: string, guestId: string | null) =>
+    rows.find((r) => r.date === date && r.guestId === guestId)?.amount;
+  expect(find('2026-05-15', g1.id)).toBe(1500);
+  expect(find('2026-05-15', g2.id)).toBe(3000);
+  expect(find('2026-05-16', null)).toBe(700);
+  expect(rows.length).toBe(3);
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -531,7 +566,7 @@ Append to `src/server/domain/guest-deposits.ts`:
 
 ```ts
 export interface GuestDepositSummaryRow {
-  date: string;          // YYYY-MM-DD (UTC)
+  date: string; // YYYY-MM-DD (UTC)
   guestId: string | null;
   amount: number;
 }
@@ -577,6 +612,7 @@ git commit -m "feat(domain): guestDepositSummary aggregation for matrix view"
 ## Task 5: Fold guest deposits into pot balances
 
 **Files:**
+
 - Modify: [src/server/domain/pots.ts](../../../src/server/domain/pots.ts)
 - Test: [tests/domain/pots.test.ts](../../../tests/domain/pots.test.ts) (extend)
 
@@ -585,17 +621,21 @@ git commit -m "feat(domain): guestDepositSummary aggregation for matrix view"
 Append a new `it()` block to `tests/domain/pots.test.ts`. Read the existing imports first; the test should look like:
 
 ```ts
-  it('includes guest deposits in pot balances and excludes cancelled', async () => {
-    // assumes db, adminId already in scope from existing beforeEach
-    const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
-    await recordGuestDeposit(db, { amount: 1500, method: 'cash', createdByUserId: adminId });
-    await recordGuestDeposit(db, { amount: 500, method: 'card', createdByUserId: adminId });
-    const cancelled = await recordGuestDeposit(db, { amount: 999, method: 'cash', createdByUserId: adminId });
-    await cancelGuestDeposit(db, cancelled.id);
-    const bal = await getPotBalances(db);
-    expect(bal.cash).toBe(1500);
-    expect(bal.card).toBe(500);
+it('includes guest deposits in pot balances and excludes cancelled', async () => {
+  // assumes db, adminId already in scope from existing beforeEach
+  const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
+  await recordGuestDeposit(db, { amount: 1500, method: 'cash', createdByUserId: adminId });
+  await recordGuestDeposit(db, { amount: 500, method: 'card', createdByUserId: adminId });
+  const cancelled = await recordGuestDeposit(db, {
+    amount: 999,
+    method: 'cash',
+    createdByUserId: adminId,
   });
+  await cancelGuestDeposit(db, cancelled.id);
+  const bal = await getPotBalances(db);
+  expect(bal.cash).toBe(1500);
+  expect(bal.card).toBe(500);
+});
 ```
 
 Use the existing `describe`/`beforeEach` structure in `pots.test.ts`. If existing tests don't share `adminId` via outer scope, follow the same setup pattern they use.
@@ -619,21 +659,18 @@ Replace the body of `getPotBalances`:
 
 ```ts
 export async function getPotBalances(db: Db): Promise<PotBalances> {
-  const [
-    s,
-    cashIn, cashOut, cashBorrow, cashGuest,
-    cardIn, cardOut, cardBorrow, cardGuest,
-  ] = await Promise.all([
-    getOrCreateSettings(db),
-    sumPaymentsByMethod(db, 'cash'),
-    sumSpendingsByPot(db, 'cash'),
-    sumPotBorrows(db, 'cash'),
-    sumGuestDepositsByMethod(db, 'cash'),
-    sumPaymentsByMethod(db, 'card'),
-    sumSpendingsByPot(db, 'card'),
-    sumPotBorrows(db, 'card'),
-    sumGuestDepositsByMethod(db, 'card'),
-  ]);
+  const [s, cashIn, cashOut, cashBorrow, cashGuest, cardIn, cardOut, cardBorrow, cardGuest] =
+    await Promise.all([
+      getOrCreateSettings(db),
+      sumPaymentsByMethod(db, 'cash'),
+      sumSpendingsByPot(db, 'cash'),
+      sumPotBorrows(db, 'cash'),
+      sumGuestDepositsByMethod(db, 'cash'),
+      sumPaymentsByMethod(db, 'card'),
+      sumSpendingsByPot(db, 'card'),
+      sumPotBorrows(db, 'card'),
+      sumGuestDepositsByMethod(db, 'card'),
+    ]);
   return {
     cash: s.cashOpeningCents + cashIn + cashGuest - cashOut - cashBorrow,
     card: s.cardOpeningCents + cardIn + cardGuest - cardOut - cardBorrow,
@@ -658,6 +695,7 @@ git commit -m "feat(pots): include guest deposits in pot balances"
 ## Task 6: Fold guest deposits into money movements
 
 **Files:**
+
 - Modify: [src/server/domain/movements.ts](../../../src/server/domain/movements.ts)
 - Test: [tests/domain/movements.test.ts](../../../tests/domain/movements.test.ts) (extend)
 
@@ -666,32 +704,40 @@ git commit -m "feat(pots): include guest deposits in pot balances"
 Append a new `it()` to `tests/domain/movements.test.ts`:
 
 ```ts
-  it('includes guest_deposit events (named and anonymous)', async () => {
-    const { createGuest } = await import('@/server/domain/guests');
-    const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
-    const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
-    await recordGuestDeposit(db, {
-      guestId: g.id, amount: 4000, method: 'cash',
-      receivedAt: '2026-05-15T10:00:00.000Z', note: 'sat game', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      amount: 2000, method: 'card',
-      receivedAt: '2026-05-15T11:00:00.000Z', createdByUserId: adminId,
-    });
-    const cancelled = await recordGuestDeposit(db, {
-      amount: 999, method: 'cash',
-      receivedAt: '2026-05-15T12:00:00.000Z', createdByUserId: adminId,
-    });
-    await cancelGuestDeposit(db, cancelled.id);
-
-    const events = await listMoneyMovements(db, { from: '2026-05-15', to: '2026-05-15' });
-    const guests = events.filter((e) => e.kind === 'guest_deposit');
-    expect(guests.length).toBe(2);
-    const named = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id);
-    const anon = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === null);
-    expect(named && named.kind === 'guest_deposit' && named.guestName).toBe('Pasha');
-    expect(anon && anon.kind === 'guest_deposit' && anon.guestName).toBe(null);
+it('includes guest_deposit events (named and anonymous)', async () => {
+  const { createGuest } = await import('@/server/domain/guests');
+  const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
+  const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
+  await recordGuestDeposit(db, {
+    guestId: g.id,
+    amount: 4000,
+    method: 'cash',
+    receivedAt: '2026-05-15T10:00:00.000Z',
+    note: 'sat game',
+    createdByUserId: adminId,
   });
+  await recordGuestDeposit(db, {
+    amount: 2000,
+    method: 'card',
+    receivedAt: '2026-05-15T11:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  const cancelled = await recordGuestDeposit(db, {
+    amount: 999,
+    method: 'cash',
+    receivedAt: '2026-05-15T12:00:00.000Z',
+    createdByUserId: adminId,
+  });
+  await cancelGuestDeposit(db, cancelled.id);
+
+  const events = await listMoneyMovements(db, { from: '2026-05-15', to: '2026-05-15' });
+  const guests = events.filter((e) => e.kind === 'guest_deposit');
+  expect(guests.length).toBe(2);
+  const named = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id);
+  const anon = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === null);
+  expect(named && named.kind === 'guest_deposit' && named.guestName).toBe('Pasha');
+  expect(anon && anon.kind === 'guest_deposit' && anon.guestName).toBe(null);
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -806,20 +852,40 @@ export async function listMoneyMovements(
     .all();
 
   const merged: Movement[] = [
-    ...ps.map((p): Movement => ({
-      kind: 'deposit',
-      id: p.id, at: p.at, amount: p.amount, method: p.method,
-      payerUserId: p.payerUserId, payerDisplayName: p.payerDisplayName, note: p.note,
-    })),
-    ...gs.map((g): Movement => ({
-      kind: 'guest_deposit',
-      id: g.id, at: g.at, amount: g.amount, method: g.method,
-      guestId: g.guestId, guestName: g.guestName, note: g.note,
-    })),
-    ...ss.map((s): Movement => ({
-      kind: 'withdraw',
-      id: s.id, at: s.at, amount: s.amount, pot: s.pot, description: s.description,
-    })),
+    ...ps.map(
+      (p): Movement => ({
+        kind: 'deposit',
+        id: p.id,
+        at: p.at,
+        amount: p.amount,
+        method: p.method,
+        payerUserId: p.payerUserId,
+        payerDisplayName: p.payerDisplayName,
+        note: p.note,
+      }),
+    ),
+    ...gs.map(
+      (g): Movement => ({
+        kind: 'guest_deposit',
+        id: g.id,
+        at: g.at,
+        amount: g.amount,
+        method: g.method,
+        guestId: g.guestId,
+        guestName: g.guestName,
+        note: g.note,
+      }),
+    ),
+    ...ss.map(
+      (s): Movement => ({
+        kind: 'withdraw',
+        id: s.id,
+        at: s.at,
+        amount: s.amount,
+        pot: s.pot,
+        description: s.description,
+      }),
+    ),
   ];
 
   merged.sort((a, b) => {
@@ -833,7 +899,7 @@ export async function listMoneyMovements(
 
 - [ ] **Step 4: Update dashboard renderer to skip-safely**
 
-Open [src/app/(app)/dashboard/page.tsx](../../../src/app/(app)/dashboard/page.tsx) and any component that switches on `movement.kind`. Add a `case 'guest_deposit':` branch rendering it like a deposit row with the guest name (fallback "Guest" when null). If the dashboard doesn't switch on kind exhaustively, no change needed — TypeScript will flag it via `tsc`.
+Open [src/app/(app)/dashboard/page.tsx](<../../../src/app/(app)/dashboard/page.tsx>) and any component that switches on `movement.kind`. Add a `case 'guest_deposit':` branch rendering it like a deposit row with the guest name (fallback "Guest" when null). If the dashboard doesn't switch on kind exhaustively, no change needed — TypeScript will flag it via `tsc`.
 
 Run: `pnpm typecheck`
 Expected: PASS, or PASS once the new branch is added. If errors point at switch-statements, add a `case 'guest_deposit':` that mirrors `case 'deposit':` with `guestName ?? 'Guest'`.
@@ -855,29 +921,40 @@ git commit -m "feat(movements): include guest deposits in money movements"
 ## Task 7: Fold guest deposits into Mini App recent activity
 
 **Files:**
+
 - Modify: [src/server/domain/activity.ts](../../../src/server/domain/activity.ts)
 - Test: [tests/domain/activity.test.ts](../../../tests/domain/activity.test.ts) (extend)
-- Modify (if it switches on `event.kind` exhaustively): Mini App home in [src/app/(mini)/mini/page.tsx](../../../src/app/(mini)/mini/page.tsx) and any recent-activity renderer it uses.
+- Modify (if it switches on `event.kind` exhaustively): Mini App home in [src/app/(mini)/mini/page.tsx](<../../../src/app/(mini)/mini/page.tsx>) and any recent-activity renderer it uses.
 
 - [ ] **Step 1: Write failing test**
 
 Append a new `it()` to `tests/domain/activity.test.ts`:
 
 ```ts
-  it('includes guest_deposit events with name resolution', async () => {
-    const { createGuest } = await import('@/server/domain/guests');
-    const { recordGuestDeposit } = await import('@/server/domain/guest-deposits');
-    const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
-    await recordGuestDeposit(db, { guestId: g.id, amount: 100, method: 'cash', createdByUserId: adminId });
-    await recordGuestDeposit(db, { amount: 200, method: 'card', createdByUserId: adminId });
-    const events = await recentActivity(db, 10);
-    const guests = events.filter((e) => e.kind === 'guest_deposit');
-    expect(guests.length).toBe(2);
-    expect(
-      guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id)?.kind === 'guest_deposit'
-        && (guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id) as { guestName: string | null }).guestName,
-    ).toBe('Pasha');
+it('includes guest_deposit events with name resolution', async () => {
+  const { createGuest } = await import('@/server/domain/guests');
+  const { recordGuestDeposit } = await import('@/server/domain/guest-deposits');
+  const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
+  await recordGuestDeposit(db, {
+    guestId: g.id,
+    amount: 100,
+    method: 'cash',
+    createdByUserId: adminId,
   });
+  await recordGuestDeposit(db, { amount: 200, method: 'card', createdByUserId: adminId });
+  const events = await recentActivity(db, 10);
+  const guests = events.filter((e) => e.kind === 'guest_deposit');
+  expect(guests.length).toBe(2);
+  expect(
+    guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id)?.kind ===
+      'guest_deposit' &&
+      (
+        guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id) as {
+          guestName: string | null;
+        }
+      ).guestName,
+  ).toBe('Pasha');
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -904,20 +981,20 @@ Add to the `ActivityEvent` union:
 In `recentActivity`, add a fourth query mirroring the payments one:
 
 ```ts
-  const gs = db
-    .select({
-      id: guestDeposits.id,
-      createdAt: guestDeposits.createdAt,
-      amount: guestDeposits.amount,
-      method: guestDeposits.method,
-      guestId: guestDeposits.guestId,
-      guestName: guests.name,
-    })
-    .from(guestDeposits)
-    .leftJoin(guests, eq(guests.id, guestDeposits.guestId))
-    .orderBy(desc(guestDeposits.createdAt))
-    .limit(limit)
-    .all();
+const gs = db
+  .select({
+    id: guestDeposits.id,
+    createdAt: guestDeposits.createdAt,
+    amount: guestDeposits.amount,
+    method: guestDeposits.method,
+    guestId: guestDeposits.guestId,
+    guestName: guests.name,
+  })
+  .from(guestDeposits)
+  .leftJoin(guests, eq(guests.id, guestDeposits.guestId))
+  .orderBy(desc(guestDeposits.createdAt))
+  .limit(limit)
+  .all();
 ```
 
 And in the `events` array spread, add:
@@ -936,7 +1013,7 @@ And in the `events` array spread, add:
 
 - [ ] **Step 4: Update Mini App renderer**
 
-Open [src/app/(mini)/mini/page.tsx](../../../src/app/(mini)/mini/page.tsx). Find the renderer that switches on `event.kind`. Add a branch for `guest_deposit` that mirrors the `payment` branch, displaying `event.guestName ?? m.guests.anonymous` as the title (`m.guests.anonymous` will be added in Task 10).
+Open [src/app/(mini)/mini/page.tsx](<../../../src/app/(mini)/mini/page.tsx>). Find the renderer that switches on `event.kind`. Add a branch for `guest_deposit` that mirrors the `payment` branch, displaying `event.guestName ?? m.guests.anonymous` as the title (`m.guests.anonymous` will be added in Task 10).
 
 Run: `pnpm typecheck`
 Expected: PASS — if any exhaustive-check fails point at activity, add the new branch.
@@ -958,6 +1035,7 @@ git commit -m "feat(activity): include guest deposits in Mini App recent activit
 ## Task 8: Zod schemas for actions
 
 **Files:**
+
 - Modify: [src/shared/schemas.ts](../../../src/shared/schemas.ts)
 
 - [ ] **Step 1: Append schemas**
@@ -1009,6 +1087,7 @@ git commit -m "feat(schemas): zod input schemas for guests and guest deposits"
 ## Task 9: Server actions
 
 **Files:**
+
 - Create: `src/server/actions/guests.ts`
 - Create: `src/server/actions/guests-server.ts`
 - Create: `src/server/actions/guest-deposits.ts`
@@ -1024,11 +1103,7 @@ import 'server-only';
 import { makeAdminAction } from './_wrapper';
 import { getDb as defaultGetDb } from '@/server/db/client';
 import type { Db } from '@/server/domain/types';
-import {
-  createGuestSchema,
-  renameGuestSchema,
-  archiveGuestSchema,
-} from '@/shared/schemas';
+import { createGuestSchema, renameGuestSchema, archiveGuestSchema } from '@/shared/schemas';
 import {
   createGuest as domainCreate,
   renameGuest as domainRename,
@@ -1060,9 +1135,11 @@ export function makeGuestActions(deps: { getDb: () => Db } = { getDb: defaultGet
     return domainUnarchive(db, p.id);
   });
 
-  const listGuests = adminAction(async ({ db }, input: { includeArchived?: boolean } | undefined) => {
-    return domainList(db, { includeArchived: input?.includeArchived ?? false });
-  });
+  const listGuests = adminAction(
+    async ({ db }, input: { includeArchived?: boolean } | undefined) => {
+      return domainList(db, { includeArchived: input?.includeArchived ?? false });
+    },
+  );
 
   return { createGuest, renameGuest, archiveGuest, unarchiveGuest, listGuests };
 }
@@ -1088,11 +1165,21 @@ import {
   listGuests as e,
 } from './guests';
 
-export async function createGuest(input: unknown) { return a(input as never); }
-export async function renameGuest(input: unknown) { return b(input as never); }
-export async function archiveGuest(input: { id: string }) { return c(input); }
-export async function unarchiveGuest(input: { id: string }) { return d(input); }
-export async function listGuests(input?: { includeArchived?: boolean }) { return e(input); }
+export async function createGuest(input: unknown) {
+  return a(input as never);
+}
+export async function renameGuest(input: unknown) {
+  return b(input as never);
+}
+export async function archiveGuest(input: { id: string }) {
+  return c(input);
+}
+export async function unarchiveGuest(input: { id: string }) {
+  return d(input);
+}
+export async function listGuests(input?: { includeArchived?: boolean }) {
+  return e(input);
+}
 ```
 
 - [ ] **Step 2: Implement guest-deposits actions**
@@ -1141,9 +1228,11 @@ export function makeGuestDepositActions(deps: { getDb: () => Db } = { getDb: def
     return domainSummary(db, p);
   });
 
-  const listGuestDeposits = adminAction(async ({ db }, input: { guestId?: string | null } | undefined) => {
-    return domainList(db, { guestId: input?.guestId ?? undefined });
-  });
+  const listGuestDeposits = adminAction(
+    async ({ db }, input: { guestId?: string | null } | undefined) => {
+      return domainList(db, { guestId: input?.guestId ?? undefined });
+    },
+  );
 
   return { recordGuestDeposit, cancelGuestDeposit, guestDepositSummary, listGuestDeposits };
 }
@@ -1167,10 +1256,18 @@ import {
   listGuestDeposits as d,
 } from './guest-deposits';
 
-export async function recordGuestDeposit(input: unknown) { return a(input as never); }
-export async function cancelGuestDeposit(input: { id: string }) { return b(input); }
-export async function guestDepositSummary(input: { from: string; to: string }) { return c(input); }
-export async function listGuestDeposits(input?: { guestId?: string | null }) { return d(input); }
+export async function recordGuestDeposit(input: unknown) {
+  return a(input as never);
+}
+export async function cancelGuestDeposit(input: { id: string }) {
+  return b(input);
+}
+export async function guestDepositSummary(input: { from: string; to: string }) {
+  return c(input);
+}
+export async function listGuestDeposits(input?: { guestId?: string | null }) {
+  return d(input);
+}
 ```
 
 - [ ] **Step 3: Add an admin-gate smoke test**
@@ -1232,6 +1329,7 @@ git commit -m "feat(actions): admin server actions for guests and guest deposits
 ## Task 10: i18n keys (en + ru)
 
 **Files:**
+
 - Modify: [src/shared/i18n/messages-en.ts](../../../src/shared/i18n/messages-en.ts)
 - Modify: [src/shared/i18n/messages-ru.ts](../../../src/shared/i18n/messages-ru.ts)
 
@@ -1319,7 +1417,7 @@ Add the same key shapes with Russian translations. Reasonable defaults:
     navTitle: 'Гости',
     pageTitle: 'Гости',
     depositsPageTitle: 'Взносы гостей',
-    addNew: '+ Новый гость',
+    addNew: 'Новый гость',
     anonymous: 'Гость',
     archivedSuffix: ' (архив)',
     showArchived: 'Показать архив',
@@ -1398,6 +1496,7 @@ git commit -m "feat(i18n): keys for guests and guest deposits (en, ru)"
 ## Task 11: Web roster page `/guests`
 
 **Files:**
+
 - Create: `src/app/(app)/guests/page.tsx`
 - Create: `src/app/(app)/guests/guests-table.tsx`
 - Create: `src/app/(app)/guests/new-guest-button.tsx`
@@ -1546,7 +1645,11 @@ export function NewGuestButton() {
   const [name, setName] = useState('');
   const create = useMutation({
     mutationFn: () => createGuest({ name }),
-    onSuccess: () => { setOpen(false); setName(''); router.refresh(); },
+    onSuccess: () => {
+      setOpen(false);
+      setName('');
+      router.refresh();
+    },
   });
   return (
     <>
@@ -1597,11 +1700,21 @@ export function RenameButton({ id, name }: { id: string; name: string }) {
   const [value, setValue] = useState(name);
   const mutate = useMutation({
     mutationFn: () => renameGuest({ id, name: value }),
-    onSuccess: () => { setOpen(false); router.refresh(); },
+    onSuccess: () => {
+      setOpen(false);
+      router.refresh();
+    },
   });
   return (
     <>
-      <Button kind={KIND.tertiary} size={SIZE.mini} onClick={() => { setValue(name); setOpen(true); }}>
+      <Button
+        kind={KIND.tertiary}
+        size={SIZE.mini}
+        onClick={() => {
+          setValue(name);
+          setOpen(true);
+        }}
+      >
         {m.guests.btnRename}
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
@@ -1610,7 +1723,9 @@ export function RenameButton({ id, name }: { id: string; name: string }) {
           <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} autoFocus />
         </ModalBody>
         <ModalFooter>
-          <ModalButton kind={KIND.tertiary} onClick={() => setOpen(false)}>{m.common.cancel}</ModalButton>
+          <ModalButton kind={KIND.tertiary} onClick={() => setOpen(false)}>
+            {m.common.cancel}
+          </ModalButton>
           <ModalButton onClick={() => mutate.mutate()} disabled={!value.trim() || mutate.isPending}>
             {m.common.save}
           </ModalButton>
@@ -1674,6 +1789,7 @@ git commit -m "feat(web): /guests roster page with create/rename/archive"
 ## Task 12: Web matrix view `/guests/deposits`
 
 **Files:**
+
 - Create: `src/app/(app)/guests/deposits/page.tsx`
 - Create: `src/app/(app)/guests/deposits/matrix.tsx`
 
@@ -1717,7 +1833,9 @@ export default async function GuestDepositsPage({
   const allGuests = await listGuests(db, { includeArchived: true });
   const summary = await guestDepositSummary(db, { from, to });
 
-  const guestsInRange = new Set(summary.map((s) => s.guestId).filter((id): id is string => id !== null));
+  const guestsInRange = new Set(
+    summary.map((s) => s.guestId).filter((id): id is string => id !== null),
+  );
   const hasAnon = summary.some((s) => s.guestId === null);
 
   const columns = allGuests
@@ -1769,8 +1887,7 @@ export function Matrix({ data }: { data: MatrixData }) {
   const cell = (date: string, guestId: string) => data.cells[`${date}|${guestId}`] ?? 0;
   const dayTotal = (date: string) =>
     data.columns.reduce((s, c) => s + cell(date, c.id), 0) + (data.hasAnon ? cell(date, '') : 0);
-  const colTotal = (guestId: string) =>
-    data.dates.reduce((s, d) => s + cell(d, guestId), 0);
+  const colTotal = (guestId: string) => data.dates.reduce((s, d) => s + cell(d, guestId), 0);
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
@@ -1779,7 +1896,8 @@ export function Matrix({ data }: { data: MatrixData }) {
             <th style={th}>—</th>
             {data.columns.map((c) => (
               <th key={c.id} style={th}>
-                {c.label}{c.archived && <span style={{ color: '#999' }}>{m.guests.archivedSuffix}</span>}
+                {c.label}
+                {c.archived && <span style={{ color: '#999' }}>{m.guests.archivedSuffix}</span>}
               </th>
             ))}
             {data.hasAnon && <th style={th}>{m.guests.anonymous}</th>}
@@ -1791,7 +1909,9 @@ export function Matrix({ data }: { data: MatrixData }) {
             <tr key={date}>
               <td style={td}>{date}</td>
               {data.columns.map((c) => (
-                <td key={c.id} style={tdNum}>{cell(date, c.id) ? formatCents(cell(date, c.id)) : ''}</td>
+                <td key={c.id} style={tdNum}>
+                  {cell(date, c.id) ? formatCents(cell(date, c.id)) : ''}
+                </td>
               ))}
               {data.hasAnon && (
                 <td style={tdNum}>{cell(date, '') ? formatCents(cell(date, '')) : ''}</td>
@@ -1804,7 +1924,9 @@ export function Matrix({ data }: { data: MatrixData }) {
           <tr>
             <td style={tdBold}>{m.guests.matrixGuestTotal}</td>
             {data.columns.map((c) => (
-              <td key={c.id} style={tdNumBold}>{formatCents(colTotal(c.id))}</td>
+              <td key={c.id} style={tdNumBold}>
+                {formatCents(colTotal(c.id))}
+              </td>
             ))}
             {data.hasAnon && <td style={tdNumBold}>{formatCents(colTotal(''))}</td>}
             <td style={tdNumBold}>
@@ -1817,9 +1939,23 @@ export function Matrix({ data }: { data: MatrixData }) {
   );
 }
 
-const th: React.CSSProperties = { textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13 };
-const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid #f4f4f4', fontSize: 14 };
-const tdNum: React.CSSProperties = { ...td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' };
+const th: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '8px 10px',
+  borderBottom: '1px solid #eee',
+  fontWeight: 600,
+  fontSize: 13,
+};
+const td: React.CSSProperties = {
+  padding: '6px 10px',
+  borderBottom: '1px solid #f4f4f4',
+  fontSize: 14,
+};
+const tdNum: React.CSSProperties = {
+  ...td,
+  textAlign: 'right',
+  fontVariantNumeric: 'tabular-nums',
+};
 const tdBold: React.CSSProperties = { ...td, fontWeight: 600 };
 const tdNumBold: React.CSSProperties = { ...tdNum, fontWeight: 600 };
 ```
@@ -1843,8 +1979,9 @@ git commit -m "feat(web): /guests/deposits date × guest matrix view"
 ## Task 13: Web `/payments/new` — guest deposit branch
 
 **Files:**
-- Modify: [src/app/(app)/payments/new/page.tsx](../../../src/app/(app)/payments/new/page.tsx) (pass guests list down)
-- Modify: [src/app/(app)/payments/new/record-form.tsx](../../../src/app/(app)/payments/new/record-form.tsx) (toggle + guest branch)
+
+- Modify: [src/app/(app)/payments/new/page.tsx](<../../../src/app/(app)/payments/new/page.tsx>) (pass guests list down)
+- Modify: [src/app/(app)/payments/new/record-form.tsx](<../../../src/app/(app)/payments/new/record-form.tsx>) (toggle + guest branch)
 
 - [ ] **Step 1: Update the server page to load guests**
 
@@ -1854,12 +1991,14 @@ Open `src/app/(app)/payments/new/page.tsx`. Augment to pass the list of non-arch
 import { listGuests } from '@/server/domain/guests';
 // ...
 const guests = await listGuests(db); // non-archived only
-return <RecordPaymentForm members={members} guests={guests.map((g) => ({ id: g.id, name: g.name }))} />;
+return (
+  <RecordPaymentForm members={members} guests={guests.map((g) => ({ id: g.id, name: g.name }))} />
+);
 ```
 
 - [ ] **Step 2: Update `record-form.tsx`**
 
-In [src/app/(app)/payments/new/record-form.tsx](../../../src/app/(app)/payments/new/record-form.tsx):
+In [src/app/(app)/payments/new/record-form.tsx](<../../../src/app/(app)/payments/new/record-form.tsx>):
 
 1. Accept new prop `guests: { id: string; name: string }[]`.
 2. Add `mode` state: `'member' | 'guest'` (default `'member'`).
@@ -1872,8 +2011,8 @@ import { recordGuestDeposit as recordGuestDepositAction } from '@/server/actions
 import { createGuest as createGuestAction } from '@/server/actions/guests-server';
 
 // inside the component:
-const [guestId, setGuestId] = useState<string | null>(null);     // null = anonymous
-const [guestQuery, setGuestQuery] = useState('');                // typed text
+const [guestId, setGuestId] = useState<string | null>(null); // null = anonymous
+const [guestQuery, setGuestQuery] = useState(''); // typed text
 const [guestAmount, setGuestAmount] = useState('');
 const [guestMethod, setGuestMethod] = useState<'cash' | 'card'>('cash');
 const [guestNote, setGuestNote] = useState('');
@@ -1883,7 +2022,11 @@ const submitGuest = useMutation({
     let resolvedId = guestId;
     // If user typed a brand-new name (no exact match), create the guest first.
     const trimmed = guestQuery.trim();
-    if (!resolvedId && trimmed && !guests.some((g) => g.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (
+      !resolvedId &&
+      trimmed &&
+      !guests.some((g) => g.name.toLowerCase() === trimmed.toLowerCase())
+    ) {
       const g = await createGuestAction({ name: trimmed });
       resolvedId = (g as { id: string }).id;
     } else if (!resolvedId && trimmed) {
@@ -1924,7 +2067,8 @@ git commit -m "feat(web): /payments/new guest-deposit toggle"
 ## Task 14: Header nav — add Guests link
 
 **Files:**
-- Modify: [src/app/(app)/header.tsx](../../../src/app/(app)/header.tsx)
+
+- Modify: [src/app/(app)/header.tsx](<../../../src/app/(app)/header.tsx>)
 
 - [ ] **Step 1: Add nav entry**
 
@@ -1948,7 +2092,8 @@ git commit -m "feat(web): add Guests nav link"
 ## Task 15: Mini App — guest deposit entry
 
 **Files:**
-- Modify: [src/app/(mini)/mini/payments/page.tsx](../../../src/app/(mini)/mini/payments/page.tsx) (add admin button)
+
+- Modify: [src/app/(mini)/mini/payments/page.tsx](<../../../src/app/(mini)/mini/payments/page.tsx>) (add admin button)
 - Create: `src/app/(mini)/mini/payments/guest/page.tsx` (new form sheet)
 - Create: `src/app/(mini)/mini/payments/guest/guest-form.tsx`
 
@@ -1957,14 +2102,16 @@ git commit -m "feat(web): add Guests nav link"
 In `src/app/(mini)/mini/payments/page.tsx`, when `user.role === 'admin'`, render an additional `MiniRow` at the top linking to `/mini/payments/guest`:
 
 ```tsx
-{user.role === 'admin' && (
-  <MiniRow
-    title={<>➕ {m.guestDeposits.toggleGuest}</>}
-    subtitle={null}
-    right={null}
-    href="/mini/payments/guest"
-  />
-)}
+{
+  user.role === 'admin' && (
+    <MiniRow
+      title={<>➕ {m.guestDeposits.toggleGuest}</>}
+      subtitle={null}
+      right={null}
+      href="/mini/payments/guest"
+    />
+  );
+}
 ```
 
 If `MiniRow` doesn't accept `href`, wrap it in a `<Link>` or add a thin alternative — match whatever existing rows do that navigate.
@@ -2052,31 +2199,58 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={anonymous}
+          onChange={(e) => setAnonymous(e.target.checked)}
+        />
         {m.guestDeposits.guestAnonymousOption}
       </label>
       {!anonymous && (
         <>
           <select
             value={pickedId ?? ''}
-            onChange={(e) => { setPickedId(e.target.value || null); setName(''); }}
+            onChange={(e) => {
+              setPickedId(e.target.value || null);
+              setName('');
+            }}
           >
             <option value="">{m.guestDeposits.guestPlaceholder}</option>
-            {guests.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            {guests.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
           </select>
           <input
             placeholder={m.guestDeposits.guestPlaceholder}
             value={name}
-            onChange={(e) => { setName(e.target.value); setPickedId(null); }}
+            onChange={(e) => {
+              setName(e.target.value);
+              setPickedId(null);
+            }}
           />
         </>
       )}
-      <input placeholder={m.guestDeposits.amountLabel} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <input
+        placeholder={m.guestDeposits.amountLabel}
+        inputMode="decimal"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+      />
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={() => setMethod('cash')} aria-pressed={method === 'cash'}>{m.common.methodCash}</button>
-        <button type="button" onClick={() => setMethod('card')} aria-pressed={method === 'card'}>{m.common.methodCard}</button>
+        <button type="button" onClick={() => setMethod('cash')} aria-pressed={method === 'cash'}>
+          {m.common.methodCash}
+        </button>
+        <button type="button" onClick={() => setMethod('card')} aria-pressed={method === 'card'}>
+          {m.common.methodCard}
+        </button>
       </div>
-      <input placeholder={m.guestDeposits.noteLabel} value={note} onChange={(e) => setNote(e.target.value)} />
+      <input
+        placeholder={m.guestDeposits.noteLabel}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
       <button
         type="button"
         onClick={() => submit.mutate()}
@@ -2108,6 +2282,7 @@ git commit -m "feat(mini): admin can record guest deposit from Mini App"
 ## Task 16: Bot `/guestdeposit` conversation
 
 **Files:**
+
 - Create: `src/server/bot/conversations/guest-deposit.ts`
 - Modify: [src/server/bot/index.ts](../../../src/server/bot/index.ts) (register the conversation and command, add to admin command list)
 
@@ -2168,7 +2343,7 @@ export async function guestDepositConversation(conversation: BotConversation, ct
     .where(eq(guestsTbl.archived, false))
     .groupBy(guestsTbl.id)
     .all()
-    .sort((a, b) => (b.last ?? '') > (a.last ?? '') ? 1 : -1)
+    .sort((a, b) => ((b.last ?? '') > (a.last ?? '') ? 1 : -1))
     .slice(0, 8);
 
   const kb = new InlineKeyboard();
@@ -2261,8 +2436,10 @@ import { guestDepositConversation } from './conversations/guest-deposit';
 Inside `getBot()`, after the `infoEdit` conversation registration:
 
 ```ts
-    _bot.use(createConversation(guestDepositConversation, 'guestDeposit'));
-    _bot.command('guestdeposit', async (ctx) => { await ctx.conversation.enter('guestDeposit'); });
+_bot.use(createConversation(guestDepositConversation, 'guestDeposit'));
+_bot.command('guestdeposit', async (ctx) => {
+  await ctx.conversation.enter('guestDeposit');
+});
 ```
 
 In `adminCommands(locale)`, add to the returned array:
@@ -2306,6 +2483,7 @@ Expected: clean.
 - [ ] **Step 3: Manual end-to-end smoke**
 
 Start the dev server, sign in as the bootstrap admin, and:
+
 1. Visit `/guests` — create "Pasha".
 2. Visit `/payments/new`, flip to "Guest deposit", record 30.00 cash for Pasha.
 3. Visit `/guests/deposits` — see today's row, Pasha column = 30 р.

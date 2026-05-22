@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeadingSmall } from 'baseui/typography';
 import { DatePicker } from 'baseui/datepicker';
@@ -87,6 +87,18 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
 
   const todayIso = isoDay(new Date());
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const todayHeaderRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    const todayEl = todayHeaderRef.current;
+    if (!scroller || !todayEl) return;
+    if (todayIso < range.from || todayIso > range.to) return;
+    const target = todayEl.offsetLeft - scroller.clientWidth / 2 + todayEl.clientWidth / 2;
+    scroller.scrollLeft = Math.max(0, target);
+  }, [range.from, range.to, todayIso]);
+
   return (
     <div style={{ marginTop: 16 }}>
       <Panel>
@@ -112,7 +124,7 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
             <Muted>{m.dashboard.noMovements}</Muted>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <div ref={scrollRef} style={{ overflowX: 'auto', marginTop: 8 }}>
             <div
               style={{
                 display: 'grid',
@@ -132,6 +144,7 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
                 return (
                   <div
                     key={d}
+                    ref={isToday ? todayHeaderRef : undefined}
                     style={{
                       ...cellHeaderTop,
                       color: isWeekend ? '#9ca3af' : '#374151',

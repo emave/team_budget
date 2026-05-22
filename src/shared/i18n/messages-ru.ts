@@ -79,7 +79,7 @@ export const MESSAGES_RU: Messages = {
 
   members: {
     title: 'Участники',
-    invite: '+ Пригласить',
+    invite: 'Пригласить',
     inviteModalTitle: 'Приглашение участника',
     displayNameLabel: 'Отображаемое имя (необязательно)',
     displayNamePlaceholder: 'Вася',
@@ -178,7 +178,7 @@ export const MESSAGES_RU: Messages = {
     navTitle: 'Гости',
     pageTitle: 'Гости',
     depositsPageTitle: 'Взносы гостей',
-    addNew: '+ Новый гость',
+    addNew: 'Новый гость',
     anonymous: 'Гость',
     archivedSuffix: ' (архив)',
     showArchived: 'Показать архив',
@@ -257,8 +257,7 @@ export const MESSAGES_RU: Messages = {
     currentLabel: (amount: string) => `Сейчас: ${amount}`,
     saveAmount: 'Сохранить сумму',
     generateNow: 'Начислить взносы сейчас',
-    generatedMsg: (count: number, period: string) =>
-      `Создано ${count} взносов за ${period}.`,
+    generatedMsg: (count: number, period: string) => `Создано ${count} взносов за ${period}.`,
     categoriesHeading: 'Категории трат',
     newCategoryPlaceholder: 'Новая категория',
     archive: 'В архив',
@@ -349,9 +348,12 @@ export const MESSAGES_RU: Messages = {
     start: {
       welcomeBack: (name: string) => `С возвращением, ${name}. Команда /menu — список действий.`,
       inviteInvalid: 'Эта ссылка-приглашение недействительна или уже использована.',
-      welcomeNew: (name: string) => `Добро пожаловать в команду, ${name}! Команда /menu — список действий.`,
-      welcomeAdmin: 'Здравствуйте, администратор. Бюджет команды теперь под вашим управлением. /menu — список действий.',
-      notMember: 'Вы пока не участник команды. Попросите администратора прислать ссылку-приглашение.',
+      welcomeNew: (name: string) =>
+        `Добро пожаловать в команду, ${name}! Команда /menu — список действий.`,
+      welcomeAdmin:
+        'Здравствуйте, администратор. Бюджет команды теперь под вашим управлением. /menu — список действий.',
+      notMember:
+        'Вы пока не участник команды. Попросите администратора прислать ссылку-приглашение.',
     },
     charge: {
       typePrompt: 'Тип начисления?',
@@ -386,7 +388,8 @@ export const MESSAGES_RU: Messages = {
       settledAborted: 'У этого участника нет долгов. Действие отменено.',
       owesAmountPrompt: (amount: string) => `Долг: ${amount}. Какая сумма внесена?`,
       invalidAmount: 'Некорректная сумма. Действие отменено.',
-      exceedsDebt: (amount: string) => `Сумма превышает текущий долг (${amount}). Действие отменено.`,
+      exceedsDebt: (amount: string) =>
+        `Сумма превышает текущий долг (${amount}). Действие отменено.`,
       cashOrCard: 'Наличные или карта?',
       btnCash: '💵 Наличные',
       btnCard: '💳 Карта',
@@ -449,7 +452,8 @@ export const MESSAGES_RU: Messages = {
     team: {
       heading: '📊 Сводка по команде',
       totalOutstanding: (amount: string) => `💰 Общий долг: ${amount}`,
-      potsLine: (cash: string, card: string) => `💵 Касса наличных: ${cash}\n💳 Касса карты: ${card}`,
+      potsLine: (cash: string, card: string) =>
+        `💵 Касса наличных: ${cash}\n💳 Касса карты: ${card}`,
       membersHeading: (settled: number, unsettled: number) =>
         `👥 Участники — без долга ${settled} / с долгом ${unsettled}:`,
       memberLineDebt: (name: string, amount: string) => `  • ${name} — должен ${amount}`,
