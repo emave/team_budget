@@ -20,6 +20,7 @@ import { spendConversation } from './conversations/spend';
 import { payConversation } from './conversations/pay';
 import { chargeConversation } from './conversations/charge';
 import { infoEditConversation } from './conversations/info-edit';
+import { guestDepositConversation } from './conversations/guest-deposit';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -41,6 +42,8 @@ export function getBot(): Bot<BotContext> {
     _bot.command('charge', async (ctx) => { await ctx.conversation.enter('charge'); });
     _bot.use(createConversation(infoEditConversation, 'infoEdit'));
     _bot.command('info_edit', async (ctx) => { await ctx.conversation.enter('infoEdit'); });
+    _bot.use(createConversation(guestDepositConversation, 'guestDeposit'));
+    _bot.command('guestdeposit', async (ctx) => { await ctx.conversation.enter('guestDeposit'); });
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
@@ -76,6 +79,7 @@ function adminCommands(locale: Locale) {
     { command: 'charge', description: d.charge },
     { command: 'invite', description: d.invite },
     { command: 'info_edit', description: d.info_edit },
+    { command: 'guestdeposit', description: d.guestdeposit },
   ];
 }
 
