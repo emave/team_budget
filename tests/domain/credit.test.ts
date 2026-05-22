@@ -8,8 +8,13 @@ import {
   listMemberCreditBalances,
   getTotalCreditLiability,
   recordCreditDeposit,
+  applyCreditToCharge,
 } from '@/server/domain/credit';
-import { getChargeById, listOpenChargesForMember } from '@/server/domain/charges';
+import {
+  createPotBorrow,
+  getChargeById,
+  listOpenChargesForMember,
+} from '@/server/domain/charges';
 import { generateMonthlyDues } from '@/server/domain/dues';
 import { updateMonthlyDuesAmount } from '@/server/domain/settings';
 
@@ -127,5 +132,86 @@ describe('recordCreditDeposit', () => {
     expect((await getChargeById(db, opens[0].id))?.status).toBe('paid');
     expect((await getChargeById(db, opens[1].id))?.status).toBe('paid');
     expect(await getCreditBalance(db, memberId)).toBe(1000);
+  });
+});
+
+describe('applyCreditToCharge', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('applies credit to a pot_borrow charge and marks paid', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const borrow = await createPotBorrow(db, {
+      userId: memberId,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await applyCreditToCharge(db, {
+      chargeId: borrow.id,
+      amount: 2500,
+      createdByUserId: adminId,
+    });
+    expect((await getChargeById(db, borrow.id))?.status).toBe('paid');
+    expect(await getCreditBalance(db, memberId)).toBe(2500);
+  });
+
+  it('rejects when amount exceeds available credit', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    const borrow = await createPotBorrow(db, {
+      userId: memberId,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await expect(
+      applyCreditToCharge(db, {
+        chargeId: borrow.id,
+        amount: 2500,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit/i);
+  });
+
+  it('rejects when charge belongs to a different user', async () => {
+    const other = await createUser(db, { telegramUserId: 9, displayName: 'X', role: 'member' });
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const otherBorrow = await createPotBorrow(db, {
+      userId: other.id,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await expect(
+      applyCreditToCharge(db, {
+        chargeId: otherBorrow.id,
+        amount: 2500,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit|different member|wallet/i);
   });
 });

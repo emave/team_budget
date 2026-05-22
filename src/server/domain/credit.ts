@@ -128,3 +128,72 @@ export async function recordCreditDeposit(db: Db, input: RecordCreditDepositInpu
   }
   return result;
 }
+
+export interface ApplyCreditInput {
+  chargeId: string;
+  amount: number;
+  createdByUserId: string;
+}
+
+export async function applyCreditToCharge(db: Db, input: ApplyCreditInput) {
+  if (!Number.isInteger(input.amount) || input.amount <= 0) {
+    throw new Error(`amount must be positive integer, got ${input.amount}`);
+  }
+  const charge = db.select().from(charges).where(eq(charges.id, input.chargeId)).get();
+  if (!charge) throw new Error(`charge ${input.chargeId} not found`);
+  if (charge.status !== 'open') throw new Error(`charge ${input.chargeId} is not open`);
+  const balance = await getCreditBalance(db, charge.userId);
+  if (balance < input.amount) {
+    throw new Error(
+      `insufficient credit on owner's wallet: have ${balance}, need ${input.amount}`,
+    );
+  }
+  const remaining = charge.amount - (await sumAllocationsForCharge(db, input.chargeId));
+  if (input.amount > remaining) {
+    throw new Error(`amount ${input.amount} exceeds charge remaining ${remaining}`);
+  }
+  const consumed = await consumeCreditForChargeAmount(db, input.chargeId, input.amount);
+  if (consumed !== input.amount) {
+    throw new Error(`credit application incomplete: consumed ${consumed} of ${input.amount}`);
+  }
+}
+
+async function consumeCreditForChargeAmount(
+  db: Db,
+  chargeId: string,
+  amount: number,
+): Promise<number> {
+  const charge = db.select().from(charges).where(eq(charges.id, chargeId)).get();
+  if (!charge) return 0;
+  const available = db
+    .select({
+      id: payments.id,
+      amount: payments.amount,
+      receivedAt: payments.receivedAt,
+      createdAt: payments.createdAt,
+    })
+    .from(payments)
+    .where(and(eq(payments.payerUserId, charge.userId), isNull(payments.cancelledAt)))
+    .orderBy(asc(payments.receivedAt), asc(payments.createdAt), asc(payments.id))
+    .all();
+  let need = amount;
+  let consumed = 0;
+  for (const p of available) {
+    if (need <= 0) break;
+    const allocRow = db
+      .select({ s: sum(paymentAllocations.amount) })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.paymentId, p.id))
+      .get();
+    const rem = p.amount - Number(allocRow?.s ?? 0);
+    if (rem <= 0) continue;
+    const take = Math.min(rem, need);
+    db.insert(paymentAllocations)
+      .values({ id: randomUUID(), paymentId: p.id, chargeId, amount: take })
+      .run();
+    need -= take;
+    consumed += take;
+  }
+  if (consumed > 0) await recomputeChargeStatus(db, chargeId);
+  return consumed;
+}
