@@ -296,6 +296,9 @@ export const MESSAGES_EN = {
       charge: 'Create a charge (admin)',
       invite: 'Create an invite link (admin)',
       info_edit: 'Manage FAQ entries (admin)',
+      wallet: 'Your subscription wallet',
+      deposit: 'Deposit to a wallet (admin)',
+      refund: 'Refund from a wallet (admin)',
     },
     adminOnly: 'This command is for admins only.',
     notMember: 'You are not a team member yet. Ask your admin for an invite link.',
@@ -453,6 +456,102 @@ Admin commands (admin only):
       noMembers: 'No active members yet.',
       allSettled: '✅ All members are settled.',
       personalHeading: (name: string) => `👤 ${name}`,
+    },
+  },
+
+  wallet: {
+    title: 'Subscription wallet',
+    balance: 'Balance',
+    empty: 'No credit yet',
+    coversMonths: (count: number, amount: string) =>
+      `Covers ~${count} ${count === 1 ? 'month' : 'months'} of dues at ${amount}`,
+    depositCta: '+ Deposit to wallet',
+    refundCta: 'Refund',
+    transferCta: 'Transfer',
+    cancelCta: 'Cancel',
+    payFromCreditCta: (available: string) => `Pay from credit (${available} available)`,
+    payFromCreditConfirm: (amount: string) =>
+      `Apply ${amount} from this member's wallet to this charge?`,
+    depositToggle: 'Deposit only (no charges to settle)',
+    overAmountNote: (excess: string, member: string) =>
+      `${excess} will be added to ${member}'s subscription wallet`,
+    deactivateConfirmTitle: 'This member has credit',
+    deactivateConfirmBody: (name: string, balance: number) =>
+      `${name} still has ${(balance / 100).toFixed(2)} in their wallet. Deactivate anyway?`,
+    dashboard: {
+      liabilityLabel: "Members' prepaid credit (liability)",
+    },
+    members: {
+      column: 'Credit',
+    },
+    section: {
+      heading: 'Subscription wallet',
+      historyHeading: 'Wallet history',
+      noHistory: 'No wallet activity yet.',
+    },
+    depositModal: {
+      title: 'Deposit to wallet',
+      amountLabel: 'Amount',
+      methodLabel: 'Method',
+      noteLabel: 'Note (optional)',
+    },
+    refundModal: {
+      title: 'Refund from wallet',
+      amountLabel: 'Amount',
+      methodLabel: 'Method',
+      noteLabel: 'Note (optional)',
+    },
+    transferModal: {
+      title: 'Transfer credit',
+      destLabel: 'To member',
+      amountLabel: 'Amount',
+      noteLabel: 'Note (optional)',
+    },
+    historyEvent: {
+      payment_deposit: (amount: string, method: string) => `Deposited ${amount} (${method})`,
+      payment_consumption: (amount: string, desc: string) => `Applied ${amount} → ${desc}`,
+      refund: (amount: string, method: string) => `Refunded ${amount} via ${method}`,
+      transfer_in: (amount: string, counterparty: string) =>
+        `Received ${amount} from ${counterparty}`,
+      transfer_out: (amount: string, counterparty: string) =>
+        `Sent ${amount} to ${counterparty}`,
+    },
+    notification: {
+      deposit: (amount: string, balance: string) =>
+        `${amount} added to your subscription wallet. Balance: ${balance}.`,
+      autoAppliedDues: (period: string, amount: string, balance: string) =>
+        `Monthly dues for ${period} were paid from your wallet (${amount}). Wallet balance: ${balance}.`,
+      refund: (amount: string, method: string, balance: string) =>
+        `${amount} refunded from your wallet via ${method}. Wallet balance: ${balance}.`,
+      transferReceived: (amount: string, counterparty: string) =>
+        `${amount} transferred to your wallet from ${counterparty}.`,
+      transferSent: (amount: string, counterparty: string) =>
+        `${amount} transferred from your wallet to ${counterparty}.`,
+    },
+    bot: {
+      walletHeading: (balance: string) => `💰 Subscription wallet: ${balance}`,
+      walletEmpty: 'Your subscription wallet is empty.',
+      depositPick: 'Pick a member to credit:',
+      depositAmount: 'Amount?',
+      depositMethod: 'Method?',
+      depositNote: 'Note? (or /skip)',
+      depositConfirm: (name: string, amount: string, method: string) =>
+        `Deposit ${amount} (${method}) to ${name}'s wallet?`,
+      depositDone: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} added to ${name}'s wallet. Balance: ${balance}.`,
+      refundPick: 'Pick a member with credit:',
+      refundNoneAvailable: 'No members currently have credit to refund.',
+      refundAmount: 'Amount?',
+      refundMethod: 'Refund via?',
+      refundNote: 'Note? (or /skip)',
+      refundConfirm: (name: string, amount: string, method: string) =>
+        `Refund ${amount} (${method}) from ${name}'s wallet?`,
+      refundDone: (name: string, amount: string, balance: string) =>
+        `✅ ${amount} refunded from ${name}'s wallet. Balance: ${balance}.`,
+      payOverpaymentPrompt: (excess: string, name: string) =>
+        `Amount is ${excess} more than open debt. Deposit excess to ${name}'s wallet?`,
+      btnYes: 'Yes',
+      btnNo: 'No',
     },
   },
 };

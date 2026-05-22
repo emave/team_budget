@@ -75,6 +75,9 @@ export const payments = sqliteTable('payments', {
   cancelledAt: text('cancelled_at'),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+  excludeFromPot: integer('exclude_from_pot', { mode: 'boolean' }).notNull().default(false),
+  transferredFromUserId: text('transferred_from_user_id').references(() => users.id),
+  transferGroupId: text('transfer_group_id'),
 });
 
 export const paymentAllocations = sqliteTable('payment_allocations', {
@@ -121,6 +124,21 @@ export const guestDeposits = sqliteTable('guest_deposits', {
   method: text('method', { enum: ['cash', 'card'] }).notNull(),
   note: text('note'),
   receivedAt: text('received_at').notNull(),
+  cancelledAt: text('cancelled_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+});
+
+export const creditMovements = sqliteTable('credit_movements', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id),
+  kind: text('kind', { enum: ['refund', 'transfer_out'] }).notNull(),
+  amount: integer('amount').notNull(),
+  method: text('method', { enum: ['cash', 'card'] }),
+  counterpartyUserId: text('counterparty_user_id').references(() => users.id),
+  groupId: text('group_id'),
+  note: text('note'),
+  occurredAt: text('occurred_at').notNull(),
   cancelledAt: text('cancelled_at'),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   createdByUserId: text('created_by_user_id').notNull().references(() => users.id),

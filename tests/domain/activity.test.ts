@@ -55,4 +55,41 @@ describe('recentActivity', () => {
     expect(named && named.kind === 'guest_deposit' && named.guestName).toBe('Pasha');
     expect(anon && anon.kind === 'guest_deposit' && anon.guestName).toBe(null);
   });
+
+  it('includes credit_refund events', async () => {
+    const { recordCreditDeposit, refundCredit } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    await refundCredit(db, {
+      userId: memberId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    const events = await recentActivity(db, 10);
+    expect(events.some((e) => e.kind === 'credit_refund')).toBe(true);
+  });
+
+  it('includes credit_transfer events', async () => {
+    const { recordCreditDeposit, transferCredit } = await import('@/server/domain/credit');
+    const b = await createUser(db, { telegramUserId: 3, displayName: 'B', role: 'member' });
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    await transferCredit(db, {
+      fromUserId: memberId,
+      toUserId: b.id,
+      amount: 2000,
+      createdByUserId: adminId,
+    });
+    const events = await recentActivity(db, 10);
+    expect(events.some((e) => e.kind === 'credit_transfer')).toBe(true);
+  });
 });

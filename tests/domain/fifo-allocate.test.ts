@@ -49,13 +49,15 @@ describe('fifoAllocate', () => {
     ]);
   });
 
-  it('throws when amount exceeds total debt', async () => {
-    await createAdhocCharge(db, {
+  it('returns partial allocation when amount exceeds total debt (excess becomes credit)', async () => {
+    const c = await createAdhocCharge(db, {
       userId: memberId,
       amount: 100,
       description: 'a',
       createdByUserId: adminId,
     });
-    await expect(fifoAllocate(db, memberId, 150)).rejects.toThrow(/exceeds/i);
+    expect(await fifoAllocate(db, memberId, 150)).toEqual([
+      { chargeId: c.id, amount: 100 },
+    ]);
   });
 });

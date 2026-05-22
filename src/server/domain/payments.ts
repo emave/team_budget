@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull, sum } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, payments, paymentAllocations, users } from '@/server/db/schema';
 import type { Db } from './types';
@@ -40,13 +40,10 @@ export async function recordPayment(
   if (input.method !== 'cash' && input.method !== 'card') {
     throw new Error(`invalid method: ${String(input.method)}`);
   }
-  if (input.allocations.length === 0) {
-    throw new Error('payment must fully allocate to at least one charge');
-  }
   const sumAlloc = input.allocations.reduce((s, a) => s + a.amount, 0);
-  if (sumAlloc !== input.amount) {
+  if (sumAlloc > input.amount) {
     throw new Error(
-      `payment must fully allocate: sum(allocations)=${sumAlloc} != amount=${input.amount}`,
+      `allocations exceed payment amount: sum(allocations)=${sumAlloc} > amount=${input.amount}`,
     );
   }
   for (const a of input.allocations) assertPositive(a.amount, 'allocation amount');
@@ -123,6 +120,8 @@ export async function fifoAllocate(
   payerUserId: string,
   amount: number,
 ): Promise<AllocationInput[]> {
+  // Returns allocations covering up to `amount`. Any excess (amount > open debt)
+  // becomes the payer's subscription-wallet credit when the payment is recorded.
   let remaining = amount;
   const result: AllocationInput[] = [];
   const open = await listOpenChargesForMember(db, payerUserId);
@@ -134,11 +133,6 @@ export async function fifoAllocate(
     const take = Math.min(headroom, remaining);
     result.push({ chargeId: c.id, amount: take });
     remaining -= take;
-  }
-  if (remaining > 0) {
-    throw new Error(
-      `payment amount ${amount} exceeds total open debt by ${remaining}`,
-    );
   }
   return result;
 }
@@ -167,4 +161,15 @@ export async function cancelPayment(db: Db, paymentId: string) {
 
 export async function listAllPayments(db: Db, limit = 200) {
   return db.select().from(payments).orderBy(desc(payments.createdAt)).limit(limit).all();
+}
+
+export async function sumUnallocatedForPayment(db: Db, paymentId: string): Promise<number> {
+  const p = db.select().from(payments).where(eq(payments.id, paymentId)).get();
+  if (!p || p.cancelledAt) return 0;
+  const row = db
+    .select({ s: sum(paymentAllocations.amount) })
+    .from(paymentAllocations)
+    .where(eq(paymentAllocations.paymentId, paymentId))
+    .get();
+  return p.amount - Number(row?.s ?? 0);
 }

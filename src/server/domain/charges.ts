@@ -110,12 +110,17 @@ export async function cancelCharge(db: Db, chargeId: string): Promise<Charge> {
   if (!c) throw new Error(`charge ${chargeId} not found`);
   if (c.status === 'cancelled') return c;
   const allocated = await sumAllocationsForCharge(db, chargeId);
-  if (allocated > 0) {
+  if (allocated > 0 && c.type !== 'monthly_dues') {
     throw new Error(
       `cannot cancel charge ${chargeId}: it has allocations (cancel the payments first)`,
     );
   }
-  db.update(charges).set({ status: 'cancelled' }).where(eq(charges.id, chargeId)).run();
+  db.transaction((tx) => {
+    if (allocated > 0) {
+      tx.delete(paymentAllocations).where(eq(paymentAllocations.chargeId, chargeId)).run();
+    }
+    tx.update(charges).set({ status: 'cancelled' }).where(eq(charges.id, chargeId)).run();
+  });
   return (await getChargeById(db, chargeId))!;
 }
 

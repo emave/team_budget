@@ -9,6 +9,7 @@ import { Select } from 'baseui/select';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { recordPayment, suggestFifoAllocation } from '@/server/actions/payments-server';
+import { recordCreditDeposit } from '@/server/actions/credit-server';
 import { recordGuestDeposit } from '@/server/actions/guest-deposits-server';
 import { createGuest as createGuestAction } from '@/server/actions/guests-server';
 import { useMessages } from '@/app/_i18n-provider';
@@ -36,6 +37,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
   const method = watch('method');
   const amount = watch('amount');
 
+  const [depositOnly, setDepositOnly] = useState(false);
   const [allocations, setAllocations] = useState<{ chargeId: string; amount: number }[] | null>(null);
   const [allocError, setAllocError] = useState<string | null>(null);
 
@@ -47,15 +49,37 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
 
   const submit = useMutation({
     mutationFn: (v: MemberFormValues) =>
-      recordPayment({
-        payerUserId: v.payerUserId,
-        method: v.method,
-        amount: v.amount,
-        note: v.note,
-        allocations: allocations ?? [],
-      }),
+      depositOnly
+        ? recordCreditDeposit({
+            payerUserId: v.payerUserId,
+            method: v.method,
+            amount: v.amount,
+            note: v.note,
+          })
+        : recordPayment({
+            payerUserId: v.payerUserId,
+            method: v.method,
+            amount: v.amount,
+            note: v.note,
+            allocations: allocations ?? [],
+          }),
     onSuccess: () => router.push('/payments'),
   });
+
+  function amountToCents(v: string): number {
+    const trimmed = v.trim();
+    if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return 0;
+    const [w, f = ''] = trimmed.split('.');
+    return Number(w) * 100 + Number(f.padEnd(2, '0'));
+  }
+  const allocatedSum = allocations
+    ? allocations.reduce((s, a) => s + a.amount, 0)
+    : 0;
+  const amountCents = amountToCents(amount ?? '');
+  const excessCents = !depositOnly && allocations
+    ? Math.max(0, amountCents - allocatedSum)
+    : 0;
+  const payerName = members.find((mm) => mm.id === payer)?.displayName ?? '';
 
   // --- Guest branch state ---
   const [guestId, setGuestId] = useState<string | null>(null);
@@ -172,10 +196,24 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
     );
   }
 
-  // --- Member branch JSX (unchanged from existing) ---
+  // --- Member branch JSX ---
   return (
     <>
       {Toggle}
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <input
+          type="checkbox"
+          checked={depositOnly}
+          onChange={(e) => {
+            setDepositOnly(e.currentTarget.checked);
+            if (e.currentTarget.checked) {
+              setAllocations(null);
+              setAllocError(null);
+            }
+          }}
+        />
+        <span>{m.wallet.depositToggle}</span>
+      </label>
       <form onSubmit={handleSubmit((v) => submit.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 560 }}>
         <FormControl label={m.payments.payerLabel}>
           <Select
@@ -198,25 +236,41 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
           <Input {...(register('note') as object)} />
         </FormControl>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button type="button" onClick={() => suggest.mutate()} disabled={!payer || !amount}>
-            {m.payments.suggestFifo}
-          </Button>
-          {allocError && <span style={{ color: '#dc2626' }}>{allocError}</span>}
-        </div>
+        {!depositOnly && (
+          <>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button type="button" onClick={() => suggest.mutate()} disabled={!payer || !amount}>
+                {m.payments.suggestFifo}
+              </Button>
+              {allocError && <span style={{ color: '#dc2626' }}>{allocError}</span>}
+            </div>
 
-        {allocations && (
-          <div style={{ background: '#f9fafb', padding: 12, borderRadius: 4, fontSize: 13 }}>
-            <strong>{m.payments.allocationsHeading}</strong>
-            {allocations.map((a, i) => (
-              <div key={i}>
-                {a.chargeId.slice(0, 8)} — {a.amount / 100}
+            {allocations && (
+              <div style={{ background: '#f9fafb', padding: 12, borderRadius: 4, fontSize: 13 }}>
+                <strong>{m.payments.allocationsHeading}</strong>
+                {allocations.map((a, i) => (
+                  <div key={i}>
+                    {a.chargeId.slice(0, 8)} — {a.amount / 100}
+                  </div>
+                ))}
+                {excessCents > 0 && (
+                  <div style={{ marginTop: 8, color: '#065f46' }}>
+                    {m.wallet.overAmountNote(
+                      (excessCents / 100).toFixed(2),
+                      payerName,
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
-        <Button type="submit" isLoading={submit.isPending} disabled={!payer || !amount || !allocations}>
+        <Button
+          type="submit"
+          isLoading={submit.isPending}
+          disabled={!payer || !amount || (!depositOnly && !allocations)}
+        >
           {m.payments.submit}
         </Button>
         {submit.isError && <div style={{ color: '#dc2626' }}>{(submit.error as Error).message}</div>}

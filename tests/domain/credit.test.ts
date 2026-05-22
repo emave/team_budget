@@ -1,0 +1,483 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { createTestDb, type TestDb } from '../helpers/db';
+import { createUser } from '@/server/domain/users';
+import { recordPayment } from '@/server/domain/payments';
+import { createAdhocCharge } from '@/server/domain/charges';
+import {
+  getCreditBalance,
+  listMemberCreditBalances,
+  getTotalCreditLiability,
+  recordCreditDeposit,
+  applyCreditToCharge,
+  refundCredit,
+  transferCredit,
+  cancelCreditMovement,
+  listCreditHistory,
+} from '@/server/domain/credit';
+import { creditMovements } from '@/server/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { getPotBalances } from '@/server/domain/pots';
+import {
+  createPotBorrow,
+  getChargeById,
+  listOpenChargesForMember,
+} from '@/server/domain/charges';
+import { generateMonthlyDues } from '@/server/domain/dues';
+import { updateMonthlyDuesAmount } from '@/server/domain/settings';
+
+describe('credit balance reads', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  let otherId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+    otherId = (await createUser(db, { telegramUserId: 3, displayName: 'O', role: 'member' })).id;
+  });
+
+  it('returns 0 when member has no payments', async () => {
+    expect(await getCreditBalance(db, memberId)).toBe(0);
+  });
+
+  it('returns unallocated remainder of a payment', async () => {
+    const c = await createAdhocCharge(db, {
+      userId: memberId,
+      amount: 3000,
+      description: 'x',
+      createdByUserId: adminId,
+    });
+    await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      allocations: [{ chargeId: c.id, amount: 3000 }],
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, memberId)).toBe(2000);
+  });
+
+  it('returns full amount for a zero-allocation payment', async () => {
+    await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'card',
+      amount: 4000,
+      allocations: [],
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, memberId)).toBe(4000);
+  });
+
+  it('listMemberCreditBalances includes only members with non-zero balance', async () => {
+    await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 2500,
+      allocations: [],
+      createdByUserId: adminId,
+    });
+    const rows = await listMemberCreditBalances(db);
+    const m = rows.find((r) => r.userId === memberId);
+    expect(m?.balance).toBe(2500);
+    expect(rows.find((r) => r.userId === otherId)).toBeUndefined();
+  });
+
+  it('getTotalCreditLiability sums active members only', async () => {
+    await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 2500,
+      allocations: [],
+      createdByUserId: adminId,
+    });
+    await recordPayment(db, {
+      payerUserId: otherId,
+      method: 'card',
+      amount: 1500,
+      allocations: [],
+      createdByUserId: adminId,
+    });
+    expect(await getTotalCreditLiability(db)).toBe(4000);
+  });
+});
+
+describe('recordCreditDeposit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('creates a zero-allocation payment and increases credit', async () => {
+    const r = await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 6000,
+      createdByUserId: adminId,
+    });
+    expect(r.payment.amount).toBe(6000);
+    expect(r.allocations.length).toBe(0);
+    expect(await getCreditBalance(db, memberId)).toBe(6000);
+  });
+
+  it('auto-applies to existing open dues charges (FIFO by charge createdAt)', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await generateMonthlyDues(db, { period: '2026-04', createdByUserId: adminId });
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    const opens = await listOpenChargesForMember(db, memberId);
+    expect(opens.length).toBe(2);
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    expect((await getChargeById(db, opens[0].id))?.status).toBe('paid');
+    expect((await getChargeById(db, opens[1].id))?.status).toBe('paid');
+    expect(await getCreditBalance(db, memberId)).toBe(1000);
+  });
+});
+
+describe('applyCreditToCharge', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('applies credit to a pot_borrow charge and marks paid', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const borrow = await createPotBorrow(db, {
+      userId: memberId,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await applyCreditToCharge(db, {
+      chargeId: borrow.id,
+      amount: 2500,
+      createdByUserId: adminId,
+    });
+    expect((await getChargeById(db, borrow.id))?.status).toBe('paid');
+    expect(await getCreditBalance(db, memberId)).toBe(2500);
+  });
+
+  it('rejects when amount exceeds available credit', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    const borrow = await createPotBorrow(db, {
+      userId: memberId,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await expect(
+      applyCreditToCharge(db, {
+        chargeId: borrow.id,
+        amount: 2500,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit/i);
+  });
+
+  it('rejects when charge belongs to a different user', async () => {
+    const other = await createUser(db, { telegramUserId: 9, displayName: 'X', role: 'member' });
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const otherBorrow = await createPotBorrow(db, {
+      userId: other.id,
+      amount: 2500,
+      sourcePot: 'cash',
+      description: 'b',
+      createdByUserId: adminId,
+    });
+    await expect(
+      applyCreditToCharge(db, {
+        chargeId: otherBorrow.id,
+        amount: 2500,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit|different member|wallet/i);
+  });
+});
+
+describe('refundCredit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('decreases credit and pot by the refund amount', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const before = await getPotBalances(db);
+    await refundCredit(db, {
+      userId: memberId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, memberId)).toBe(3000);
+    const after = await getPotBalances(db);
+    expect(after.cash).toBe(before.cash - 2000);
+  });
+
+  it('rejects when amount exceeds balance', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    await expect(
+      refundCredit(db, {
+        userId: memberId,
+        amount: 2000,
+        method: 'cash',
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit/i);
+  });
+});
+
+describe('transferCredit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let aId: string;
+  let bId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'Adm', role: 'admin' })).id;
+    aId = (await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' })).id;
+    bId = (await createUser(db, { telegramUserId: 3, displayName: 'B', role: 'member' })).id;
+  });
+
+  it('moves credit from A to B and leaves pots unchanged', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const beforePot = await getPotBalances(db);
+    await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    expect(await getCreditBalance(db, bId)).toBe(1500);
+    const afterPot = await getPotBalances(db);
+    expect(afterPot.cash).toBe(beforePot.cash);
+    expect(afterPot.card).toBe(beforePot.card);
+  });
+
+  it('rejects when from === to', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    await expect(
+      transferCredit(db, {
+        fromUserId: aId,
+        toUserId: aId,
+        amount: 100,
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/same member|cannot transfer/i);
+  });
+
+  it('auto-applies received credit to open dues on the destination', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    // A and B each get a $15 dues charge. A has no credit yet, so charges open.
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    // recordCreditDeposit auto-applied $15 of A's deposit to A's own dues → A has $25 left.
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 2000,
+      createdByUserId: adminId,
+    });
+    // B receives $20, which auto-applies to B's $15 open dues → B has $5 left.
+    expect(await getCreditBalance(db, bId)).toBe(500);
+  });
+});
+
+describe('cancelCreditMovement', () => {
+  let db: TestDb;
+  let adminId: string;
+  let aId: string;
+  let bId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'Adm', role: 'admin' })).id;
+    aId = (await createUser(db, { telegramUserId: 2, displayName: 'A', role: 'member' })).id;
+    bId = (await createUser(db, { telegramUserId: 3, displayName: 'B', role: 'member' })).id;
+  });
+
+  it('reverses a refund: credit and pot restored', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const beforePot = await getPotBalances(db);
+    const refund = await refundCredit(db, {
+      userId: aId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    await cancelCreditMovement(db, refund.id);
+    expect(await getCreditBalance(db, aId)).toBe(5000);
+    const afterPot = await getPotBalances(db);
+    expect(afterPot.cash).toBe(beforePot.cash);
+  });
+
+  it('reverses a transfer: source credit restored, dest credit removed', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const { groupId } = await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, aId)).toBe(2500);
+    expect(await getCreditBalance(db, bId)).toBe(1500);
+    const transferOut = db
+      .select()
+      .from(creditMovements)
+      .where(eq(creditMovements.groupId, groupId))
+      .get()!;
+    await cancelCreditMovement(db, transferOut.id);
+    expect(await getCreditBalance(db, aId)).toBe(4000);
+    expect(await getCreditBalance(db, bId)).toBe(0);
+  });
+
+  it('idempotent for already-cancelled movement', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const refund = await refundCredit(db, {
+      userId: aId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    await cancelCreditMovement(db, refund.id);
+    await expect(cancelCreditMovement(db, refund.id)).resolves.not.toThrow();
+  });
+
+  it('rejects cancellation that would push a member below zero', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: aId,
+      method: 'cash',
+      amount: 4000,
+      createdByUserId: adminId,
+    });
+    const { groupId } = await transferCredit(db, {
+      fromUserId: aId,
+      toUserId: bId,
+      amount: 1500,
+      createdByUserId: adminId,
+    });
+    // B spends all $15 received via refund — pulls pot down by $15
+    await refundCredit(db, {
+      userId: bId,
+      amount: 1500,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, bId)).toBe(0);
+    const transferOut = db
+      .select()
+      .from(creditMovements)
+      .where(and(eq(creditMovements.groupId, groupId), eq(creditMovements.kind, 'transfer_out')))
+      .get()!;
+    await expect(cancelCreditMovement(db, transferOut.id)).rejects.toThrow(
+      /negative|below zero|insufficient/i,
+    );
+  });
+});
+
+describe('listCreditHistory', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('returns deposit, consumption, refund events for a member', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    await refundCredit(db, {
+      userId: memberId,
+      amount: 1000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    const events = await listCreditHistory(db, memberId);
+    const kinds = events.map((e) => e.kind);
+    expect(kinds).toContain('payment_deposit');
+    expect(kinds).toContain('payment_consumption');
+    expect(kinds).toContain('refund');
+  });
+});

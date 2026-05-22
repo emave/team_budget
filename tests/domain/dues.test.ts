@@ -78,3 +78,38 @@ describe('generateMonthlyDues', () => {
     expect(r2.createdCount).toBe(0);
   });
 });
+
+describe('generateMonthlyDues with existing credit', () => {
+  it('auto-consumes credit for each new dues charge', async () => {
+    const db = createTestDb();
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' });
+    const member = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit, getCreditBalance } = await import('@/server/domain/credit');
+    await updateMonthlyDuesAmount(db, 2000);
+    await recordCreditDeposit(db, {
+      payerUserId: member.id,
+      method: 'card',
+      amount: 5000,
+      createdByUserId: admin.id,
+    });
+    expect(await getCreditBalance(db, member.id)).toBe(5000);
+    await generateMonthlyDues(db, { period: '2026-06', createdByUserId: admin.id });
+    expect(await getCreditBalance(db, member.id)).toBe(3000);
+  });
+
+  it('leaves dues partially open when credit insufficient', async () => {
+    const db = createTestDb();
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' });
+    const member = await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit, getCreditBalance } = await import('@/server/domain/credit');
+    await updateMonthlyDuesAmount(db, 2000);
+    await recordCreditDeposit(db, {
+      payerUserId: member.id,
+      method: 'cash',
+      amount: 500,
+      createdByUserId: admin.id,
+    });
+    await generateMonthlyDues(db, { period: '2026-06', createdByUserId: admin.id });
+    expect(await getCreditBalance(db, member.id)).toBe(0);
+  });
+});

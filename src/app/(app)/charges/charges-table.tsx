@@ -5,6 +5,7 @@ import { useMessages } from '@/app/_i18n-provider';
 import { Muted, StatusBadge } from '@/ui/text';
 import { StatusOpenIcon, StatusPaidIcon, StatusCancelledIcon } from '@/ui/icons';
 import { CancelChargeButton } from './cancel-button';
+import { PayFromCreditButton } from './pay-from-credit-button';
 import type { Messages } from '@/shared/i18n';
 
 export interface ChargeRow {
@@ -16,6 +17,8 @@ export interface ChargeRow {
   status: 'open' | 'paid' | 'cancelled' | string;
   whenFormatted: string;
   showCancel: boolean;
+  creditAvailableCents?: number;
+  remainingCents?: number;
 }
 
 const TYPE_KEYS: Record<string, keyof Messages['charges']> = {
@@ -62,7 +65,21 @@ export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
         {(r: ChargeRow) => <Muted>{r.whenFormatted}</Muted>}
       </TableBuilderColumn>
       <TableBuilderColumn header={m.common.colActions}>
-        {(r: ChargeRow) => (r.showCancel ? <CancelChargeButton id={r.id} /> : null)}
+        {(r: ChargeRow) => (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {r.status === 'open' &&
+              r.type !== 'monthly_dues' &&
+              (r.creditAvailableCents ?? 0) > 0 &&
+              (r.remainingCents ?? 0) > 0 && (
+                <PayFromCreditButton
+                  chargeId={r.id}
+                  remainingCents={r.remainingCents ?? 0}
+                  creditAvailableCents={r.creditAvailableCents ?? 0}
+                />
+              )}
+            {r.showCancel ? <CancelChargeButton id={r.id} /> : null}
+          </div>
+        )}
       </TableBuilderColumn>
     </TableBuilder>
   );

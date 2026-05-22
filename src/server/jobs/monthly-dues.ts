@@ -1,11 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import cron from 'node-cron';
-import { users } from '@/server/db/schema';
+import { charges, users } from '@/server/db/schema';
 import type { Db } from '@/server/domain/types';
 import { currentBillingPeriod, generateMonthlyDues } from '@/server/domain/dues';
+import { getCreditBalance } from '@/server/domain/credit';
 import { getNotifier } from '../bot/notifications';
 import { getOrCreateSettings } from '../domain/settings';
 import { formatCents } from '@/shared/format';
+import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
 
 export interface RunOptions {
   now?: Date;
@@ -28,6 +30,29 @@ export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
       await getNotifier().notifyAllActive(
         `📅 Monthly dues for ${period} have been added (${formatCents(settings.monthlyDuesAmount)}). Type /balance to see total.`,
       );
+
+      const paidFromWallet = db
+        .select({ userId: charges.userId, amount: charges.amount })
+        .from(charges)
+        .where(
+          and(
+            eq(charges.type, 'monthly_dues'),
+            eq(charges.billingPeriod, period),
+            eq(charges.status, 'paid'),
+          ),
+        )
+        .all();
+      for (const r of paidFromWallet) {
+        const balance = await getCreditBalance(db, r.userId);
+        await getNotifier().notifyUser(r.userId, (recipient) => {
+          const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+          return getMessages(locale).wallet.notification.autoAppliedDues(
+            period,
+            formatCents(r.amount),
+            formatCents(balance),
+          );
+        });
+      }
     } catch (err) { console.error('[dues] notify failed:', err); }
   }
 

@@ -8,7 +8,7 @@ export async function inviteMember(input: z.infer<typeof inviteMemberSchema>) {
   return m.inviteMember(input);
 }
 
-export async function deactivateMember(input: { id: string }) {
+export async function deactivateMember(input: { id: string; force?: boolean }) {
   return m.deactivateMember(input);
 }
 

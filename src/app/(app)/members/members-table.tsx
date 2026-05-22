@@ -17,6 +17,7 @@ export interface MemberRow {
   role: 'admin' | 'member';
   isActive: boolean;
   debtFormatted: string | null;
+  creditFormatted?: string | null;
 }
 
 const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [role="button"]';
@@ -76,6 +77,15 @@ export function MembersTable({ rows }: { rows: MemberRow[] }) {
       </TableBuilderColumn>
       <TableBuilderColumn header={m.members.colRole}>
         {(r: MemberRow) => <Muted>{r.role}</Muted>}
+      </TableBuilderColumn>
+      <TableBuilderColumn header={m.wallet.members.column}>
+        {(r: MemberRow) =>
+          r.creditFormatted ? (
+            <StatusBadge tone="positive">{r.creditFormatted}</StatusBadge>
+          ) : (
+            <Muted>—</Muted>
+          )
+        }
       </TableBuilderColumn>
       <TableBuilderColumn header={m.members.colStatus}>
         {(r: MemberRow) =>

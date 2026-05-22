@@ -39,12 +39,14 @@ export async function generateMonthlyDues(
   const active = db.select().from(users).where(eq(users.isActive, true)).all();
 
   let created = 0;
+  const createdIds: string[] = [];
   db.transaction((tx) => {
     for (const u of active) {
       if (have.has(u.id)) continue;
+      const id = randomUUID();
       tx.insert(charges)
         .values({
-          id: randomUUID(),
+          id,
           userId: u.id,
           type: 'monthly_dues',
           amount: s.monthlyDuesAmount,
@@ -54,9 +56,15 @@ export async function generateMonthlyDues(
           createdByUserId: input.createdByUserId,
         })
         .run();
+      createdIds.push(id);
       created += 1;
     }
   });
+
+  const { consumeCreditForCharge } = await import('./credit');
+  for (const id of createdIds) {
+    await consumeCreditForCharge(db, id);
+  }
 
   await setLastDuesGeneratedFor(db, input.period);
   return { createdCount: created, period: input.period };
