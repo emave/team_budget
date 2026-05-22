@@ -6,6 +6,7 @@ import {
   createAdhocChargeSchema,
   createPotBorrowSchema,
   createSplitChargeSchema,
+  chargeMemberDuesSchema,
   idSchema,
 } from '@/shared/schemas';
 import {
@@ -14,6 +15,11 @@ import {
   createSplitCharge as domainSplit,
   cancelCharge as domainCancel,
 } from '@/server/domain/charges';
+import {
+  chargeMemberDues as domainChargeMemberDues,
+  MemberAlreadyChargedError,
+} from '@/server/domain/dues';
+import { notifyDuesCreated } from '@/server/jobs/monthly-dues';
 import { getNotifier } from '@/server/bot/notifications';
 import { formatCents } from '@/shared/format';
 
@@ -69,7 +75,33 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     return domainCancel(db, id);
   });
 
-  return { createAdhocCharge, createPotBorrow, createSplitCharge, cancelCharge };
+  const chargeMemberDues = adminAction(async ({ user, db }, input: unknown) => {
+    const p = chargeMemberDuesSchema.parse(input);
+    try {
+      const charge = await domainChargeMemberDues(db, {
+        userId: p.userId,
+        period: p.period,
+        createdByUserId: user.id,
+      });
+      if (process.env.SKIP_BOT !== '1') {
+        try { await notifyDuesCreated(db, charge); }
+        catch (err) { console.error('[actions] notify failed:', err); }
+      }
+      return { ok: true as const, charge };
+    } catch (err) {
+      if (err instanceof MemberAlreadyChargedError) {
+        return {
+          ok: false as const,
+          reason: 'already_charged' as const,
+          existingChargeId: err.existingCharge.id,
+          existingStatus: err.existingCharge.status,
+        };
+      }
+      throw err;
+    }
+  });
+
+  return { createAdhocCharge, createPotBorrow, createSplitCharge, cancelCharge, chargeMemberDues };
 }
 
 const prod = makeChargeActions();
@@ -77,3 +109,4 @@ export const createAdhocCharge = prod.createAdhocCharge;
 export const createPotBorrow = prod.createPotBorrow;
 export const createSplitCharge = prod.createSplitCharge;
 export const cancelCharge = prod.cancelCharge;
+export const chargeMemberDues = prod.chargeMemberDues;

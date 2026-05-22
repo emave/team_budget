@@ -67,4 +67,19 @@ describe('charge actions', () => {
     const c = await a.createAdhocCharge({ userId: memberA, amount: '50.00' as unknown as number, description: 'x' });
     expect(c.amount).toBe(5000);
   });
+
+  it('chargeMemberDues creates a monthly_dues charge for the given period', async () => {
+    const { updateMonthlyDuesAmount } = await import('@/server/domain/settings');
+    await updateMonthlyDuesAmount(db, 5000);
+
+    const a = makeChargeActions({ getDb: () => db });
+    const res = await a.chargeMemberDues({ userId: memberA, period: '2026-05' });
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.charge.type).toBe('monthly_dues');
+      expect(res.charge.userId).toBe(memberA);
+      expect(res.charge.billingPeriod).toBe('2026-05');
+      expect(res.charge.amount).toBe(5000);
+    }
+  });
 });

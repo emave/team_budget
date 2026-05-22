@@ -5,6 +5,7 @@ import {
   createPotBorrow as p,
   createSplitCharge as s,
   cancelCharge as c,
+  chargeMemberDues as cmd,
 } from './charges';
 
 export async function createAdhocCharge(input: unknown) {
@@ -21,4 +22,8 @@ export async function createSplitCharge(input: unknown) {
 
 export async function cancelCharge(input: { id: string }) {
   return c(input);
+}
+
+export async function chargeMemberDues(input: { userId: string; period: string }) {
+  return cmd(input as never);
 }
