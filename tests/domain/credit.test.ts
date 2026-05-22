@@ -12,6 +12,7 @@ import {
   refundCredit,
   transferCredit,
   cancelCreditMovement,
+  listCreditHistory,
 } from '@/server/domain/credit';
 import { creditMovements } from '@/server/db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -445,5 +446,38 @@ describe('cancelCreditMovement', () => {
     await expect(cancelCreditMovement(db, transferOut.id)).rejects.toThrow(
       /negative|below zero|insufficient/i,
     );
+  });
+});
+
+describe('listCreditHistory', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('returns deposit, consumption, refund events for a member', async () => {
+    await updateMonthlyDuesAmount(db, 1500);
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    await refundCredit(db, {
+      userId: memberId,
+      amount: 1000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    const events = await listCreditHistory(db, memberId);
+    const kinds = events.map((e) => e.kind);
+    expect(kinds).toContain('payment_deposit');
+    expect(kinds).toContain('payment_consumption');
+    expect(kinds).toContain('refund');
   });
 });

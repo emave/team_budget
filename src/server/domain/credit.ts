@@ -308,6 +308,151 @@ export async function cancelCreditMovement(db: Db, id: string) {
   return db.select().from(creditMovements).where(eq(creditMovements.id, id)).get()!;
 }
 
+export type CreditEvent =
+  | {
+      kind: 'payment_deposit';
+      paymentId: string;
+      amount: number;
+      method: 'cash' | 'card';
+      occurredAt: string;
+      note: string | null;
+    }
+  | {
+      kind: 'payment_consumption';
+      paymentId: string;
+      chargeId: string;
+      chargeDescription: string;
+      amount: number;
+      occurredAt: string;
+    }
+  | {
+      kind: 'refund';
+      movementId: string;
+      amount: number;
+      method: 'cash' | 'card';
+      occurredAt: string;
+      note: string | null;
+    }
+  | {
+      kind: 'transfer_in';
+      paymentId: string;
+      amount: number;
+      counterpartyUserId: string;
+      counterpartyDisplayName: string;
+      occurredAt: string;
+    }
+  | {
+      kind: 'transfer_out';
+      movementId: string;
+      amount: number;
+      counterpartyUserId: string;
+      counterpartyDisplayName: string;
+      occurredAt: string;
+    };
+
+export async function listCreditHistory(db: Db, userId: string): Promise<CreditEvent[]> {
+  const events: CreditEvent[] = [];
+
+  const ps = db
+    .select({
+      id: payments.id,
+      amount: payments.amount,
+      method: payments.method,
+      receivedAt: payments.receivedAt,
+      note: payments.note,
+      transferredFromUserId: payments.transferredFromUserId,
+    })
+    .from(payments)
+    .where(and(eq(payments.payerUserId, userId), isNull(payments.cancelledAt)))
+    .all();
+
+  const userNames = new Map<string, string>();
+  for (const u of db.select({ id: users.id, displayName: users.displayName }).from(users).all()) {
+    userNames.set(u.id, u.displayName);
+  }
+
+  for (const p of ps) {
+    const row = db
+      .select({ s: sum(paymentAllocations.amount) })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.paymentId, p.id))
+      .get();
+    const unallocated = p.amount - Number(row?.s ?? 0);
+    if (p.transferredFromUserId) {
+      if (unallocated > 0) {
+        events.push({
+          kind: 'transfer_in',
+          paymentId: p.id,
+          amount: unallocated,
+          counterpartyUserId: p.transferredFromUserId,
+          counterpartyDisplayName: userNames.get(p.transferredFromUserId) ?? '?',
+          occurredAt: p.receivedAt,
+        });
+      }
+    } else if (unallocated > 0) {
+      events.push({
+        kind: 'payment_deposit',
+        paymentId: p.id,
+        amount: unallocated,
+        method: p.method,
+        occurredAt: p.receivedAt,
+        note: p.note,
+      });
+    }
+    const allocs = db
+      .select({
+        chargeId: paymentAllocations.chargeId,
+        amount: paymentAllocations.amount,
+        chargeDescription: charges.description,
+        chargeCreatedAt: charges.createdAt,
+      })
+      .from(paymentAllocations)
+      .innerJoin(charges, eq(charges.id, paymentAllocations.chargeId))
+      .where(eq(paymentAllocations.paymentId, p.id))
+      .all();
+    for (const a of allocs) {
+      events.push({
+        kind: 'payment_consumption',
+        paymentId: p.id,
+        chargeId: a.chargeId,
+        chargeDescription: a.chargeDescription,
+        amount: a.amount,
+        occurredAt: a.chargeCreatedAt,
+      });
+    }
+  }
+
+  const movs = db
+    .select()
+    .from(creditMovements)
+    .where(and(eq(creditMovements.userId, userId), isNull(creditMovements.cancelledAt)))
+    .all();
+  for (const m of movs) {
+    if (m.kind === 'refund') {
+      events.push({
+        kind: 'refund',
+        movementId: m.id,
+        amount: m.amount,
+        method: m.method!,
+        occurredAt: m.occurredAt,
+        note: m.note,
+      });
+    } else if (m.kind === 'transfer_out') {
+      events.push({
+        kind: 'transfer_out',
+        movementId: m.id,
+        amount: m.amount,
+        counterpartyUserId: m.counterpartyUserId!,
+        counterpartyDisplayName: userNames.get(m.counterpartyUserId!) ?? '?',
+        occurredAt: m.occurredAt,
+      });
+    }
+  }
+
+  events.sort((a, b) => (b.occurredAt > a.occurredAt ? 1 : -1));
+  return events;
+}
+
 async function consumeCreditForChargeAmount(
   db: Db,
   chargeId: string,
