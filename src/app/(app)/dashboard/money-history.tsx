@@ -104,9 +104,9 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
   return (
     <div style={{ marginTop: 16 }}>
       <Panel>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 12, flexWrap: 'wrap', rowGap: 8 }}>
           <HeadingSmall marginTop="0" marginBottom="0">{m.dashboard.movementsHeading}</HeadingSmall>
-          <div style={{ minWidth: 280 }}>
+          <div style={{ flex: '1 1 240px' }}>
             <DatePicker
               value={pickerValue}
               onChange={({ date }) => applyRange(Array.isArray(date) ? date : [date])}

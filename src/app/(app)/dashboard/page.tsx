@@ -1,16 +1,15 @@
+import Link from 'next/link';
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { getPotBalances } from '@/server/domain/pots';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
-import { listMoneyMovements } from '@/server/domain/movements';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import {
   getCreditBalance,
   getTotalCreditLiability,
   listMemberCreditBalances,
 } from '@/server/domain/credit';
-import { resolveDashboardRange } from '@/shared/date-range';
 import { formatCents } from '@/shared/format';
 import { getMessages } from '@/shared/i18n';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
@@ -19,25 +18,18 @@ import { StatusCard } from '@/ui/status-card';
 import { SectionHeading } from '@/ui/heading';
 import { Muted } from '@/ui/text';
 import { PotCard } from './pot-card';
-import { MoneyHistory } from './money-history';
 import { MembersTable, type MemberRow } from '../members/members-table';
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: { from?: string; to?: string };
-}) {
+export default async function DashboardPage() {
   const user = await requireUser();
   const db = getDb();
   const locale = await resolveLocaleForRequest();
   const m = getMessages(locale);
 
   if (user.role === 'admin') {
-    const range = resolveDashboardRange({ from: searchParams.from, to: searchParams.to });
-    const [pots, members, movements, totalCreditLiability, memberCredits] = await Promise.all([
+    const [pots, members, totalCreditLiability, memberCredits] = await Promise.all([
       getPotBalances(db),
       listActiveMembers(db),
-      listMoneyMovements(db, { from: range.from, to: range.to }),
       getTotalCreditLiability(db),
       listMemberCreditBalances(db),
     ]);
@@ -59,10 +51,8 @@ export default async function DashboardPage({
 
     return (
       <div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          <PotCard label={m.dashboard.cashPot} cents={pots.cash} />
-          <PotCard label={m.dashboard.cardPot} cents={pots.card} />
-        </div>
+        <PotCard label={m.dashboard.cashPot} cents={pots.cash} />
+        <PotCard label={m.dashboard.cardPot} cents={pots.card} />
         {totalCreditLiability > 0 && (
           <Panel>
             <Muted>
@@ -74,11 +64,9 @@ export default async function DashboardPage({
           <SectionHeading>{m.dashboard.membersHeading(members.length)}</SectionHeading>
           <MembersTable rows={memberRows} />
         </Panel>
-        <MoneyHistory
-          movements={movements}
-          range={{ from: range.from, to: range.to }}
-          clamped={range.clamped}
-        />
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <Link href="/dashboard/history">{m.dashboard.viewHistory}</Link>
+        </div>
       </div>
     );
   }
