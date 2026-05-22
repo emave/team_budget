@@ -21,6 +21,9 @@ import { payConversation } from './conversations/pay';
 import { chargeConversation } from './conversations/charge';
 import { infoEditConversation } from './conversations/info-edit';
 import { guestDepositConversation } from './conversations/guest-deposit';
+import { creditDepositConversation } from './conversations/credit-deposit';
+import { creditRefundConversation } from './conversations/credit-refund';
+import { registerWalletHandler } from './handlers/wallet';
 
 let _bot: Bot<BotContext> | null = null;
 
@@ -44,6 +47,11 @@ export function getBot(): Bot<BotContext> {
     _bot.command('info_edit', async (ctx) => { await ctx.conversation.enter('infoEdit'); });
     _bot.use(createConversation(guestDepositConversation, 'guestDeposit'));
     _bot.command('guestdeposit', async (ctx) => { await ctx.conversation.enter('guestDeposit'); });
+    _bot.use(createConversation(creditDepositConversation, 'creditDeposit'));
+    _bot.command('deposit', async (ctx) => { await ctx.conversation.enter('creditDeposit'); });
+    _bot.use(createConversation(creditRefundConversation, 'creditRefund'));
+    _bot.command('refund', async (ctx) => { await ctx.conversation.enter('creditRefund'); });
+    registerWalletHandler(_bot);
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
@@ -62,6 +70,7 @@ function publicCommands(locale: Locale) {
   return [
     { command: 'menu', description: d.menu },
     { command: 'balance', description: d.balance },
+    { command: 'wallet', description: d.wallet },
     { command: 'history', description: d.history },
     { command: 'info', description: d.info },
     { command: 'help', description: d.help },
@@ -80,6 +89,8 @@ function adminCommands(locale: Locale) {
     { command: 'invite', description: d.invite },
     { command: 'info_edit', description: d.info_edit },
     { command: 'guestdeposit', description: d.guestdeposit },
+    { command: 'deposit', description: d.deposit },
+    { command: 'refund', description: d.refund },
   ];
 }
 

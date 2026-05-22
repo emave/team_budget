@@ -50,8 +50,23 @@ export async function payConversation(conversation: BotConversation, ctx: BotCon
     return;
   }
   if (cents > debt) {
-    await ctx.reply(m.bot.pay.exceedsDebt(formatCents(debt)));
-    return;
+    const payerName =
+      members.find((mm) => mm.id === payerId)?.displayName ?? '?';
+    const excess = cents - debt;
+    await ctx.reply(
+      m.wallet.bot.payOverpaymentPrompt(formatCents(excess), payerName),
+      {
+        reply_markup: new InlineKeyboard()
+          .text(m.wallet.bot.btnYes, 'pay:ov:y')
+          .text(m.wallet.bot.btnNo, 'pay:ov:n'),
+      },
+    );
+    const ovCtx = await conversation.waitForCallbackQuery(/^pay:ov:(y|n)$/);
+    await ovCtx.answerCallbackQuery();
+    if (ovCtx.match[1] !== 'y') {
+      await ctx.reply(m.bot.pay.exceedsDebt(formatCents(debt)));
+      return;
+    }
   }
 
   // Step 3: method
