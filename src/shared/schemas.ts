@@ -116,3 +116,34 @@ export const guestDepositRangeSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
+
+export const recordCreditDepositSchema = z.object({
+  payerUserId: idSchema,
+  method: potSchema,
+  amount: moneySchema,
+  note: z.string().max(200).optional(),
+  receivedAt: z.string().datetime().optional(),
+});
+
+export const applyCreditToChargeSchema = z.object({
+  chargeId: idSchema,
+  amount: moneySchema,
+});
+
+export const refundCreditSchema = z.object({
+  userId: idSchema,
+  method: potSchema,
+  amount: moneySchema,
+  note: z.string().max(200).optional(),
+  occurredAt: z.string().datetime().optional(),
+});
+
+export const transferCreditSchema = z.object({
+  fromUserId: idSchema,
+  toUserId: idSchema,
+  amount: moneySchema,
+  note: z.string().max(200).optional(),
+  occurredAt: z.string().datetime().optional(),
+});
+
+export const cancelCreditMovementSchema = z.object({ id: idSchema });
