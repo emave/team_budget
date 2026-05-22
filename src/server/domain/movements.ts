@@ -1,5 +1,5 @@
 import { and, eq, gte, isNull, lte } from 'drizzle-orm';
-import { payments, spendings, users } from '@/server/db/schema';
+import { payments, spendings, users, guests, guestDeposits } from '@/server/db/schema';
 import type { Db } from './types';
 
 export type Movement =
@@ -11,6 +11,16 @@ export type Movement =
       method: 'cash' | 'card';
       payerUserId: string;
       payerDisplayName: string;
+      note: string | null;
+    }
+  | {
+      kind: 'guest_deposit';
+      id: string;
+      at: string;
+      amount: number;
+      method: 'cash' | 'card';
+      guestId: string | null;
+      guestName: string | null;
       note: string | null;
     }
   | {
@@ -50,6 +60,27 @@ export async function listMoneyMovements(
     )
     .all();
 
+  const gs = db
+    .select({
+      id: guestDeposits.id,
+      at: guestDeposits.receivedAt,
+      amount: guestDeposits.amount,
+      method: guestDeposits.method,
+      guestId: guestDeposits.guestId,
+      guestName: guests.name,
+      note: guestDeposits.note,
+    })
+    .from(guestDeposits)
+    .leftJoin(guests, eq(guests.id, guestDeposits.guestId))
+    .where(
+      and(
+        isNull(guestDeposits.cancelledAt),
+        gte(guestDeposits.receivedAt, fromBound),
+        lte(guestDeposits.receivedAt, toBound),
+      ),
+    )
+    .all();
+
   const ss = db
     .select({
       id: spendings.id,
@@ -71,21 +102,17 @@ export async function listMoneyMovements(
   const merged: Movement[] = [
     ...ps.map((p): Movement => ({
       kind: 'deposit',
-      id: p.id,
-      at: p.at,
-      amount: p.amount,
-      method: p.method,
-      payerUserId: p.payerUserId,
-      payerDisplayName: p.payerDisplayName,
-      note: p.note,
+      id: p.id, at: p.at, amount: p.amount, method: p.method,
+      payerUserId: p.payerUserId, payerDisplayName: p.payerDisplayName, note: p.note,
+    })),
+    ...gs.map((g): Movement => ({
+      kind: 'guest_deposit',
+      id: g.id, at: g.at, amount: g.amount, method: g.method,
+      guestId: g.guestId, guestName: g.guestName, note: g.note,
     })),
     ...ss.map((s): Movement => ({
       kind: 'withdraw',
-      id: s.id,
-      at: s.at,
-      amount: s.amount,
-      pot: s.pot,
-      description: s.description,
+      id: s.id, at: s.at, amount: s.amount, pot: s.pot, description: s.description,
     })),
   ];
 

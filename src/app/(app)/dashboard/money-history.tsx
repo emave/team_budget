@@ -58,7 +58,11 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
     for (const ev of movements) {
       const day = ev.at.slice(0, 10);
       const laneKey: LaneKey =
-        ev.kind === 'deposit' ? `member:${ev.payerUserId}` : `pot:${ev.pot}`;
+        ev.kind === 'deposit'
+          ? `member:${ev.payerUserId}`
+          : ev.kind === 'guest_deposit'
+          ? `pot:${ev.method}`
+          : `pot:${ev.pot}`;
       const k = `${laneKey}|${day}`;
       const arr = map.get(k);
       if (arr) arr.push(ev);
@@ -205,10 +209,15 @@ function LaneRow({
 }
 
 function EventCard({ ev }: { ev: Movement }) {
-  const tooltip = ev.kind === 'deposit' ? (ev.note ?? '') : ev.description;
-  const sign = ev.kind === 'deposit' ? '+' : '−';
-  const color = ev.kind === 'deposit' ? '#065f46' : '#991b1b';
-  const bg = ev.kind === 'deposit' ? '#d1fae5' : '#fee2e2';
+  const tooltip =
+    ev.kind === 'deposit'
+      ? (ev.note ?? '')
+      : ev.kind === 'guest_deposit'
+      ? (ev.note ?? '')
+      : ev.description;
+  const sign = ev.kind === 'withdraw' ? '−' : '+';
+  const color = ev.kind === 'withdraw' ? '#991b1b' : '#065f46';
+  const bg = ev.kind === 'withdraw' ? '#fee2e2' : '#d1fae5';
   return (
     <StatefulTooltip content={tooltip || null} showArrow>
       <div

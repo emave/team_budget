@@ -96,4 +96,31 @@ describe('listMoneyMovements', () => {
     const rows = await listMoneyMovements(db, { from: '2026-01-01', to: '2026-01-31' });
     expect(rows).toEqual([]);
   });
+
+  it('includes guest_deposit events (named and anonymous)', async () => {
+    const { createGuest } = await import('@/server/domain/guests');
+    const { recordGuestDeposit, cancelGuestDeposit } = await import('@/server/domain/guest-deposits');
+    const g = await createGuest(db, { name: 'Pasha', createdByUserId: adminId });
+    await recordGuestDeposit(db, {
+      guestId: g.id, amount: 4000, method: 'cash',
+      receivedAt: '2026-05-15T10:00:00.000Z', note: 'sat game', createdByUserId: adminId,
+    });
+    await recordGuestDeposit(db, {
+      amount: 2000, method: 'card',
+      receivedAt: '2026-05-15T11:00:00.000Z', createdByUserId: adminId,
+    });
+    const cancelled = await recordGuestDeposit(db, {
+      amount: 999, method: 'cash',
+      receivedAt: '2026-05-15T12:00:00.000Z', createdByUserId: adminId,
+    });
+    await cancelGuestDeposit(db, cancelled.id);
+
+    const events = await listMoneyMovements(db, { from: '2026-05-15', to: '2026-05-15' });
+    const guests = events.filter((e) => e.kind === 'guest_deposit');
+    expect(guests.length).toBe(2);
+    const named = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === g.id);
+    const anon = guests.find((e) => e.kind === 'guest_deposit' && e.guestId === null);
+    expect(named && named.kind === 'guest_deposit' && named.guestName).toBe('Pasha');
+    expect(anon && anon.kind === 'guest_deposit' && anon.guestName).toBe(null);
+  });
 });
