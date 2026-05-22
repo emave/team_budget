@@ -82,4 +82,43 @@ describe('cancellations', () => {
     await cancelPayment(db, payment.id);
     await cancelPayment(db, payment.id); // does not throw
   });
+
+  it('allows cancelling a monthly_dues charge that was paid by credit', async () => {
+    const { recordCreditDeposit, getCreditBalance } = await import('@/server/domain/credit');
+    const { updateMonthlyDuesAmount } = await import('@/server/domain/settings');
+    const { generateMonthlyDues } = await import('@/server/domain/dues');
+    const { listChargesFiltered } = await import('@/server/domain/charges');
+
+    await updateMonthlyDuesAmount(db, 1500);
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 3000,
+      createdByUserId: adminId,
+    });
+    await generateMonthlyDues(db, { period: '2026-05', createdByUserId: adminId });
+    const opens = await listChargesFiltered(db, { userId: memberId, type: 'monthly_dues' });
+    const charge = opens[0]!;
+    expect(charge.status).toBe('paid');
+    await cancelCharge(db, charge.id);
+    expect((await getChargeById(db, charge.id))?.status).toBe('cancelled');
+    expect(await getCreditBalance(db, memberId)).toBe(3000);
+  });
+
+  it('still rejects cancelling an adhoc charge with allocations', async () => {
+    const c = await createAdhocCharge(db, {
+      userId: memberId,
+      amount: 2000,
+      description: 'x',
+      createdByUserId: adminId,
+    });
+    await recordPayment(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 2000,
+      allocations: [{ chargeId: c.id, amount: 2000 }],
+      createdByUserId: adminId,
+    });
+    await expect(cancelCharge(db, c.id)).rejects.toThrow(/has allocations/i);
+  });
 });
