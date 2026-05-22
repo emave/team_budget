@@ -70,6 +70,11 @@ export const inviteMemberSchema = z.object({
 
 export const updateDuesAmountSchema = z.object({ amount: moneySchema });
 
+export const chargeMemberDuesSchema = z.object({
+  userId: idSchema,
+  period: z.string().regex(/^\d{4}-\d{2}$/, 'period must be YYYY-MM'),
+});
+
 export const upsertInfoPageSchema = z.object({
   id: idSchema.optional(),
   title: z.string().min(1).max(120),
