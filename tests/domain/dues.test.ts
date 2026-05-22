@@ -4,7 +4,8 @@ import { createUser, deactivateUser } from '@/server/domain/users';
 import { getOrCreateSettings, updateMonthlyDuesAmount } from '@/server/domain/settings';
 import { chargeMemberDues, MemberAlreadyChargedError, generateMonthlyDues } from '@/server/domain/dues';
 import { charges } from '@/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { recordPayment } from '@/server/domain/payments';
 
 describe('generateMonthlyDues', () => {
   let db: TestDb;
@@ -225,5 +226,66 @@ describe('chargeMemberDues', () => {
       createdByUserId: adminId,
     });
     expect(c.status).toBe('paid');
+  });
+});
+
+describe('generateMonthlyDues — no double charge after manual/paid charge', () => {
+  let db: TestDb;
+  let adminId: string;
+  let manuallyCharged: string;
+
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    manuallyCharged = (
+      await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })
+    ).id;
+    for (let i = 0; i < 2; i++) {
+      await createUser(db, {
+        telegramUserId: 100 + i,
+        displayName: `O${i}`,
+        role: 'member',
+      });
+    }
+    await updateMonthlyDuesAmount(db, 5000);
+  });
+
+  it('skips members who already have a paid monthly_dues charge for the period', async () => {
+    const c = await chargeMemberDues(db, {
+      userId: manuallyCharged,
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+    await recordPayment(db, {
+      payerUserId: manuallyCharged,
+      method: 'cash',
+      amount: c.amount,
+      allocations: [{ chargeId: c.id, amount: c.amount }],
+      createdByUserId: adminId,
+    });
+    const paid = db.select().from(charges).where(eq(charges.id, c.id)).get();
+    expect(paid?.status).toBe('paid');
+
+    const r = await generateMonthlyDues(db, {
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+
+    // admin + two other members got new charges; M already had one and is not re-charged.
+    expect(r.createdCount).toBe(3);
+    const mCharges = db
+      .select()
+      .from(charges)
+      .where(
+        and(
+          eq(charges.userId, manuallyCharged),
+          eq(charges.type, 'monthly_dues'),
+          eq(charges.billingPeriod, '2026-05'),
+        ),
+      )
+      .all();
+    expect(mCharges.length).toBe(1);
+    expect(mCharges[0]!.id).toBe(c.id);
+    expect(mCharges[0]!.status).toBe('paid');
   });
 });
