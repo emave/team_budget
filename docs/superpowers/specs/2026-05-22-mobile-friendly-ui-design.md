@@ -244,8 +244,8 @@ Replace the outer flex-row with a wrapping layout:
 Effect: on a wide screen, title and actions sit side-by-side as today. When the actions row can't fit, it wraps onto the next line. Actions themselves also wrap when crowded.
 
 `AdminControls` ([src/app/(app)/members/[id]/admin-controls.tsx](../../../src/app/(app)/members/[id]/admin-controls.tsx)):
-- Wrap the 4 buttons (rename, role-toggle, archive, delete) so each can shrink. Below 600px (use `SMALL` breakpoint): `display: grid; grid-template-columns: 1fr 1fr; gap: 8px;` so they form a 2×2.
-- The destructive "Delete" stays in the grid but gets `kind="tertiary"` and an explicit visual gap (top margin) so it's not pressed by accident next to "Rename".
+- Today: 3 buttons (Edit, Deactivate/Reactivate, Delete) in a `flex-wrap: wrap` row. They already wrap. Below 600px, force each button to `flex: 1 1 0` so the row uses the full width with equal-width buttons. Above 600px, restore natural button widths.
+- Modals inside this component are Base Web `Modal`, which is already mobile-friendly; no changes needed.
 
 ### Forms
 
@@ -283,19 +283,20 @@ No structural changes to mini.
 
 ### i18n
 
-New keys in [src/shared/i18n/](../../../src/shared/i18n/):
-- `dashboard.viewHistory` → "View money history" / "Посмотреть историю движений" / "Глядзець гісторыю рухаў".
-- `nav.menu` → "Menu" / "Меню" / "Меню".
-- `nav.close` → "Close" / "Закрыть" / "Закрыць".
+New keys in [src/shared/i18n/](../../../src/shared/i18n/) — locales are EN + RU only:
+- `dashboard.viewHistory` → EN "View money history" / RU "Открыть историю движений".
+- `nav.menu` → EN "Menu" / RU "Меню".
+- `nav.close` → EN "Close" / RU "Закрыть".
 
 All other strings reuse existing keys (the nav labels, member/charge/payment column labels reused as card titles or subtitles).
 
 ### Tests
 
 The redesign is presentational; no domain logic changes. Test coverage:
-- Unit (Vitest, `tests/ui/`): smoke-render tests for `DataCard` — renders `title`, `titleRight`, `subtitle`, `badges`, `actions`; clicking an interactive child does not navigate when `href` is set (verify `stopPropagation`).
-- Existing unit and integration tests must keep passing — they exercise actions and domain logic, which we don't touch.
-- Manual: open the app in a phone-sized viewport (use DevTools or actual phone via Cloudflare Tunnel) and walk the golden path: login → dashboard → members → member detail → charges → payments → settings → drawer nav.
+- Existing Vitest suites must stay green (`pnpm test`). They exercise domain, actions, jobs, bot — none of which we touch.
+- TypeScript must stay clean (`pnpm typecheck`).
+- Vitest is configured with `environment: 'node'` and doesn't load React Testing Library, so we do not add UI unit tests for the new primitives — the cost of wiring jsdom + RTL is too high for what the tests would catch (visual changes).
+- Manual verification at phone width: open the app in Chrome DevTools mobile emulation (390×844) and walk the golden path: login → dashboard → tap "View money history" → back → /members → tap a member → admin controls → /charges → /payments → /spendings → /settings → drawer (hamburger → tap each link → verify drawer closes after navigation).
 
 ### Risk
 
