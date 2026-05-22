@@ -2,9 +2,17 @@
 
 import type { ReactNode } from 'react';
 import { useStyletron } from 'baseui';
-import { HeadingMedium } from 'baseui/typography';
+import { HeadingMedium, LabelSmall } from 'baseui/typography';
 
-export function PageHeader({ title, actions }: { title: string; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   const [css, theme] = useStyletron();
   return (
     <div
@@ -15,7 +23,12 @@ export function PageHeader({ title, actions }: { title: string; actions?: ReactN
         marginBottom: theme.sizing.scale600,
       })}
     >
-      <HeadingMedium marginTop="0" marginBottom="0">{title}</HeadingMedium>
+      <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.sizing.scale100 })}>
+        <HeadingMedium marginTop="0" marginBottom="0">{title}</HeadingMedium>
+        {subtitle ? (
+          <LabelSmall color={theme.colors.contentSecondary}>{subtitle}</LabelSmall>
+        ) : null}
+      </div>
       {actions}
     </div>
   );
