@@ -7,6 +7,7 @@ export {
   InfoIcon as NavInfoIcon,
   UsersThreeIcon as NavGuestsIcon,
   GearIcon as NavSettingsIcon,
+  ListIcon as NavMenuIcon,
   PlusIcon as ActionNewIcon,
   EnvelopeSimpleIcon as ActionInviteIcon,
   CheckIcon as ActionSaveIcon,
