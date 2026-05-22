@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDb, type TestDb } from '../helpers/db';
 import { createUser, deactivateUser } from '@/server/domain/users';
 import { updateMonthlyDuesAmount } from '@/server/domain/settings';
-import { generateMonthlyDues } from '@/server/domain/dues';
+import { chargeMemberDues, MemberAlreadyChargedError, generateMonthlyDues } from '@/server/domain/dues';
 import { charges } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -111,5 +111,31 @@ describe('generateMonthlyDues with existing credit', () => {
     });
     await generateMonthlyDues(db, { period: '2026-06', createdByUserId: admin.id });
     expect(await getCreditBalance(db, member.id)).toBe(0);
+  });
+});
+
+describe('chargeMemberDues', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+    await updateMonthlyDuesAmount(db, 5000);
+  });
+
+  it('creates a monthly_dues charge for the user and period at current settings amount', async () => {
+    const c = await chargeMemberDues(db, {
+      userId: memberId,
+      period: '2026-05',
+      createdByUserId: adminId,
+    });
+    expect(c.type).toBe('monthly_dues');
+    expect(c.userId).toBe(memberId);
+    expect(c.billingPeriod).toBe('2026-05');
+    expect(c.amount).toBe(5000);
+    expect(c.status).toBe('open');
   });
 });
