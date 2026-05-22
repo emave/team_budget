@@ -158,6 +158,45 @@ export async function applyCreditToCharge(db: Db, input: ApplyCreditInput) {
   }
 }
 
+export interface RefundCreditInput {
+  userId: string;
+  amount: number;
+  method: 'cash' | 'card';
+  note?: string;
+  occurredAt?: string;
+  createdByUserId: string;
+}
+
+export async function refundCredit(db: Db, input: RefundCreditInput) {
+  if (!Number.isInteger(input.amount) || input.amount <= 0) {
+    throw new Error(`amount must be positive integer, got ${input.amount}`);
+  }
+  if (input.method !== 'cash' && input.method !== 'card') {
+    throw new Error(`invalid method: ${String(input.method)}`);
+  }
+  const balance = await getCreditBalance(db, input.userId);
+  if (balance < input.amount) {
+    throw new Error(`insufficient credit: have ${balance}, need ${input.amount}`);
+  }
+  const id = randomUUID();
+  const occurredAt = input.occurredAt ?? new Date().toISOString();
+  db.insert(creditMovements)
+    .values({
+      id,
+      userId: input.userId,
+      kind: 'refund',
+      amount: input.amount,
+      method: input.method,
+      counterpartyUserId: null,
+      groupId: null,
+      note: input.note ?? null,
+      occurredAt,
+      createdByUserId: input.createdByUserId,
+    })
+    .run();
+  return db.select().from(creditMovements).where(eq(creditMovements.id, id)).get()!;
+}
+
 async function consumeCreditForChargeAmount(
   db: Db,
   chargeId: string,

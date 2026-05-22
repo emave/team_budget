@@ -9,7 +9,9 @@ import {
   getTotalCreditLiability,
   recordCreditDeposit,
   applyCreditToCharge,
+  refundCredit,
 } from '@/server/domain/credit';
+import { getPotBalances } from '@/server/domain/pots';
 import {
   createPotBorrow,
   getChargeById,
@@ -213,5 +215,52 @@ describe('applyCreditToCharge', () => {
         createdByUserId: adminId,
       }),
     ).rejects.toThrow(/insufficient credit|different member|wallet/i);
+  });
+});
+
+describe('refundCredit', () => {
+  let db: TestDb;
+  let adminId: string;
+  let memberId: string;
+  beforeEach(async () => {
+    db = createTestDb();
+    adminId = (await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' })).id;
+    memberId = (await createUser(db, { telegramUserId: 2, displayName: 'M', role: 'member' })).id;
+  });
+
+  it('decreases credit and pot by the refund amount', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 5000,
+      createdByUserId: adminId,
+    });
+    const before = await getPotBalances(db);
+    await refundCredit(db, {
+      userId: memberId,
+      amount: 2000,
+      method: 'cash',
+      createdByUserId: adminId,
+    });
+    expect(await getCreditBalance(db, memberId)).toBe(3000);
+    const after = await getPotBalances(db);
+    expect(after.cash).toBe(before.cash - 2000);
+  });
+
+  it('rejects when amount exceeds balance', async () => {
+    await recordCreditDeposit(db, {
+      payerUserId: memberId,
+      method: 'cash',
+      amount: 1000,
+      createdByUserId: adminId,
+    });
+    await expect(
+      refundCredit(db, {
+        userId: memberId,
+        amount: 2000,
+        method: 'cash',
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/insufficient credit/i);
   });
 });
