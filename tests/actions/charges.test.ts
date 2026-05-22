@@ -82,4 +82,31 @@ describe('charge actions', () => {
       expect(res.charge.amount).toBe(5000);
     }
   });
+
+  it('chargeMemberDues returns a structured conflict result when charge already exists', async () => {
+    const { updateMonthlyDuesAmount } = await import('@/server/domain/settings');
+    await updateMonthlyDuesAmount(db, 5000);
+
+    const a = makeChargeActions({ getDb: () => db });
+    const first = await a.chargeMemberDues({ userId: memberA, period: '2026-05' });
+    expect(first.ok).toBe(true);
+
+    const second = await a.chargeMemberDues({ userId: memberA, period: '2026-05' });
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.reason).toBe('already_charged');
+      expect(second.existingStatus).toBe('open');
+      if (first.ok) expect(second.existingChargeId).toBe(first.charge.id);
+    }
+  });
+
+  it('chargeMemberDues rejects malformed period', async () => {
+    const a = makeChargeActions({ getDb: () => db });
+    await expect(
+      a.chargeMemberDues({ userId: memberA, period: '2026-5' }),
+    ).rejects.toThrow();
+    await expect(
+      a.chargeMemberDues({ userId: memberA, period: 'foo' }),
+    ).rejects.toThrow();
+  });
 });
