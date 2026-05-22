@@ -138,4 +138,37 @@ describe('chargeMemberDues', () => {
     expect(c.amount).toBe(5000);
     expect(c.status).toBe('open');
   });
+
+  it('rejects invalid period format', async () => {
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-5', createdByUserId: adminId }),
+    ).rejects.toThrow(/invalid period/);
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: 'foo', createdByUserId: adminId }),
+    ).rejects.toThrow(/invalid period/);
+  });
+
+  it('rejects when monthly dues amount is not set', async () => {
+    await updateMonthlyDuesAmount(db, 0);
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
+    ).rejects.toThrow(/monthly_dues_amount must be set/);
+  });
+
+  it('rejects when user does not exist', async () => {
+    await expect(
+      chargeMemberDues(db, {
+        userId: '00000000-0000-0000-0000-000000000000',
+        period: '2026-05',
+        createdByUserId: adminId,
+      }),
+    ).rejects.toThrow(/not found/);
+  });
+
+  it('rejects when user is inactive', async () => {
+    await deactivateUser(db, memberId);
+    await expect(
+      chargeMemberDues(db, { userId: memberId, period: '2026-05', createdByUserId: adminId }),
+    ).rejects.toThrow(/not active/);
+  });
 });
