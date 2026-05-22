@@ -60,20 +60,22 @@ export function ChargeDuesForm({ userId, monthlyDuesAmount }: Props) {
   return (
     <form onSubmit={handleSubmit((v) => mutation.mutate(v))}>
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <Controller
-          control={control}
-          name="period"
-          render={({ field }) => (
-            <FormControl label={m.members.dues.monthLabel}>
-              <Input
-                type="month"
-                value={field.value}
-                onChange={(e) => field.onChange((e.target as HTMLInputElement).value)}
-              />
-            </FormControl>
-          )}
-        />
-        <Button type="submit" isLoading={mutation.isPending}>
+        <div style={{ flex: '1 1 200px' }}>
+          <Controller
+            control={control}
+            name="period"
+            render={({ field }) => (
+              <FormControl label={m.members.dues.monthLabel}>
+                <Input
+                  type="month"
+                  value={field.value}
+                  onChange={(e) => field.onChange((e.target as HTMLInputElement).value)}
+                />
+              </FormControl>
+            )}
+          />
+        </div>
+        <Button type="submit" isLoading={mutation.isPending} overrides={{ BaseButton: { style: { flex: '1 1 200px' } } }}>
           {m.members.dues.chargeButton(formatCents(monthlyDuesAmount))}
         </Button>
       </div>

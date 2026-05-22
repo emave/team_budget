@@ -1,7 +1,6 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { Button } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { Select } from 'baseui/select';
@@ -9,6 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { recordSpending } from '@/server/actions/spendings-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { SubmitButton } from '@/ui/submit-button';
 
 type Cat = { id: string; name: string };
 
@@ -38,7 +38,7 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
   });
 
   return (
-    <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 480 }}>
+    <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12 }}>
       <FormControl label={m.spendings.potLabel}>
         <Select
           options={[{ id: 'cash', label: m.common.methodCash }, { id: 'card', label: m.common.methodCard }]}
@@ -60,7 +60,7 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
           placeholder={m.spendings.categoryPlaceholder}
         />
       </FormControl>
-      <Button type="submit" isLoading={mut.isPending}>{m.spendings.submit}</Button>
+      <SubmitButton type="submit" isLoading={mut.isPending}>{m.spendings.submit}</SubmitButton>
       {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </form>
   );

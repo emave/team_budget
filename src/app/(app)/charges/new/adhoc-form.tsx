@@ -1,7 +1,6 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { Button } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { Select } from 'baseui/select';
@@ -9,6 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { createAdhocCharge } from '@/server/actions/charges-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { SubmitButton } from '@/ui/submit-button';
 
 type Member = { id: string; displayName: string };
 
@@ -30,7 +30,7 @@ export function AdhocForm({ members }: { members: Member[] }) {
   });
 
   return (
-    <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12, maxWidth: 480 }}>
+    <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12 }}>
       <FormControl label={m.charges.memberLabel}>
         <Select
           options={members.map((mm) => ({ id: mm.id, label: mm.displayName }))}
@@ -45,7 +45,7 @@ export function AdhocForm({ members }: { members: Member[] }) {
       <FormControl label={m.charges.descriptionLabel}>
         <Input {...(register('description') as object)} />
       </FormControl>
-      <Button type="submit" isLoading={mut.isPending} disabled={!userId}>{m.charges.submitAdhoc}</Button>
+      <SubmitButton type="submit" isLoading={mut.isPending} disabled={!userId}>{m.charges.submitAdhoc}</SubmitButton>
       {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </form>
   );

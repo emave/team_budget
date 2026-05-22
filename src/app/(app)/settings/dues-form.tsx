@@ -24,13 +24,13 @@ export function DuesForm({ currentCents }: { currentCents: number }) {
   });
 
   return (
-    <div style={{ display: 'grid', gap: 12, maxWidth: 360 }}>
+    <div style={{ display: 'grid', gap: 12 }}>
       <FormControl label={m.settings.currentLabel(formatCents(currentCents))}>
         <Input value={amount} onChange={(e) => setAmount(e.currentTarget.value)} />
       </FormControl>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button onClick={() => save.mutate()} isLoading={save.isPending}>{m.settings.saveAmount}</Button>
-        <Button onClick={() => run.mutate()} isLoading={run.isPending}>{m.settings.generateNow}</Button>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Button onClick={() => save.mutate()} isLoading={save.isPending} overrides={{ BaseButton: { style: { flex: 1 } } }}>{m.settings.saveAmount}</Button>
+        <Button onClick={() => run.mutate()} isLoading={run.isPending} overrides={{ BaseButton: { style: { flex: 1 } } }}>{m.settings.generateNow}</Button>
       </div>
       {save.isError && <div style={{ color: '#dc2626' }}>{(save.error as Error).message}</div>}
       {run.isSuccess && (

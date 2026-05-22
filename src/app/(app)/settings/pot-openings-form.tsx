@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { useMutation } from '@tanstack/react-query';
@@ -9,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { updatePotOpenings } from '@/server/actions/settings-server';
 import { formatCents } from '@/shared/format';
 import { useMessages } from '@/app/_i18n-provider';
+import { SubmitButton } from '@/ui/submit-button';
 
 export function PotOpeningsForm({
   cashCents,
@@ -27,7 +27,7 @@ export function PotOpeningsForm({
   });
 
   return (
-    <div style={{ display: 'grid', gap: 12, maxWidth: 360 }}>
+    <div style={{ display: 'grid', gap: 12 }}>
       <FormControl
         label={`${m.settings.potOpeningsCashLabel} (${m.settings.currentLabel(formatCents(cashCents))})`}
       >
@@ -38,11 +38,9 @@ export function PotOpeningsForm({
       >
         <Input value={card} onChange={(e) => setCard(e.currentTarget.value)} />
       </FormControl>
-      <div>
-        <Button onClick={() => save.mutate()} isLoading={save.isPending}>
-          {m.settings.potOpeningsSave}
-        </Button>
-      </div>
+      <SubmitButton onClick={() => save.mutate()} isLoading={save.isPending}>
+        {m.settings.potOpeningsSave}
+      </SubmitButton>
       {save.isError && (
         <div style={{ color: '#dc2626' }}>{(save.error as Error).message}</div>
       )}

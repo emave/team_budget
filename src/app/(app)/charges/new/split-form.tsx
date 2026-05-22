@@ -1,20 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
 import { Input } from 'baseui/input';
 import { Checkbox } from 'baseui/checkbox';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useStyletron } from 'baseui';
 import { createSplitCharge } from '@/server/actions/charges-server';
 import { useMessages } from '@/app/_i18n-provider';
+import { SubmitButton } from '@/ui/submit-button';
+import { SMALL } from '@/ui/breakpoints';
 
 type Member = { id: string; displayName: string };
 
 export function SplitForm({ members }: { members: Member[] }) {
   const m = useMessages();
   const router = useRouter();
+  const [css] = useStyletron();
   const [description, setDescription] = useState('');
   const [total, setTotal] = useState('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -38,8 +41,20 @@ export function SplitForm({ members }: { members: Member[] }) {
     onSuccess: () => router.push('/charges'),
   });
 
+  const rowCss = css({
+    display: 'grid',
+    gridTemplateColumns: '1fr 120px',
+    gap: '12px',
+    alignItems: 'center',
+    padding: '6px 0',
+    [SMALL]: {
+      gridTemplateColumns: '1fr',
+      gap: '6px',
+    },
+  });
+
   return (
-    <div style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
+    <div style={{ display: 'grid', gap: 12 }}>
       <FormControl label={m.charges.descriptionLabel}>
         <Input value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
       </FormControl>
@@ -51,7 +66,7 @@ export function SplitForm({ members }: { members: Member[] }) {
         {members.map((mm) => {
           const checked = !!selected[mm.id];
           return (
-            <div key={mm.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12, alignItems: 'center', padding: '4px 0' }}>
+            <div key={mm.id} className={rowCss}>
               <Checkbox checked={checked} onChange={(e) => setSelected((s) => ({ ...s, [mm.id]: e.currentTarget.checked }))}>
                 {mm.displayName}
               </Checkbox>
@@ -65,9 +80,9 @@ export function SplitForm({ members }: { members: Member[] }) {
           );
         })}
       </div>
-      <Button onClick={() => mut.mutate()} disabled={selectedIds.length === 0 || !description}>
+      <SubmitButton onClick={() => mut.mutate()} disabled={selectedIds.length === 0 || !description} isLoading={mut.isPending}>
         {m.charges.submitSplit}
-      </Button>
+      </SubmitButton>
       {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </div>
   );

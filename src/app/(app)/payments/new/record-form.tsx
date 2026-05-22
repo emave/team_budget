@@ -11,6 +11,7 @@ import {
   recordPayment,
   listOpenChargesForPayer,
 } from '@/server/actions/payments-server';
+import { SubmitButton } from '@/ui/submit-button';
 
 interface OpenChargeForPayer {
   id: string;
@@ -191,7 +192,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
     return (
       <>
         {Toggle}
-        <div style={{ display: 'grid', gap: 12, maxWidth: 560 }}>
+        <div style={{ display: 'grid', gap: 12 }}>
           <FormControl label={m.guestDeposits.guestLabel}>
             <Select
               creatable
@@ -234,14 +235,14 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
           <FormControl label={m.guestDeposits.noteLabel}>
             <Input value={guestNote} onChange={(e) => setGuestNote(e.currentTarget.value)} />
           </FormControl>
-          <Button
+          <SubmitButton
             type="button"
             onClick={() => submitGuest.mutate()}
             isLoading={submitGuest.isPending}
             disabled={!guestAmount || submitGuest.isPending}
           >
             {m.guestDeposits.submit}
-          </Button>
+          </SubmitButton>
           {submitGuest.isError && (
             <div style={{ color: '#dc2626' }}>{(submitGuest.error as Error).message}</div>
           )}
@@ -258,7 +259,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
   return (
     <>
       {Toggle}
-      <div style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
+      <div style={{ display: 'grid', gap: 12 }}>
         <FormControl label={m.payments.payerLabel}>
           <Select
             options={members.map((mm) => ({ id: mm.id, label: mm.displayName }))}
@@ -303,12 +304,12 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
               </div>
             )}
             {!openCharges.isLoading && charges.length > 0 && (
+              <div style={{ overflowX: 'auto', marginTop: 8 }}>
               <table
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
                   fontSize: 13,
-                  marginTop: 8,
                 }}
               >
                 <thead>
@@ -355,6 +356,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
                   </tr>
                 </tfoot>
               </table>
+              </div>
             )}
             {amountCents > 0 && !allocationsExceed && excessCents > 0 && payerName && (
               <div style={{ marginTop: 8, color: '#065f46' }}>
@@ -369,14 +371,14 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
           </div>
         )}
 
-        <Button
+        <SubmitButton
           type="button"
           onClick={() => submit.mutate()}
           isLoading={submit.isPending}
           disabled={submitDisabled}
         >
           {m.payments.submit}
-        </Button>
+        </SubmitButton>
         {submit.isError && (
           <div style={{ color: '#dc2626' }}>{(submit.error as Error).message}</div>
         )}

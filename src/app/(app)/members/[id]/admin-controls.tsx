@@ -8,6 +8,7 @@ import { Input } from 'baseui/input';
 import { RadioGroup, Radio } from 'baseui/radio';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import { useStyletron } from 'baseui';
 import {
   deactivateMember,
   reactivateMember,
@@ -17,6 +18,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMessages } from '@/app/_i18n-provider';
 import type { DeleteBlockReason } from '@/server/domain/users';
+import { SMALL } from '@/ui/breakpoints';
 
 interface Props {
   user: { id: string; displayName: string; isActive: boolean; role: 'admin' | 'member' };
@@ -32,6 +34,21 @@ interface EditForm {
 export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
   const m = useMessages();
   const router = useRouter();
+  const [css] = useStyletron();
+  const btnContainer = css({
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    [SMALL]: { width: '100%' },
+  });
+  const fullOnSmall = {
+    BaseButton: {
+      style: {
+        [SMALL]: { flex: '1 1 0', width: '100%' },
+      } as Record<string, unknown>,
+    },
+  };
 
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -76,13 +93,14 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
         : null;
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+    <div className={btnContainer}>
       <Button
         kind={KIND.secondary}
         onClick={() => {
           reset({ displayName: user.displayName, role: user.role });
           setEditOpen(true);
         }}
+        overrides={fullOnSmall}
       >
         {m.common.edit}
       </Button>
@@ -92,6 +110,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
           kind={KIND.secondary}
           onClick={() => deactivate.mutate(undefined)}
           isLoading={deactivate.isPending}
+          overrides={fullOnSmall}
         >
           {m.members.deactivate}
         </Button>
@@ -100,6 +119,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
           kind={KIND.secondary}
           onClick={() => reactivate.mutate()}
           isLoading={reactivate.isPending}
+          overrides={fullOnSmall}
         >
           {m.members.reactivate}
         </Button>
@@ -112,6 +132,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             disabled={blockedText !== null}
             onClick={() => setConfirmDeleteOpen(true)}
             isLoading={del.isPending}
+            overrides={fullOnSmall}
           >
             {m.members.deleteButton}
           </Button>
