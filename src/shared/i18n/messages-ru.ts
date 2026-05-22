@@ -114,6 +114,15 @@ export const MESSAGES_RU: Messages = {
     copied: 'Скопировано',
     revoke: 'Отозвать',
     confirmRevoke: 'Отозвать приглашение? Ссылка перестанет работать.',
+    dues: {
+      heading: 'Ежемесячный взнос',
+      monthLabel: 'Месяц',
+      chargeButton: (amount: string) => `Начислить ${amount}`,
+      noAmountConfigured: 'Сначала задайте сумму взноса в Настройках.',
+      alreadyCharged: (period: string, status: string) =>
+        `Уже начислено за ${period} (${status}).`,
+      successAck: 'Долг создан.',
+    },
   },
 
   charges: {

@@ -110,6 +110,15 @@ export const MESSAGES_EN = {
     copied: 'Copied',
     revoke: 'Revoke',
     confirmRevoke: 'Revoke this invite? The link will stop working.',
+    dues: {
+      heading: 'Monthly dues',
+      monthLabel: 'Month',
+      chargeButton: (amount: string) => `Charge ${amount}`,
+      noAmountConfigured: 'Set the monthly dues amount in Settings first.',
+      alreadyCharged: (period: string, status: string) =>
+        `Already charged for ${period} (${status}).`,
+      successAck: 'Charge created.',
+    },
   },
 
   charges: {
