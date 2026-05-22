@@ -18,13 +18,36 @@ import {
   getCreditBalance as domainBalance,
   listCreditHistory as domainHistory,
 } from '@/server/domain/credit';
+import { getUserById } from '@/server/domain/users';
+import { getNotifier } from '@/server/bot/notifications';
+import { formatCents } from '@/shared/format';
+import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
+
+function localeFor(u: { locale: unknown } | null | undefined) {
+  return u && isLocale(u.locale) ? u.locale : detectFromTelegram(undefined);
+}
+
+function notifySafe(fn: () => Promise<void>) {
+  if (process.env.SKIP_BOT === '1') return;
+  fn().catch((err) => console.error('[credit] notify failed:', err));
+}
 
 export function makeCreditActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
   const adminAction = makeAdminAction(deps);
 
   const recordCreditDeposit = adminAction(async ({ user, db }, input: unknown) => {
     const p = recordCreditDepositSchema.parse(input);
-    return domainDeposit(db, { ...p, createdByUserId: user.id });
+    const result = await domainDeposit(db, { ...p, createdByUserId: user.id });
+    notifySafe(async () => {
+      const balance = await domainBalance(db, p.payerUserId);
+      await getNotifier().notifyUser(p.payerUserId, (recipient) =>
+        getMessages(localeFor(recipient)).wallet.notification.deposit(
+          formatCents(p.amount),
+          formatCents(balance),
+        ),
+      );
+    });
+    return result;
   });
 
   const applyCreditToCharge = adminAction(async ({ user, db }, input: unknown) => {
@@ -34,12 +57,44 @@ export function makeCreditActions(deps: { getDb: () => Db } = { getDb: defaultGe
 
   const refundCredit = adminAction(async ({ user, db }, input: unknown) => {
     const p = refundCreditSchema.parse(input);
-    return domainRefund(db, { ...p, createdByUserId: user.id });
+    const result = await domainRefund(db, { ...p, createdByUserId: user.id });
+    notifySafe(async () => {
+      const balance = await domainBalance(db, p.userId);
+      await getNotifier().notifyUser(p.userId, (recipient) =>
+        getMessages(localeFor(recipient)).wallet.notification.refund(
+          formatCents(p.amount),
+          p.method === 'cash' ? getMessages(localeFor(recipient)).common.cash : getMessages(localeFor(recipient)).common.card,
+          formatCents(balance),
+        ),
+      );
+    });
+    return result;
   });
 
   const transferCredit = adminAction(async ({ user, db }, input: unknown) => {
     const p = transferCreditSchema.parse(input);
-    return domainTransfer(db, { ...p, createdByUserId: user.id });
+    const result = await domainTransfer(db, { ...p, createdByUserId: user.id });
+    notifySafe(async () => {
+      const fromUser = await getUserById(db, p.fromUserId);
+      const toUser = await getUserById(db, p.toUserId);
+      if (fromUser) {
+        await getNotifier().notifyUser(p.fromUserId, (recipient) =>
+          getMessages(localeFor(recipient)).wallet.notification.transferSent(
+            formatCents(p.amount),
+            toUser?.displayName ?? '?',
+          ),
+        );
+      }
+      if (toUser) {
+        await getNotifier().notifyUser(p.toUserId, (recipient) =>
+          getMessages(localeFor(recipient)).wallet.notification.transferReceived(
+            formatCents(p.amount),
+            fromUser?.displayName ?? '?',
+          ),
+        );
+      }
+    });
+    return result;
   });
 
   const cancelCreditMovement = adminAction(async ({ db }, input: unknown) => {
