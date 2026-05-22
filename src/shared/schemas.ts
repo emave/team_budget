@@ -92,3 +92,29 @@ export const editMemberSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   role: roleSchema,
 });
+
+export const createGuestSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
+export const renameGuestSchema = z.object({
+  id: idSchema,
+  name: z.string().trim().min(1).max(80),
+});
+
+export const archiveGuestSchema = z.object({ id: idSchema });
+
+export const recordGuestDepositSchema = z.object({
+  guestId: idSchema.nullable().optional(),
+  amount: moneySchema,
+  method: potSchema,
+  note: z.string().max(200).optional(),
+  receivedAt: z.string().datetime().optional(),
+});
+
+export const cancelGuestDepositSchema = z.object({ id: idSchema });
+
+export const guestDepositRangeSchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
