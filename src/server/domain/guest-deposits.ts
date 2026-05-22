@@ -92,3 +92,32 @@ export async function sumGuestDepositsByMethod(db: Db, method: Pot): Promise<num
     .get();
   return Number(row?.s ?? 0);
 }
+
+export interface GuestDepositSummaryRow {
+  date: string;          // YYYY-MM-DD (UTC)
+  guestId: string | null;
+  amount: number;
+}
+
+export async function guestDepositSummary(
+  db: Db,
+  range: { from: string; to: string },
+): Promise<GuestDepositSummaryRow[]> {
+  const fromBound = `${range.from}T00:00:00.000Z`;
+  const toBound = `${range.to}T23:59:59.999Z`;
+  const rows = db.select().from(guestDeposits).all();
+  const buckets = new Map<string, GuestDepositSummaryRow>();
+  for (const r of rows) {
+    if (r.cancelledAt) continue;
+    if (r.receivedAt < fromBound || r.receivedAt > toBound) continue;
+    const date = r.receivedAt.slice(0, 10);
+    const key = `${date}|${r.guestId ?? ''}`;
+    const cur = buckets.get(key);
+    if (cur) cur.amount += r.amount;
+    else buckets.set(key, { date, guestId: r.guestId, amount: r.amount });
+  }
+  return [...buckets.values()].sort((a, b) => {
+    if (a.date !== b.date) return a.date > b.date ? -1 : 1;
+    return (a.guestId ?? '') < (b.guestId ?? '') ? -1 : 1;
+  });
+}
