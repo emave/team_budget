@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listPaymentsByPayer } from '@/server/domain/payments';
@@ -22,6 +23,16 @@ export default async function MiniPaymentsPage() {
       <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
         {m.mini.yourPayments}
       </h2>
+      {user.role === 'admin' && (
+        <MiniSection>
+          <Link href="/mini/payments/guest" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <MiniRow
+              title={<>➕ {m.guestDeposits.toggleGuest}</>}
+              subtitle={null}
+            />
+          </Link>
+        </MiniSection>
+      )}
       <MiniSection>
         {rows.length === 0 ? (
           <MiniEmpty>{m.mini.none}</MiniEmpty>
