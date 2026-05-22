@@ -29,6 +29,13 @@
       "when": 1779313756442,
       "tag": "0003_lowly_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779444024069,
+      "tag": "0004_wooden_maximus",
+      "breakpoints": true
     }
   ]
 }

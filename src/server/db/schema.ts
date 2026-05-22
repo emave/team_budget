@@ -105,3 +105,23 @@ export const infoPages = sqliteTable('info_pages', {
   updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedByUserId: text('updated_by_user_id').notNull().references(() => users.id),
 });
+
+export const guests = sqliteTable('guests', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+});
+
+export const guestDeposits = sqliteTable('guest_deposits', {
+  id: text('id').primaryKey(),
+  guestId: text('guest_id').references(() => guests.id),
+  amount: integer('amount').notNull(),
+  method: text('method', { enum: ['cash', 'card'] }).notNull(),
+  note: text('note'),
+  receivedAt: text('received_at').notNull(),
+  cancelledAt: text('cancelled_at'),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdByUserId: text('created_by_user_id').notNull().references(() => users.id),
+});
