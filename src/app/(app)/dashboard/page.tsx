@@ -4,6 +4,12 @@ import { getPotBalances } from '@/server/domain/pots';
 import { listActiveMembers } from '@/server/domain/users';
 import { getMemberOutstandingDebt } from '@/server/domain/charges';
 import { listMoneyMovements } from '@/server/domain/movements';
+import { getOrCreateSettings } from '@/server/domain/settings';
+import {
+  getCreditBalance,
+  getTotalCreditLiability,
+  listMemberCreditBalances,
+} from '@/server/domain/credit';
 import { resolveDashboardRange } from '@/shared/date-range';
 import { formatCents } from '@/shared/format';
 import { getMessages } from '@/shared/i18n';
@@ -28,21 +34,26 @@ export default async function DashboardPage({
 
   if (user.role === 'admin') {
     const range = resolveDashboardRange({ from: searchParams.from, to: searchParams.to });
-    const [pots, members, movements] = await Promise.all([
+    const [pots, members, movements, totalCreditLiability, memberCredits] = await Promise.all([
       getPotBalances(db),
       listActiveMembers(db),
       listMoneyMovements(db, { from: range.from, to: range.to }),
+      getTotalCreditLiability(db),
+      listMemberCreditBalances(db),
     ]);
     const debts = await Promise.all(members.map((mm) => getMemberOutstandingDebt(db, mm.id)));
+    const creditByUser = new Map(memberCredits.map((c) => [c.userId, c.balance]));
 
     const memberRows: MemberRow[] = members.map((mm, i) => {
       const debt = debts[i] ?? 0;
+      const credit = creditByUser.get(mm.id) ?? 0;
       return {
         id: mm.id,
         displayName: mm.displayName,
         role: mm.role as 'admin' | 'member',
         isActive: true,
         debtFormatted: debt > 0 ? formatCents(debt) : null,
+        creditFormatted: credit > 0 ? formatCents(credit) : null,
       };
     });
 
@@ -52,6 +63,13 @@ export default async function DashboardPage({
           <PotCard label={m.dashboard.cashPot} cents={pots.cash} />
           <PotCard label={m.dashboard.cardPot} cents={pots.card} />
         </div>
+        {totalCreditLiability > 0 && (
+          <Panel>
+            <Muted>
+              {m.wallet.dashboard.liabilityLabel}: {formatCents(totalCreditLiability)}
+            </Muted>
+          </Panel>
+        )}
         <Panel>
           <SectionHeading>{m.dashboard.membersHeading(members.length)}</SectionHeading>
           <MembersTable rows={memberRows} />
@@ -65,8 +83,14 @@ export default async function DashboardPage({
     );
   }
 
-  const debt = await getMemberOutstandingDebt(db, user.id);
-  const pots = await getPotBalances(db);
+  const [debt, pots, creditBalance, settings] = await Promise.all([
+    getMemberOutstandingDebt(db, user.id),
+    getPotBalances(db),
+    getCreditBalance(db, user.id),
+    getOrCreateSettings(db),
+  ]);
+  const dues = settings.monthlyDuesAmount;
+  const monthsCovered = dues > 0 ? Math.floor(creditBalance / dues) : 0;
   return (
     <div>
       <StatusCard
@@ -74,6 +98,15 @@ export default async function DashboardPage({
         caption={debt > 0 ? m.dashboard.youOwe(user.displayName) : m.dashboard.youSettled(user.displayName)}
         value={formatCents(debt)}
       />
+      {creditBalance > 0 && (
+        <Panel>
+          <SectionHeading>{m.wallet.title}</SectionHeading>
+          <div style={{ fontSize: 28, fontWeight: 600 }}>{formatCents(creditBalance)}</div>
+          {monthsCovered > 0 && dues > 0 ? (
+            <Muted>{m.wallet.coversMonths(monthsCovered, formatCents(dues))}</Muted>
+          ) : null}
+        </Panel>
+      )}
       <Panel>
         <SectionHeading>{m.dashboard.teamSummary}</SectionHeading>
         <Muted>
