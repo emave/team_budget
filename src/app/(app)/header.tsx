@@ -16,7 +16,10 @@ export function AppHeader({ displayName, role }: { displayName: string; role: 'a
     { href: '/spendings', label: m.nav.spendings },
     { href: '/info', label: m.nav.info },
   ];
-  const items = role === 'admin' ? [...nav, { href: '/settings', label: m.nav.settings }] : nav;
+  const items =
+    role === 'admin'
+      ? [...nav, { href: '/guests', label: m.nav.guests }, { href: '/settings', label: m.nav.settings }]
+      : nav;
   return (
     <HeaderNavigation>
       <StyledNavigationList $align={ALIGN.left}>
