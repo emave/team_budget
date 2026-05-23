@@ -76,8 +76,8 @@ let scheduled = false;
 export function scheduleMonthlyDues(getDb: () => Db) {
   if (scheduled) return;
   scheduled = true;
-  // Every day at 00:05 — idempotent so safe to oversample
-  cron.schedule('5 0 * * *', async () => {
+  // 00:05 on the 1st of each month — generates dues for the new billing period
+  cron.schedule('5 0 1 * *', async () => {
     try {
       const db = getDb();
       const r = await runMonthlyDuesOnce(db);
