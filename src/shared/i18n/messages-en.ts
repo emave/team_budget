@@ -56,6 +56,14 @@ export const MESSAGES_EN = {
     colDescription: 'Description',
     colAmount: 'Amount',
     colActions: '',
+    monthsLong: [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ],
+    monthsShort: [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ],
   },
 
   dashboard: {
@@ -121,6 +129,9 @@ export const MESSAGES_EN = {
       alreadyCharged: (period: string, status: string) =>
         `Already charged for ${period} (${status}).`,
       successAck: 'Charge created.',
+    },
+    prepaid: {
+      heading: 'Pre-paid months',
     },
   },
 

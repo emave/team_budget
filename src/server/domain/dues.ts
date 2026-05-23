@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, gt } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { charges, users } from '@/server/db/schema';
 import type { Db } from './types';
@@ -56,6 +56,27 @@ export function currentBillingPeriod(now: Date = new Date()): string {
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
+}
+
+export async function listPrepaidMonthlyDues(
+  db: Db,
+  userId: string,
+  now: Date = new Date(),
+): Promise<Charge[]> {
+  const current = currentBillingPeriod(now);
+  return db
+    .select()
+    .from(charges)
+    .where(
+      and(
+        eq(charges.userId, userId),
+        eq(charges.type, 'monthly_dues'),
+        eq(charges.status, 'paid'),
+        gt(charges.billingPeriod, current),
+      ),
+    )
+    .orderBy(asc(charges.billingPeriod))
+    .all();
 }
 
 export class MemberAlreadyChargedError extends Error {

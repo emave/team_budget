@@ -6,12 +6,13 @@ import {
   getMemberOutstandingDebt,
   listOpenChargesForMember,
 } from '@/server/domain/charges';
+import { listPrepaidMonthlyDues } from '@/server/domain/dues';
 import { listPaymentsByPayer } from '@/server/domain/payments';
 import { getCreditBalance, listCreditHistory } from '@/server/domain/credit';
 import { getOrCreateSettings } from '@/server/domain/settings';
 import { formatCents } from '@/shared/format';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
-import { formatDateTime, getMessages } from '@/shared/i18n';
+import { formatDateTime, formatPeriodLong, getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { StatusCard } from '@/ui/status-card';
@@ -30,6 +31,7 @@ export default async function MemberDetail({ params }: { params: { id: string } 
   const m = getMessages(locale);
   const debt = await getMemberOutstandingDebt(db, u.id);
   const charges = await listOpenChargesForMember(db, u.id);
+  const prepaid = await listPrepaidMonthlyDues(db, u.id);
   const payments = await listPaymentsByPayer(db, u.id);
   const creditBalance = await getCreditBalance(db, u.id);
   const creditEvents = await listCreditHistory(db, u.id);
@@ -147,6 +149,30 @@ export default async function MemberDetail({ params }: { params: { id: string } 
         <SectionHeading>{m.members.openCharges}</SectionHeading>
         <OpenChargesTable rows={openRows} />
       </Panel>
+
+      {prepaid.length > 0 && (
+        <Panel marginBottom={16}>
+          <SectionHeading>{m.members.prepaid.heading}</SectionHeading>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+            {prepaid.map((c) => (
+              <span
+                key={c.id}
+                style={{
+                  display: 'inline-block',
+                  padding: '4px 10px',
+                  borderRadius: 999,
+                  background: '#dcfce7',
+                  color: '#065f46',
+                  fontSize: 13,
+                  fontWeight: 500,
+                }}
+              >
+                {formatPeriodLong(c.billingPeriod ?? '', locale)}
+              </span>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       <Panel marginBottom={16}>
         <SectionHeading>{m.wallet.section.heading}</SectionHeading>

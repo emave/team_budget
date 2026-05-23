@@ -60,6 +60,14 @@ export const MESSAGES_RU: Messages = {
     colDescription: 'Описание',
     colAmount: 'Сумма',
     colActions: '',
+    monthsLong: [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+    ],
+    monthsShort: [
+      'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
+      'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек',
+    ],
   },
 
   dashboard: {
@@ -125,6 +133,9 @@ export const MESSAGES_RU: Messages = {
       alreadyCharged: (period: string, status: string) =>
         `Уже начислено за ${period} (${status}).`,
       successAck: 'Долг создан.',
+    },
+    prepaid: {
+      heading: 'Оплачено вперёд',
     },
   },
 

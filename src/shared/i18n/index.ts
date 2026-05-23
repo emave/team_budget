@@ -43,3 +43,25 @@ export function formatDateTime(d: string | Date, locale: Locale): string {
 export function formatDate(d: string | Date, locale: Locale): string {
   return new Date(d).toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'en-US');
 }
+
+export function parsePeriod(p: string): { year: number; month: number } | null {
+  const m = p.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return null;
+  const month = Number(m[2]);
+  if (month < 1 || month > 12) return null;
+  return { year: Number(m[1]), month };
+}
+
+export function formatPeriodLong(period: string, locale: Locale): string {
+  const parsed = parsePeriod(period);
+  if (!parsed) return period;
+  const months = catalogs[locale].common.monthsLong;
+  return `${months[parsed.month - 1]} ${parsed.year}`;
+}
+
+export function formatPeriodShort(period: string, locale: Locale): string {
+  const parsed = parsePeriod(period);
+  if (!parsed) return period;
+  const months = catalogs[locale].common.monthsShort;
+  return `${months[parsed.month - 1]} ${parsed.year}`;
+}

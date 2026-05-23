@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { Button } from 'baseui/button';
 import { FormControl } from 'baseui/form-control';
-import { Input } from 'baseui/input';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { chargeMemberDues } from '@/server/actions/charges-server';
 import { useMessages } from '@/app/_i18n-provider';
 import { formatCents } from '@/shared/format';
+import { MonthPicker } from '@/ui/month-picker';
 
 interface Props {
   userId: string;
@@ -66,11 +66,7 @@ export function ChargeDuesForm({ userId, monthlyDuesAmount }: Props) {
             name="period"
             render={({ field }) => (
               <FormControl label={m.members.dues.monthLabel}>
-                <Input
-                  type="month"
-                  value={field.value}
-                  onChange={(e) => field.onChange((e.target as HTMLInputElement).value)}
-                />
+                <MonthPicker value={field.value} onChange={field.onChange} />
               </FormControl>
             )}
           />
