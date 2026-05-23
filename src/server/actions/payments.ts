@@ -10,6 +10,7 @@ import {
 } from '@/server/domain/payments';
 import { getNotifier } from '@/server/bot/notifications';
 import { formatCents } from '@/shared/format';
+import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
 import {
   getMemberOutstandingDebt,
   listOpenChargesForMember,
@@ -36,10 +37,14 @@ export function makePaymentActions(deps: { getDb: () => Db } = { getDb: defaultG
     if (process.env.SKIP_BOT !== '1') {
       try {
         const remaining = await getMemberOutstandingDebt(db, p.payerUserId);
-        await getNotifier().notifyUser(
-          p.payerUserId,
-          `💵 Payment ${formatCents(result.payment.amount)} (${result.payment.method}) recorded. Remaining: ${formatCents(remaining)}.`,
-        );
+        await getNotifier().notifyUser(p.payerUserId, (recipient) => {
+          const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+          return getMessages(locale).bot.pay.notifyPaid(
+            formatCents(result.payment.amount),
+            result.payment.method,
+            formatCents(remaining),
+          );
+        });
       } catch (err) { console.error('[actions] notify failed:', err); }
     }
     return result;

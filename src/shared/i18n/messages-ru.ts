@@ -395,6 +395,10 @@ export const MESSAGES_RU: Messages = {
       createdPotBorrow: (amount: string) => `✅ Создан заём из кассы на ${amount}.`,
       notifyCharge: (desc: string, amount: string) =>
         `🧾 Новое начисление: ${desc} ${amount}. Введите /balance чтобы увидеть итог.`,
+      notifySplitCharge: (desc: string, amount: string) =>
+        `🧾 Новое общее начисление: ${desc} ${amount}. Введите /balance чтобы увидеть итог.`,
+      notifyPotBorrow: (amount: string, sourcePot: 'cash' | 'card', desc: string) =>
+        `💰 Заём ${amount} из кассы (${sourcePot === 'cash' ? 'наличные' : 'карта'}): ${desc}. Введите /balance чтобы увидеть итог.`,
       splitPerMemberPrompt: 'Сумма с каждого (одинаковая)? (например, 80.00)',
       splitBtnEveryone: 'Все',
       splitBtnDone: '✅ Готово',
@@ -557,6 +561,8 @@ export const MESSAGES_RU: Messages = {
         `${amount} зачислено в ваш кошелёк. Баланс: ${balance}.`,
       autoAppliedDues: (period: string, amount: string, balance: string) =>
         `Взносы за ${period} списаны из кошелька (${amount}). Баланс кошелька: ${balance}.`,
+      duesCreated: (period: string, amount: string) =>
+        `🧾 Начислены взносы за ${period} (${amount}). Команда /balance — посмотреть итог.`,
       refund: (amount: string, method: string, balance: string) =>
         `${amount} возвращено из вашего кошелька (${method}). Баланс кошелька: ${balance}.`,
       transferReceived: (amount: string, counterparty: string) =>

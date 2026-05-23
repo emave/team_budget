@@ -389,6 +389,10 @@ Admin commands (admin only):
       createdPotBorrow: (amount: string) => `✅ Created pot_borrow charge of ${amount}.`,
       notifyCharge: (desc: string, amount: string) =>
         `🧾 New charge: ${desc} ${amount}. Type /balance to see total.`,
+      notifySplitCharge: (desc: string, amount: string) =>
+        `🧾 New shared charge: ${desc} ${amount}. Type /balance to see total.`,
+      notifyPotBorrow: (amount: string, sourcePot: 'cash' | 'card', desc: string) =>
+        `💰 You borrowed ${amount} from the ${sourcePot} pot: ${desc}. Type /balance to see total.`,
       splitPerMemberPrompt: 'Per-member amount (same for everyone)? (e.g., 80.00)',
       splitBtnEveryone: 'Everyone',
       splitBtnDone: '✅ Done',
@@ -550,6 +554,8 @@ Admin commands (admin only):
         `${amount} added to your subscription wallet. Balance: ${balance}.`,
       autoAppliedDues: (period: string, amount: string, balance: string) =>
         `Monthly dues for ${period} were paid from your wallet (${amount}). Wallet balance: ${balance}.`,
+      duesCreated: (period: string, amount: string) =>
+        `🧾 Monthly dues for ${period} have been added (${amount}). Type /balance to see total.`,
       refund: (amount: string, method: string, balance: string) =>
         `${amount} refunded from your wallet via ${method}. Wallet balance: ${balance}.`,
       transferReceived: (amount: string, counterparty: string) =>

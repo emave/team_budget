@@ -22,6 +22,7 @@ import {
 import { notifyDuesCreated } from '@/server/jobs/monthly-dues';
 import { getNotifier } from '@/server/bot/notifications';
 import { formatCents } from '@/shared/format';
+import { detectFromTelegram, getMessages, isLocale } from '@/shared/i18n';
 
 export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
   const adminAction = makeAdminAction(deps);
@@ -31,10 +32,10 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     const charge = await domainAdhoc(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        await getNotifier().notifyUser(
-          p.userId,
-          `🧾 New charge: ${p.description} ${formatCents(charge.amount)}. Type /balance to see total.`,
-        );
+        await getNotifier().notifyUser(p.userId, (recipient) => {
+          const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+          return getMessages(locale).bot.charge.notifyCharge(p.description, formatCents(charge.amount));
+        });
       } catch (err) { console.error('[actions] notify failed:', err); }
     }
     return charge;
@@ -45,10 +46,14 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     const charge = await domainPotBorrow(db, { ...p, createdByUserId: user.id });
     if (process.env.SKIP_BOT !== '1') {
       try {
-        await getNotifier().notifyUser(
-          p.userId,
-          `💰 You borrowed ${formatCents(charge.amount)} from the ${p.sourcePot} pot: ${p.description}. Type /balance to see total.`,
-        );
+        await getNotifier().notifyUser(p.userId, (recipient) => {
+          const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+          return getMessages(locale).bot.charge.notifyPotBorrow(
+            formatCents(charge.amount),
+            p.sourcePot,
+            p.description,
+          );
+        });
       } catch (err) { console.error('[actions] notify failed:', err); }
     }
     return charge;
@@ -60,10 +65,10 @@ export function makeChargeActions(deps: { getDb: () => Db } = { getDb: defaultGe
     if (process.env.SKIP_BOT !== '1') {
       try {
         for (const a of p.allocations) {
-          await getNotifier().notifyUser(
-            a.userId,
-            `🧾 New shared charge: ${p.description} ${formatCents(a.amount)}. Type /balance to see total.`,
-          );
+          await getNotifier().notifyUser(a.userId, (recipient) => {
+            const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+            return getMessages(locale).bot.charge.notifySplitCharge(p.description, formatCents(a.amount));
+          });
         }
       } catch (err) { console.error('[actions] notify failed:', err); }
     }

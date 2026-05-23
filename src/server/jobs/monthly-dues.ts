@@ -34,10 +34,13 @@ export async function notifyDuesCreated(db: Db, charge: Charge): Promise<void> {
     });
     return;
   }
-  await getNotifier().notifyUser(
-    charge.userId,
-    `🧾 Monthly dues for ${charge.billingPeriod} have been added (${formatCents(charge.amount)}). Type /balance to see total.`,
-  );
+  await getNotifier().notifyUser(charge.userId, (recipient) => {
+    const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+    return getMessages(locale).wallet.notification.duesCreated(
+      charge.billingPeriod ?? '',
+      formatCents(charge.amount),
+    );
+  });
 }
 
 export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
@@ -48,9 +51,13 @@ export async function runMonthlyDuesOnce(db: Db, opts: RunOptions = {}) {
   if (result.createdCount > 0 && process.env.SKIP_BOT !== '1') {
     try {
       const settings = await getOrCreateSettings(db);
-      await getNotifier().notifyAllActive(
-        `📅 Monthly dues for ${period} have been added (${formatCents(settings.monthlyDuesAmount)}). Type /balance to see total.`,
-      );
+      await getNotifier().notifyAllActive((recipient) => {
+        const locale = isLocale(recipient.locale) ? recipient.locale : detectFromTelegram(undefined);
+        return getMessages(locale).wallet.notification.duesCreated(
+          period,
+          formatCents(settings.monthlyDuesAmount),
+        );
+      });
 
       const paidFromWallet = db
         .select()
