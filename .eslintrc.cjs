@@ -1,8 +1,0 @@
-module.exports = {
-  root: true,
-  extends: ['next/core-web-vitals', 'prettier'],
-  plugins: ['@typescript-eslint'],
-  rules: {
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-  },
-};

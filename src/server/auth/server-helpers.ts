@@ -6,7 +6,7 @@ import { getDb } from '@/server/db/client';
 import { resolveCurrentUser } from './current-user';
 
 export async function getCurrentUser() {
-  const c = cookies().get('tb_session')?.value;
+  const c = (await cookies()).get('tb_session')?.value;
   return resolveCurrentUser(getDb(), c, env().SESSION_SECRET);
 }
 

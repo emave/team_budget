@@ -22,7 +22,8 @@ import { ChargeDuesForm } from './charge-dues-form';
 import { OpenChargesTable, PaymentHistoryTable, type OpenChargeRow, type PaymentHistoryRow } from './detail-tables';
 import { WalletSection, type WalletHistoryItem, type WalletTransferOption } from './wallet-section';
 
-export default async function MemberDetail({ params }: { params: { id: string } }) {
+export default async function MemberDetail(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const me = await requireUser();
   const db = getDb();
   const u = await getUserById(db, params.id);

@@ -7,7 +7,6 @@ import {
   cancelGuestDeposit,
   listGuestDeposits,
   sumGuestDepositsByMethod,
-  guestDepositSummary,
 } from '@/server/domain/guest-deposits';
 
 describe('guest-deposits domain', () => {

@@ -40,11 +40,12 @@ const FILTERS: Array<{ key: 'all' | ChargeStatus; labelKey: keyof Messages['char
   { key: 'cancelled', labelKey: 'filterCancelled' },
 ];
 
-export default async function MiniChargesPage({
-  searchParams,
-}: {
-  searchParams: { status?: string };
-}) {
+export default async function MiniChargesPage(
+  props: {
+    searchParams: Promise<{ status?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireUser();
   const db = getDb();
   const locale = await resolveLocaleForRequest();
