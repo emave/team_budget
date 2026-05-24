@@ -17,6 +17,7 @@ services:
       - CURRENCY=${CURRENCY:-USD}
       - SESSION_SECRET=${SESSION_SECRET}
       - STATS_TOKEN=${STATS_TOKEN}
+      - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET}
     volumes:
       - ./data:/data
     labels:

@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   experimental: {
+    instrumentationHook: true,
     serverActions: { allowedOrigins: ['localhost:3000'] },
     serverComponentsExternalPackages: ['better-sqlite3', 'grammy'],
   },

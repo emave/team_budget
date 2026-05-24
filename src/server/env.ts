@@ -10,6 +10,10 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_BASE_URL: z.string().url(),
   SESSION_SECRET: z.string().min(32),
   STATS_TOKEN: z.string().min(16).optional(),
+  TELEGRAM_WEBHOOK_SECRET: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,256}$/, 'must match Telegram secret_token charset')
+    .optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

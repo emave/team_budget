@@ -21,6 +21,7 @@ ENV BOT_USERNAME=build-placeholder
 ENV BOOTSTRAP_ADMIN_TELEGRAM_ID=1
 ENV NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ENV SESSION_SECRET=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ENV TELEGRAM_WEBHOOK_SECRET=build-time-placeholder
 ENV SKIP_BOT=1
 ENV SKIP_CRON=1
 RUN pnpm build

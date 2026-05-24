@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react';
 import { requireUser } from '@/server/auth/server-helpers';
-import { bootOnce } from '@/server/boot';
 import { env } from '@/server/env';
 import { AppShell } from './_components/app-shell';
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  await bootOnce();
   const user = await requireUser();
   const e = env();
   return (

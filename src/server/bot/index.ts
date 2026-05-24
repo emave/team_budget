@@ -152,11 +152,21 @@ async function publishAdminCommandsForAllAdmins(bot: Bot<BotContext>) {
   }
 }
 
-export async function startBot() {
-  const bot = getBot();
+export async function publishAllCommands(bot: Bot<BotContext>) {
   try { await publishCommands(bot); }
   catch (err) { console.error('[bot] publishCommands failed:', err); }
   try { await publishAdminCommandsForAllAdmins(bot); }
   catch (err) { console.error('[bot] publishAdminCommandsForAllAdmins failed:', err); }
-  await bot.start({ drop_pending_updates: true });
+}
+
+export async function registerWebhook(bot: Bot<BotContext>) {
+  const e = env();
+  if (!e.TELEGRAM_WEBHOOK_SECRET) {
+    throw new Error('TELEGRAM_WEBHOOK_SECRET is required to register a webhook');
+  }
+  const url = `${e.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}/api/bot/webhook`;
+  await bot.api.setWebhook(url, {
+    secret_token: e.TELEGRAM_WEBHOOK_SECRET,
+    drop_pending_updates: false,
+  });
 }
