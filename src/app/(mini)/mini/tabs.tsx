@@ -4,14 +4,32 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMessages } from '@/app/_i18n-provider';
 
+interface Tab {
+  href: string;
+  label: string;
+  matchPrefixes?: readonly string[];
+}
+
 export function MiniTabs() {
   const m = useMessages();
   const pathname = usePathname();
-  const tabs = [
+  const tabs: Tab[] = [
     { href: '/mini', label: m.mini.tabHome },
-    { href: '/mini/charges', label: m.mini.tabCharges },
-    { href: '/mini/payments', label: m.mini.tabPayments },
-    { href: '/mini/info', label: m.mini.tabInfo },
+    { href: '/mini/members', label: m.mini.tabMembers, matchPrefixes: ['/mini/members'] },
+    { href: '/mini/charges', label: m.mini.tabCharges, matchPrefixes: ['/mini/charges'] },
+    { href: '/mini/payments', label: m.mini.tabPayments, matchPrefixes: ['/mini/payments'] },
+    {
+      href: '/mini/more',
+      label: m.mini.tabMore,
+      matchPrefixes: [
+        '/mini/more',
+        '/mini/info',
+        '/mini/spendings',
+        '/mini/guests',
+        '/mini/settings',
+        '/mini/history',
+      ],
+    },
   ];
   const onTap = () => {
     try {
@@ -26,7 +44,9 @@ export function MiniTabs() {
       style={{ display: 'grid', gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
     >
       {tabs.map((t) => {
-        const active = pathname === t.href;
+        const active =
+          pathname === t.href ||
+          (t.matchPrefixes ?? []).some((p) => pathname === p || pathname.startsWith(p + '/'));
         return (
           <Link
             key={t.href}
