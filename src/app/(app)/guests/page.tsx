@@ -10,11 +10,12 @@ import { Panel } from '@/ui/panel';
 import { GuestsTable, type GuestRow } from './guests-table';
 import { NewGuestButton } from './new-guest-button';
 
-export default async function GuestsPage({
-  searchParams,
-}: {
-  searchParams?: { archived?: string };
-}) {
+export default async function GuestsPage(
+  props: {
+    searchParams?: Promise<{ archived?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdmin();
   const db = getDb();
   const locale = await resolveLocaleForRequest();

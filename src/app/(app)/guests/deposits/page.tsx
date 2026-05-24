@@ -16,11 +16,12 @@ function defaultRange() {
   return { from: iso(from), to: iso(to) };
 }
 
-export default async function GuestDepositsPage({
-  searchParams,
-}: {
-  searchParams?: { from?: string; to?: string };
-}) {
+export default async function GuestDepositsPage(
+  props: {
+    searchParams?: Promise<{ from?: string; to?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireAdmin();
   const db = getDb();
   const locale = await resolveLocaleForRequest();

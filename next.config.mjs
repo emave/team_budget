@@ -2,10 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  serverExternalPackages: ['better-sqlite3', 'grammy'],
   experimental: {
-    instrumentationHook: true,
     serverActions: { allowedOrigins: ['localhost:3000'] },
-    serverComponentsExternalPackages: ['better-sqlite3', 'grammy'],
   },
 };
 export default nextConfig;

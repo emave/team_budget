@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Bot } from 'grammy';
 import { createTestDb, type TestDb } from '../helpers/db';
 import { createUser } from '@/server/domain/users';

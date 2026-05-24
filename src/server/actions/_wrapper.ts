@@ -22,7 +22,7 @@ export interface ActionContext {
 async function resolve(deps: { getDb: () => Db }): Promise<CurrentUser> {
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new ActionError('INTERNAL', 'SESSION_SECRET not configured');
-  const cookie = cookies().get('tb_session')?.value;
+  const cookie = (await cookies()).get('tb_session')?.value;
   const user = await resolveCurrentUser(deps.getDb(), cookie, secret);
   if (!user) throw new ActionError('UNAUTHENTICATED', 'sign in required');
   return user;

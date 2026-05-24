@@ -11,7 +11,7 @@ const setMyLocaleSchema = z.object({ locale: z.enum(LOCALES as unknown as [Local
 export const setMyLocale = memberAction(async ({ user, db }, input: z.infer<typeof setMyLocaleSchema>) => {
   const parsed = setMyLocaleSchema.parse(input);
   await updateUserLocale(db, user.id, parsed.locale);
-  cookies().set('tb_locale', parsed.locale, {
+  (await cookies()).set('tb_locale', parsed.locale, {
     httpOnly: false,
     sameSite: 'lax',
     path: '/',

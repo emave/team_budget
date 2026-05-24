@@ -8,11 +8,12 @@ import { getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { MoneyHistory } from '../money-history';
 
-export default async function DashboardHistory({
-  searchParams,
-}: {
-  searchParams: { from?: string; to?: string };
-}) {
+export default async function DashboardHistory(
+  props: {
+    searchParams: Promise<{ from?: string; to?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const user = await requireUser();
   if (user.role !== 'admin') redirect('/dashboard');
   const db = getDb();

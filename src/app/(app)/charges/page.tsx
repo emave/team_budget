@@ -13,7 +13,10 @@ import { LinkButton } from '@/ui/link-button';
 import { ActionNewIcon } from '@/ui/icons';
 import { ChargesTable, type ChargeRow } from './charges-table';
 
-export default async function ChargesPage({ searchParams }: { searchParams: { status?: 'open' | 'paid' | 'cancelled' } }) {
+export default async function ChargesPage(
+  props: { searchParams: Promise<{ status?: 'open' | 'paid' | 'cancelled' }> }
+) {
+  const searchParams = await props.searchParams;
   const me = await requireUser();
   const db = getDb();
   const locale = await resolveLocaleForRequest();

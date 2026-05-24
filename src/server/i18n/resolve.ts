@@ -7,19 +7,11 @@ export async function resolveLocaleForRequest(): Promise<Locale> {
   const user = await getCurrentUser();
   if (user && isLocale(user.locale)) return user.locale;
 
-  const cookieValue = cookies().get('tb_locale')?.value;
+  const cookieValue = (await cookies()).get('tb_locale')?.value;
   if (isLocale(cookieValue)) return cookieValue;
 
-  const acceptLanguage = headers().get('accept-language');
+  const acceptLanguage = (await headers()).get('accept-language');
   if (acceptLanguage) return detectFromAcceptLanguage(acceptLanguage);
 
-  return DEFAULT_LOCALE;
-}
-
-export function resolveLocaleFromHeadersOnly(): Locale {
-  const cookieValue = cookies().get('tb_locale')?.value;
-  if (isLocale(cookieValue)) return cookieValue;
-  const acceptLanguage = headers().get('accept-language');
-  if (acceptLanguage) return detectFromAcceptLanguage(acceptLanguage);
   return DEFAULT_LOCALE;
 }
