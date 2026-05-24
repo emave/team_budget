@@ -59,7 +59,10 @@ describe('POST /api/bot/webhook', () => {
   it('dispatches valid update to bot.handleUpdate and returns 200', async () => {
     const handle = vi.fn().mockResolvedValue(undefined);
     const { getBot } = await import('@/server/bot');
-    (getBot as ReturnType<typeof vi.fn>).mockReturnValue({ handleUpdate: handle });
+    (getBot as ReturnType<typeof vi.fn>).mockReturnValue({
+      init: vi.fn().mockResolvedValue(undefined),
+      handleUpdate: handle,
+    });
     const { POST } = await import('@/app/api/bot/webhook/route');
     const update = {
       update_id: 1,
@@ -85,7 +88,10 @@ describe('POST /api/bot/webhook', () => {
   it('returns 200 even if handler throws (logs error)', async () => {
     const handle = vi.fn().mockRejectedValue(new Error('boom'));
     const { getBot } = await import('@/server/bot');
-    (getBot as ReturnType<typeof vi.fn>).mockReturnValue({ handleUpdate: handle });
+    (getBot as ReturnType<typeof vi.fn>).mockReturnValue({
+      init: vi.fn().mockResolvedValue(undefined),
+      handleUpdate: handle,
+    });
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { POST } = await import('@/app/api/bot/webhook/route');
     const res = await POST(new Request('http://x/api/bot/webhook', {
