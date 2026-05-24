@@ -4,6 +4,7 @@ const PUBLIC_PATHS = new Set([
   '/login',
   '/api/auth/telegram/callback',
   '/api/auth/telegram/mini',
+  '/api/bot/webhook',
   '/api/stats',
 ]);
 
