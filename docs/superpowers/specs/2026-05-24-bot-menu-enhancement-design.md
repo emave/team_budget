@@ -125,10 +125,10 @@ one chronological list:
    to avoid double-counting (the original charge already appears in
    #1).
 
-Each entry renders as one line: `±amount  label  (date)`. Add new
-i18n labels under `m.bot.historyEvent.*` covering the additional
-event kinds; remove the now-unused `m.wallet.bot.*` and
-`m.wallet.historyEvent.*` blocks.
+Each entry renders as one line: `±amount  label  (date)`. Reuse the
+existing `m.wallet.historyEvent.*` labels (still consumed by the
+dashboard) for the credit-side events; keep `m.bot.historyChargeLine`
+and `m.bot.historyPaymentLine` for charges and direct payments.
 
 Limit: 10 most recent events (unchanged).
 
@@ -140,9 +140,13 @@ Delete:
 - `registerWalletHandler` import + call in `src/server/bot/index.ts`
 - `wallet` entry from `publicCommands` in `src/server/bot/index.ts`
 - `m.bot.cmdDescriptions.wallet`
-- `m.wallet.bot.*` (walletEmpty, walletHeading)
-- `m.wallet.historyEvent.*` after their replacement labels are
-  added under `m.bot.historyEvent.*`
+- `m.wallet.bot.walletHeading` and `m.wallet.bot.walletEmpty`
+  (the rest of `m.wallet.bot.*` stays — used by credit-deposit,
+  credit-refund, and pay conversations)
+- `m.wallet.historyEvent.*` stays untouched — referenced by the
+  dashboard at `src/app/(app)/members/[id]/page.tsx`. The unified
+  `/history` reuses these same strings rather than introducing
+  parallel `m.bot.historyEvent.*` keys.
 
 `/deposit`, `/refund`, `/guestdeposit` conversations and the
 underlying credit domain (`getCreditBalance`, `listCreditHistory`,
@@ -182,10 +186,10 @@ helper is needed — match the existing `menu:charge` / `menu:pay` /
   `menuBtnLanguage`, `menuBtnHelp`, `menuBtnDeposit`,
   `menuBtnGuestDeposit`, `balanceLine`, expanded `historyEvent.*`
   labels. Remove `menuTypeHistory`, `menuTypeInfo`,
-  `cmdDescriptions.wallet`, the open-charge bullet strings used by
-  the old `/balance` (`youOweTotal`, `chargeBullet`, `settledYes`)
-  if unused elsewhere, and all `wallet.bot.*` /
-  `wallet.historyEvent.*` keys.
+  `cmdDescriptions.wallet`, `wallet.bot.walletHeading`,
+  `wallet.bot.walletEmpty`, and the open-charge bullet strings used
+  by the old `/balance` (`youOweTotal`, `chargeBullet`, `settledYes`)
+  if unused elsewhere.
 
 **Deleted:**
 
