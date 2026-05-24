@@ -61,12 +61,32 @@ export const MESSAGES_RU: Messages = {
     colAmount: 'Сумма',
     colActions: '',
     monthsLong: [
-      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+      'Январь',
+      'Февраль',
+      'Март',
+      'Апрель',
+      'Май',
+      'Июнь',
+      'Июль',
+      'Август',
+      'Сентябрь',
+      'Октябрь',
+      'Ноябрь',
+      'Декабрь',
     ],
     monthsShort: [
-      'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
-      'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек',
+      'Янв',
+      'Фев',
+      'Мар',
+      'Апр',
+      'Май',
+      'Июн',
+      'Июл',
+      'Авг',
+      'Сен',
+      'Окт',
+      'Ноя',
+      'Дек',
     ],
   },
 
@@ -130,8 +150,7 @@ export const MESSAGES_RU: Messages = {
       monthLabel: 'Месяц',
       chargeButton: (amount: string) => `Начислить ${amount}`,
       noAmountConfigured: 'Сначала задайте сумму взноса в Настройках.',
-      alreadyCharged: (period: string, status: string) =>
-        `Уже начислено за ${period} (${status}).`,
+      alreadyCharged: (period: string, status: string) => `Уже начислено за ${period} (${status}).`,
       successAck: 'Долг создан.',
     },
     prepaid: {
@@ -197,8 +216,7 @@ export const MESSAGES_RU: Messages = {
     allocRemaining: 'Открыто',
     allocAmount: 'Сумма',
     allocTotal: (sum: string, amount: string) => `Распределено: ${sum} / ${amount}`,
-    excessToWallet: (excess: string, member: string) =>
-      `Излишек: ${excess} → кошелёк ${member}`,
+    excessToWallet: (excess: string, member: string) => `Излишек: ${excess} → кошелёк ${member}`,
     allocationsExceed: 'Распределено больше суммы',
     noOpenChargesHint: (member: string) =>
       `Открытых начислений нет. Сумма поступит в кошелёк ${member} и автоматически покроет ближайшую месячную подписку.`,
@@ -387,7 +405,7 @@ export const MESSAGES_RU: Messages = {
     inviteOnlyAdmin: 'Эта команда доступна только администраторам.',
     inviteLine: (url: string) => `✅ Ссылка-приглашение (одноразовая):\n${url}`,
     menuTitle: (name: string) => `Главное меню — ${name}`,
-    menuBtnBalance: '💰 Долг',
+    menuBtnBalance: '💰 Мой Баланс',
     menuBtnHistory: '📜 История',
     menuBtnInfo: 'ℹ️ Инфо',
     menuBtnOpenMini: '📱 Открыть мини-приложение',
@@ -565,8 +583,7 @@ export const MESSAGES_RU: Messages = {
     payFromCreditCta: (available: string) => `Оплатить из кошелька (доступно: ${available})`,
     payFromCreditConfirm: (amount: string) =>
       `Списать ${amount} из кошелька участника на этот долг?`,
-    overAmountNote: (excess: string, member: string) =>
-      `${excess} зачислится в кошелёк ${member}`,
+    overAmountNote: (excess: string, member: string) => `${excess} зачислится в кошелёк ${member}`,
     deactivateConfirmTitle: 'У участника есть остаток в кошельке',
     deactivateConfirmBody: (name: string, balance: number) =>
       `У ${name} ещё ${(balance / 100).toFixed(2)} в кошельке. Всё равно деактивировать?`,
