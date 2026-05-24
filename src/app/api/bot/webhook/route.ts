@@ -17,8 +17,10 @@ export async function POST(req: Request) {
     return new Response('bad request', { status: 400 });
   }
   try {
-    await getBot().handleUpdate(
-      update as Parameters<ReturnType<typeof getBot>['handleUpdate']>[0],
+    const bot = getBot();
+    await bot.init();
+    await bot.handleUpdate(
+      update as Parameters<typeof bot.handleUpdate>[0],
     );
   } catch (err) {
     console.error('[bot] handleUpdate failed:', err);
