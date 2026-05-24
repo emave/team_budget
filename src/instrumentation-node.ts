@@ -7,6 +7,7 @@ env();
 
 if (process.env.SKIP_BOT !== '1') {
   const bot = getBot();
+  await bot.init();
   await registerWebhook(bot);
   await publishAllCommands(bot);
   console.log('[boot] bot webhook registered, commands published');
