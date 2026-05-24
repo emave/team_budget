@@ -23,8 +23,6 @@ import { infoEditConversation } from './conversations/info-edit';
 import { guestDepositConversation } from './conversations/guest-deposit';
 import { creditDepositConversation } from './conversations/credit-deposit';
 import { creditRefundConversation } from './conversations/credit-refund';
-import { registerWalletHandler } from './handlers/wallet';
-
 let _bot: Bot<BotContext> | null = null;
 
 export function getBot(): Bot<BotContext> {
@@ -51,7 +49,6 @@ export function getBot(): Bot<BotContext> {
     _bot.command('deposit', async (ctx) => { await ctx.conversation.enter('creditDeposit'); });
     _bot.use(createConversation(creditRefundConversation, 'creditRefund'));
     _bot.command('refund', async (ctx) => { await ctx.conversation.enter('creditRefund'); });
-    registerWalletHandler(_bot);
     registerStartHandler(_bot, { bootstrapAdminTelegramId: env().BOOTSTRAP_ADMIN_TELEGRAM_ID });
     registerHelpHandler(_bot);
     registerMenuHandler(_bot);
@@ -70,7 +67,6 @@ function publicCommands(locale: Locale) {
   return [
     { command: 'menu', description: d.menu },
     { command: 'balance', description: d.balance },
-    { command: 'wallet', description: d.wallet },
     { command: 'history', description: d.history },
     { command: 'info', description: d.info },
     { command: 'help', description: d.help },

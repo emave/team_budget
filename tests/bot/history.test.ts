@@ -74,4 +74,28 @@ describe('/history', () => {
     expect(out).toMatch(/gear/);
     expect(out).toMatch(/cash/);
   });
+
+  it('includes credit deposits in unified history', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' });
+    const m = await createUser(db, { telegramUserId: 5, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, { payerUserId: m.id, amount: 2000, method: 'cash', createdByUserId: admin.id });
+    const { bot, replies } = setup(db);
+    await bot.handleUpdate(update(5));
+    expect(replies.join('\n')).toMatch(/deposited.*20\.00/i);
+  });
+
+  it('does not double-count payment_consumption alongside the charge', async () => {
+    const admin = await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' });
+    const m = await createUser(db, { telegramUserId: 5, displayName: 'M', role: 'member' });
+    const { recordCreditDeposit, applyCreditToCharge } = await import('@/server/domain/credit');
+    await recordCreditDeposit(db, { payerUserId: m.id, amount: 5000, method: 'cash', createdByUserId: admin.id });
+    const charge = await createAdhocCharge(db, { userId: m.id, amount: 1000, description: 'gear', createdByUserId: admin.id });
+    await applyCreditToCharge(db, { chargeId: charge.id, amount: 1000 });
+    const { bot, replies } = setup(db);
+    await bot.handleUpdate(update(5));
+    const out = replies.join('\n');
+    expect(out).toMatch(/gear/);
+    expect(out).not.toMatch(/applied.*gear/i);
+  });
 });

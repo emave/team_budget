@@ -4,19 +4,21 @@ import { getMessages, type Locale } from '@/shared/i18n';
 import { updateUserLocale } from '@/server/domain/users';
 import { botMessages } from '../i18n';
 
-export function registerLanguageHandler(bot: Bot<BotContext>) {
-  bot.command('language', async (ctx) => {
-    const { m } = botMessages(ctx);
-    if (!ctx.currentUser) {
-      await ctx.reply(m.bot.notMember);
-      return;
-    }
-    await ctx.reply(m.bot.language.prompt, {
-      reply_markup: new InlineKeyboard()
-        .text(m.bot.language.btnEnglish, 'lang:set:en')
-        .text(m.bot.language.btnRussian, 'lang:set:ru'),
-    });
+export async function runLanguage(ctx: BotContext): Promise<void> {
+  const { m } = botMessages(ctx);
+  if (!ctx.currentUser) {
+    await ctx.reply(m.bot.notMember);
+    return;
+  }
+  await ctx.reply(m.bot.language.prompt, {
+    reply_markup: new InlineKeyboard()
+      .text(m.bot.language.btnEnglish, 'lang:set:en')
+      .text(m.bot.language.btnRussian, 'lang:set:ru'),
   });
+}
+
+export function registerLanguageHandler(bot: Bot<BotContext>) {
+  bot.command('language', runLanguage);
 
   bot.callbackQuery(/^lang:set:(en|ru)$/, async (ctx) => {
     await ctx.answerCallbackQuery();

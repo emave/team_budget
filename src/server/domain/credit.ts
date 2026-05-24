@@ -13,6 +13,7 @@ import {
   recomputeChargeStatus,
   sumAllocationsForCharge,
   listOpenChargesForMember,
+  getMemberOutstandingDebt,
 } from './charges';
 
 export async function getCreditBalance(db: Db, userId: string): Promise<number> {
@@ -491,4 +492,12 @@ async function consumeCreditForChargeAmount(
   }
   if (consumed > 0) await recomputeChargeStatus(db, chargeId);
   return consumed;
+}
+
+export async function getNetBalance(db: Db, userId: string): Promise<number> {
+  const [credit, debt] = await Promise.all([
+    getCreditBalance(db, userId),
+    getMemberOutstandingDebt(db, userId),
+  ]);
+  return credit - debt;
 }

@@ -5,25 +5,27 @@ import { eq } from 'drizzle-orm';
 import { infoPages } from '@/server/db/schema';
 import { botMessages } from '../i18n';
 
-export function registerInfoHandler(bot: Bot<BotContext>) {
-  bot.command('info', async (ctx) => {
-    const { m } = botMessages(ctx);
-    if (!ctx.currentUser) {
-      await ctx.reply(m.bot.notMember);
-      return;
-    }
-    const pages = await listInfoPages(ctx.db);
-    if (pages.length === 0) {
-      await ctx.reply(m.bot.infoNoEntries);
-      return;
-    }
-    const kb = new InlineKeyboard();
-    pages.forEach((p, i) => {
-      kb.text(p.title.slice(0, 40), `info:${p.id}`);
-      if ((i + 1) % 2 === 0) kb.row();
-    });
-    await ctx.reply(m.bot.infoTapEntry, { reply_markup: kb });
+export async function runInfo(ctx: BotContext): Promise<void> {
+  const { m } = botMessages(ctx);
+  if (!ctx.currentUser) {
+    await ctx.reply(m.bot.notMember);
+    return;
+  }
+  const pages = await listInfoPages(ctx.db);
+  if (pages.length === 0) {
+    await ctx.reply(m.bot.infoNoEntries);
+    return;
+  }
+  const kb = new InlineKeyboard();
+  pages.forEach((p, i) => {
+    kb.text(p.title.slice(0, 40), `info:${p.id}`);
+    if ((i + 1) % 2 === 0) kb.row();
   });
+  await ctx.reply(m.bot.infoTapEntry, { reply_markup: kb });
+}
+
+export function registerInfoHandler(bot: Bot<BotContext>) {
+  bot.command('info', runInfo);
 
   bot.callbackQuery(/^info:(.+)$/, async (ctx) => {
     const { m } = botMessages(ctx);

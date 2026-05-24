@@ -54,23 +54,20 @@ describe('/balance', () => {
     expect(replies.join('\n')).toMatch(/not a team member/i);
   });
 
-  it('shows zero balance when no debt', async () => {
+  it('shows zero balance for a fresh member', async () => {
     await createUser(db, { telegramUserId: 5, displayName: 'M', role: 'member' });
     const { bot, replies } = setup(db);
     await bot.handleUpdate(balanceUpdate(5));
-    expect(replies.join('\n')).toMatch(/settled/i);
+    expect(replies.join('\n')).toMatch(/your balance: 0\.00/i);
   });
 
-  it('lists open charges with total', async () => {
+  it('shows negative balance when member has outstanding charges', async () => {
     const admin = await createUser(db, { telegramUserId: 1, displayName: 'A', role: 'admin' });
     const m = await createUser(db, { telegramUserId: 5, displayName: 'M', role: 'member' });
     await createAdhocCharge(db, { userId: m.id, amount: 5000, description: 'gear', createdByUserId: admin.id });
     await createAdhocCharge(db, { userId: m.id, amount: 3000, description: 'misc', createdByUserId: admin.id });
     const { bot, replies } = setup(db);
     await bot.handleUpdate(balanceUpdate(5));
-    const out = replies.join('\n');
-    expect(out).toMatch(/80\.00/);
-    expect(out).toMatch(/gear/);
-    expect(out).toMatch(/misc/);
+    expect(replies.join('\n')).toMatch(/your balance: -80\.00/i);
   });
 });
