@@ -225,6 +225,9 @@ export const MESSAGES_EN = {
     matrixDayTotal: 'Day total',
     matrixGuestTotal: 'Total',
     matrixEmpty: 'No guest deposits in this range.',
+    depositsModalTitle: (guest: string, date: string) => `Deposits — ${guest}, ${date}`,
+    depositsModalEmpty: 'No deposits.',
+    depositNoNote: '(no note)',
   },
   guestDeposits: {
     newPageTitle: 'Guest deposit',

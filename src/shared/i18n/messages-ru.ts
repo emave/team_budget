@@ -247,6 +247,9 @@ export const MESSAGES_RU: Messages = {
     matrixDayTotal: 'Итого за день',
     matrixGuestTotal: 'Итого',
     matrixEmpty: 'Нет гостевых взносов за выбранный период.',
+    depositsModalTitle: (guest: string, date: string) => `Взносы — ${guest}, ${date}`,
+    depositsModalEmpty: 'Нет взносов.',
+    depositNoNote: '(без заметки)',
   },
   guestDeposits: {
     newPageTitle: 'Взнос гостя',

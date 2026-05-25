@@ -1,12 +1,14 @@
 import { requireAdmin } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listGuests } from '@/server/domain/guests';
-import { guestDepositSummary } from '@/server/domain/guest-deposits';
+import { guestDepositSummary, listGuestDeposits } from '@/server/domain/guest-deposits';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
+import { LinkButton } from '@/ui/link-button';
 import { Matrix, type MatrixData } from './matrix';
+import type { DepositRow } from './deposits-modal';
 
 function defaultRange() {
   const to = new Date();
@@ -33,6 +35,7 @@ export default async function GuestDepositsPage(
 
   const allGuests = await listGuests(db, { includeArchived: true });
   const summary = await guestDepositSummary(db, { from, to });
+  const rawDeposits = await listGuestDeposits(db, { range: { from, to } });
 
   const guestsInRange = new Set(summary.map((s) => s.guestId).filter((id): id is string => id !== null));
   const hasAnon = summary.some((s) => s.guestId === null);
@@ -46,11 +49,36 @@ export default async function GuestDepositsPage(
   const cells = new Map<string, number>();
   for (const s of summary) cells.set(`${s.date}|${s.guestId ?? ''}`, s.amount);
 
-  const data: MatrixData = { from, to, dates, columns, hasAnon, cells: Object.fromEntries(cells) };
+  const deposits: DepositRow[] = rawDeposits.map((d) => ({
+    id: d.id,
+    guestId: d.guestId,
+    date: d.receivedAt.slice(0, 10),
+    receivedAt: d.receivedAt,
+    amount: d.amount,
+    method: d.method,
+    note: d.note,
+  }));
+
+  const data: MatrixData = {
+    from,
+    to,
+    dates,
+    columns,
+    hasAnon,
+    cells: Object.fromEntries(cells),
+    deposits,
+  };
 
   return (
     <div>
-      <PageHeader title={m.guests.depositsPageTitle} />
+      <PageHeader
+        title={m.guests.depositsPageTitle}
+        actions={
+          <LinkButton href="/guests" kind="secondary">
+            ← {m.guests.pageTitle}
+          </LinkButton>
+        }
+      />
       <Panel>
         <Matrix data={data} />
       </Panel>
