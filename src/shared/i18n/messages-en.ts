@@ -297,7 +297,6 @@ export const MESSAGES_EN = {
     tabReceived: 'Received',
     tabSpent: 'Spent',
     tabMore: 'More',
-    tabInfo: 'Info',
     yourCharges: 'Your charges',
     allCharges: 'All charges',
     none: 'None.',

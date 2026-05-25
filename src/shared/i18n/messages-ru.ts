@@ -318,7 +318,6 @@ export const MESSAGES_RU: Messages = {
     tabReceived: 'Поступления',
     tabSpent: 'Расходы',
     tabMore: 'Ещё',
-    tabInfo: 'Информация',
     yourCharges: 'Ваши начисления',
     allCharges: 'Все начисления',
     none: 'Нет данных.',

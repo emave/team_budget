@@ -32,6 +32,7 @@ interface Props {
   deposits: UnifiedDeposit[];
   memberOptions: PersonOption[];
   guestOptions: PersonOption[];
+  isAdmin: boolean;
 }
 
 const TAB_KEY: Record<TabId, string> = {
@@ -52,6 +53,7 @@ export function ReceivedView({
   deposits,
   memberOptions,
   guestOptions,
+  isAdmin,
 }: Props) {
   const m = useMessages();
   const router = useRouter();
@@ -211,16 +213,18 @@ export function ReceivedView({
               <span style={{ flex: '1 1 200px', minWidth: 0, color: '#6b7280' }}>
                 {d.note || m.received.noNote}
               </span>
-              <Button
-                kind={KIND.tertiary}
-                size={SIZE.mini}
-                isLoading={cancelMut.isPending && cancelMut.variables?.id === d.id}
-                onClick={() => {
-                  if (confirm(m.received.confirmCancel)) cancelMut.mutate(d);
-                }}
-              >
-                {m.common.delete}
-              </Button>
+              {isAdmin && (
+                <Button
+                  kind={KIND.tertiary}
+                  size={SIZE.mini}
+                  isLoading={cancelMut.isPending && cancelMut.variables?.id === d.id}
+                  onClick={() => {
+                    if (confirm(m.received.confirmCancel)) cancelMut.mutate(d);
+                  }}
+                >
+                  {m.common.delete}
+                </Button>
+              )}
             </li>
           ))}
         </ul>

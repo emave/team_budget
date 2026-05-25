@@ -1,4 +1,4 @@
-import { requireAdmin, requireUser } from '@/server/auth/server-helpers';
+import { requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listDeposits, type DepositSource } from '@/server/domain/deposits';
 import { listGuests } from '@/server/domain/guests';
@@ -29,7 +29,6 @@ export default async function ReceivedPage(props: {
   searchParams?: Promise<{ tab?: string; from?: string; to?: string; personId?: string }>;
 }) {
   const me = await requireUser();
-  await requireAdmin();
   const sp = (await props.searchParams) ?? {};
   const db = getDb();
   const locale = await resolveLocaleForRequest();
@@ -82,6 +81,7 @@ export default async function ReceivedPage(props: {
           deposits={deposits}
           memberOptions={memberOptions}
           guestOptions={guestOptions}
+          isAdmin={me.role === 'admin'}
         />
       </Panel>
     </div>

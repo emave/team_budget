@@ -193,15 +193,6 @@ async function GuestsFeed({
 
   return (
     <>
-      <div className="mini-filterbar">
-        <Link
-          href={archived ? '/mini/people?tab=guests' : '/mini/people?tab=guests&archived=1'}
-          data-active={archived}
-        >
-          {m.people.showArchivedGuests}
-        </Link>
-      </div>
-
       <MiniSection>
         {guests.length === 0 ? (
           <MiniEmpty>{m.people.guests.none}</MiniEmpty>
@@ -235,6 +226,13 @@ async function GuestsFeed({
           })
         )}
       </MiniSection>
+      <div style={{ marginTop: 12 }}>
+        <Link
+          href={archived ? '/mini/people?tab=guests' : '/mini/people?tab=guests&archived=1'}
+        >
+          {m.people.showArchivedGuests}
+        </Link>
+      </div>
     </>
   );
 }
