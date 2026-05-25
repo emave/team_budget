@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeadingSmall } from 'baseui/typography';
 import { DatePicker } from 'baseui/datepicker';
+import { Input } from 'baseui/input';
 import { StatefulTooltip } from 'baseui/tooltip';
 import { Tag } from 'baseui/tag';
 import { useMessages } from '@/app/_i18n-provider';
@@ -113,6 +114,7 @@ export function MoneyHistory({ movements, range, clamped }: Props) {
               range
               quickSelect
               formatString="yyyy-MM-dd"
+              overrides={{ Input: { component: Input } }}
             />
           </div>
         </div>

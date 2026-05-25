@@ -6,6 +6,7 @@ import { Tab, Tabs } from 'baseui/tabs-motion';
 import { FormControl } from 'baseui/form-control';
 import { Select, type Option } from 'baseui/select';
 import { DatePicker } from 'baseui/datepicker';
+import { Input } from 'baseui/input';
 import { Button, KIND, SIZE } from 'baseui/button';
 import { Tag } from 'baseui/tag';
 import { useMutation } from '@tanstack/react-query';
@@ -142,6 +143,7 @@ export function ReceivedView({
               range
               quickSelect
               formatString="yyyy-MM-dd"
+              overrides={{ Input: { component: Input } }}
             />
           </FormControl>
         </div>
