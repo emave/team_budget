@@ -32,7 +32,7 @@ import { formatCents } from '@/shared/format';
 type Member = { id: string; displayName: string };
 type Guest = { id: string; name: string };
 
-const CHARGE_TYPE_KEY: Record<string, keyof Messages['charges']> = {
+const CHARGE_TYPE_KEY: Record<string, keyof Messages['owed']> = {
   monthly_dues: 'typeMonthlyDues',
   adhoc: 'typeAdhoc',
   pot_borrow: 'typePotBorrow',
@@ -322,7 +322,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
                 <tbody>
                   {charges.map((c) => {
                     const typeKey = CHARGE_TYPE_KEY[c.type];
-                    const typeLabel = typeKey ? (m.charges[typeKey] as string) : c.type;
+                    const typeLabel = typeKey ? (m.owed[typeKey] as string) : c.type;
                     return (
                       <tr key={c.id} style={{ borderTop: '1px solid #e5e7eb' }}>
                         <td style={{ padding: '6px 8px 6px 0' }}>

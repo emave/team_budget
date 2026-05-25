@@ -17,7 +17,7 @@ import { MiniLinkButton } from '../../_components/mini-button';
 import { MiniCancelButton } from '../../_components/mini-cancel-button';
 import { parseChargesStatusParam, type ChargeStatus } from './filter';
 
-const STATUS_LABEL_KEYS: Record<ChargeStatus, keyof Messages['charges']> = {
+const STATUS_LABEL_KEYS: Record<ChargeStatus, keyof Messages['owed']> = {
   open: 'statusOpen',
   paid: 'statusPaid',
   cancelled: 'statusCancelled',
@@ -29,7 +29,7 @@ const STATUS_VARIANT: Record<ChargeStatus, 'warn' | 'success' | 'neutral'> = {
   cancelled: 'neutral',
 };
 
-const TYPE_LABEL_KEYS: Record<string, keyof Messages['charges']> = {
+const TYPE_LABEL_KEYS: Record<string, keyof Messages['owed']> = {
   adhoc: 'typeAdhoc',
   split: 'typeSplit',
   pot_borrow: 'typePotBorrow',
@@ -37,7 +37,7 @@ const TYPE_LABEL_KEYS: Record<string, keyof Messages['charges']> = {
   out_of_bounds: 'typeOutOfBounds',
 };
 
-const FILTERS: Array<{ key: 'all' | ChargeStatus; labelKey: keyof Messages['charges'] }> = [
+const FILTERS: Array<{ key: 'all' | ChargeStatus; labelKey: keyof Messages['owed'] }> = [
   { key: 'all', labelKey: 'filterAll' },
   { key: 'open', labelKey: 'filterOpen' },
   { key: 'paid', labelKey: 'filterPaid' },
@@ -85,7 +85,7 @@ export default async function MiniChargesPage(props: {
     if (finalStatus !== 'all') params.set('status', finalStatus);
     if (isAdmin && finalScope === 'mine') params.set('scope', 'mine');
     const qs = params.toString();
-    return qs ? `/mini/charges?${qs}` : '/mini/charges';
+    return qs ? `/mini/owed?${qs}` : '/mini/owed';
   }
 
   return (
@@ -96,7 +96,7 @@ export default async function MiniChargesPage(props: {
           {scope === 'all' ? m.mini.allCharges : m.mini.yourCharges}
         </h2>
         {isAdmin && (
-          <MiniLinkButton href="/mini/charges/new" variant="primary" inline>
+          <MiniLinkButton href="/mini/owed/new" variant="primary" inline>
             {m.mini.newCta}
           </MiniLinkButton>
         )}
@@ -118,7 +118,7 @@ export default async function MiniChargesPage(props: {
           const active = (status ?? 'all') === f.key;
           return (
             <Link key={f.key} href={buildHref({ status: f.key })} data-active={active}>
-              {m.charges[f.labelKey] as string}
+              {m.owed[f.labelKey] as string}
             </Link>
           );
         })}
@@ -131,9 +131,9 @@ export default async function MiniChargesPage(props: {
           rows.map((c) => {
             const statusKey = c.status as ChargeStatus;
             const typeLabelKey = TYPE_LABEL_KEYS[c.type];
-            const typeLabel = typeLabelKey ? (m.charges[typeLabelKey] as string) : c.type;
+            const typeLabel = typeLabelKey ? (m.owed[typeLabelKey] as string) : c.type;
             const statusLabel = STATUS_LABEL_KEYS[statusKey]
-              ? ((m.charges[STATUS_LABEL_KEYS[statusKey]] as string) ?? c.status)
+              ? ((m.owed[STATUS_LABEL_KEYS[statusKey]] as string) ?? c.status)
               : c.status;
             const payerName = userNames.get(c.userId);
             const remaining =

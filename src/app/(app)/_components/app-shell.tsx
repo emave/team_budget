@@ -44,7 +44,7 @@ export function AppShell({
   const baseNav: NavItem[] = [
     { href: '/dashboard', label: m.nav.dashboard, Icon: NavDashboardIcon },
     { href: '/members', label: m.nav.members, Icon: NavMembersIcon },
-    { href: '/charges', label: m.nav.charges, Icon: NavDebtsIcon },
+    { href: '/owed', label: m.nav.owed, Icon: NavDebtsIcon },
     { href: '/payments', label: m.nav.payments, Icon: NavPaymentsInIcon },
     { href: '/spendings', label: m.nav.spendings, Icon: NavExpensesIcon },
     { href: '/handbook', label: m.nav.handbook, Icon: NavInfoIcon },

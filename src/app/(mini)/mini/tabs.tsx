@@ -16,7 +16,7 @@ export function MiniTabs() {
   const tabs: Tab[] = [
     { href: '/mini', label: m.mini.tabHome },
     { href: '/mini/members', label: m.mini.tabMembers, matchPrefixes: ['/mini/members'] },
-    { href: '/mini/charges', label: m.mini.tabCharges, matchPrefixes: ['/mini/charges'] },
+    { href: '/mini/owed', label: m.mini.tabOwed, matchPrefixes: ['/mini/owed'] },
     { href: '/mini/payments', label: m.mini.tabPayments, matchPrefixes: ['/mini/payments'] },
     {
       href: '/mini/more',

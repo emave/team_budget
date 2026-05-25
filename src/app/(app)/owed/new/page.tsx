@@ -14,7 +14,7 @@ export default async function NewChargePage() {
   const m = getMessages(locale);
   return (
     <div>
-      <PageHeader title={m.charges.newPageTitle} />
+      <PageHeader title={m.owed.newPageTitle} />
       <NewChargeTabs members={members.map((mm) => ({ id: mm.id, displayName: mm.displayName }))} />
     </div>
   );

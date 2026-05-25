@@ -22,7 +22,7 @@ export interface ChargeRow {
   remainingCents?: number;
 }
 
-const TYPE_KEYS: Record<string, keyof Messages['charges']> = {
+const TYPE_KEYS: Record<string, keyof Messages['owed']> = {
   adhoc: 'typeAdhoc',
   split: 'typeSplit',
   pot_borrow: 'typePotBorrow',
@@ -30,22 +30,22 @@ const TYPE_KEYS: Record<string, keyof Messages['charges']> = {
   out_of_bounds: 'typeOutOfBounds',
 };
 
-const STATUS_KEYS: Record<string, keyof Messages['charges']> = {
+const STATUS_KEYS: Record<string, keyof Messages['owed']> = {
   open: 'statusOpen',
   paid: 'statusPaid',
   cancelled: 'statusCancelled',
 };
 
-export function ChargesTable({ rows }: { rows: ChargeRow[] }) {
+export function OwedTable({ rows }: { rows: ChargeRow[] }) {
   const m = useMessages();
   return (
-    <DataList emptyMessage={m.charges.none} isEmpty={rows.length === 0}>
+    <DataList emptyMessage={m.owed.none} isEmpty={rows.length === 0}>
       {rows.map((r) => {
         const typeLabel = TYPE_KEYS[r.type]
-          ? (m.charges[TYPE_KEYS[r.type]!] as string)
+          ? (m.owed[TYPE_KEYS[r.type]!] as string)
           : r.type;
         const statusLabel = STATUS_KEYS[r.status]
-          ? (m.charges[STATUS_KEYS[r.status]!] as string)
+          ? (m.owed[STATUS_KEYS[r.status]!] as string)
           : r.status;
         const tone = r.status === 'paid' ? 'positive' : r.status === 'open' ? 'negative' : 'neutral';
         const Icon =

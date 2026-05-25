@@ -10,7 +10,7 @@ export const MESSAGES_RU: Messages = {
   nav: {
     dashboard: 'Главная',
     members: 'Участники',
-    charges: 'Долги',
+    owed: 'Долги',
     payments: 'Поступления',
     guests: 'Гости',
     deposits: 'Взносы',
@@ -160,7 +160,7 @@ export const MESSAGES_RU: Messages = {
     },
   },
 
-  charges: {
+  owed: {
     title: 'Долги',
     subtitle: 'Что участники должны команде',
     newCharge: 'Новый долг',
@@ -334,7 +334,7 @@ export const MESSAGES_RU: Messages = {
     settled: 'Долгов нет',
     cashCardLine: (cash: string, card: string) => `Наличные: ${cash} · Карта: ${card}`,
     tabHome: 'Главная',
-    tabCharges: 'Начисления',
+    tabOwed: 'Долги',
     tabPayments: 'Платежи',
     tabMembers: 'Участники',
     tabMore: 'Ещё',

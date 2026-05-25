@@ -11,7 +11,7 @@ import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { LinkButton } from '@/ui/link-button';
 import { ActionNewIcon } from '@/ui/icons';
-import { ChargesTable, type ChargeRow } from './charges-table';
+import { OwedTable, type ChargeRow } from './owed-table';
 
 export default async function ChargesPage(
   props: { searchParams: Promise<{ status?: 'open' | 'paid' | 'cancelled' }> }
@@ -56,24 +56,24 @@ export default async function ChargesPage(
   return (
     <div>
       <PageHeader
-        title={m.charges.title}
-        subtitle={m.charges.subtitle}
+        title={m.owed.title}
+        subtitle={m.owed.subtitle}
         actions={
           me.role === 'admin' ? (
-            <LinkButton href="/charges/new" startEnhancer={<ActionNewIcon />}>
-              {m.charges.newCharge}
+            <LinkButton href="/owed/new" startEnhancer={<ActionNewIcon />}>
+              {m.owed.newCharge}
             </LinkButton>
           ) : null
         }
       />
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, fontSize: 13 }}>
-        <Link href="/charges">{m.charges.filterAll}</Link>
-        <Link href="/charges?status=open">{m.charges.filterOpen}</Link>
-        <Link href="/charges?status=paid">{m.charges.filterPaid}</Link>
-        <Link href="/charges?status=cancelled">{m.charges.filterCancelled}</Link>
+        <Link href="/owed">{m.owed.filterAll}</Link>
+        <Link href="/owed?status=open">{m.owed.filterOpen}</Link>
+        <Link href="/owed?status=paid">{m.owed.filterPaid}</Link>
+        <Link href="/owed?status=cancelled">{m.owed.filterCancelled}</Link>
       </div>
       <Panel>
-        <ChargesTable rows={shaped} />
+        <OwedTable rows={shaped} />
       </Panel>
     </div>
   );

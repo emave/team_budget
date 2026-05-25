@@ -38,7 +38,7 @@ export function SplitForm({ members }: { members: Member[] }) {
         description,
         allocations: allocations.map((a) => ({ userId: a.userId, amount: a.amount })),
       }),
-    onSuccess: () => router.push('/charges'),
+    onSuccess: () => router.push('/owed'),
   });
 
   const rowCss = css({
@@ -55,14 +55,14 @@ export function SplitForm({ members }: { members: Member[] }) {
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
-      <FormControl label={m.charges.descriptionLabel}>
+      <FormControl label={m.owed.descriptionLabel}>
         <Input value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
       </FormControl>
-      <FormControl label={m.charges.totalAmountLabel}>
-        <Input value={total} onChange={(e) => setTotal(e.currentTarget.value)} placeholder={m.charges.totalPlaceholder} />
+      <FormControl label={m.owed.totalAmountLabel}>
+        <Input value={total} onChange={(e) => setTotal(e.currentTarget.value)} placeholder={m.owed.totalPlaceholder} />
       </FormControl>
       <div>
-        <h4>{m.charges.membersSectionTitle}</h4>
+        <h4>{m.owed.membersSectionTitle}</h4>
         {members.map((mm) => {
           const checked = !!selected[mm.id];
           return (
@@ -81,7 +81,7 @@ export function SplitForm({ members }: { members: Member[] }) {
         })}
       </div>
       <SubmitButton onClick={() => mut.mutate()} disabled={selectedIds.length === 0 || !description} isLoading={mut.isPending}>
-        {m.charges.submitSplit}
+        {m.owed.submitSplit}
       </SubmitButton>
       {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </div>

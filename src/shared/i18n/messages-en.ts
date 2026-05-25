@@ -6,7 +6,7 @@ export const MESSAGES_EN = {
   nav: {
     dashboard: 'Dashboard',
     members: 'Members',
-    charges: 'Debts',
+    owed: 'Owed',
     payments: 'Payments in',
     guests: 'Guests',
     deposits: 'Deposits',
@@ -137,7 +137,7 @@ export const MESSAGES_EN = {
     },
   },
 
-  charges: {
+  owed: {
     title: 'Debts',
     subtitle: 'What members owe the team',
     newCharge: '+ New debt',
@@ -313,7 +313,7 @@ export const MESSAGES_EN = {
     settled: 'Settled',
     cashCardLine: (cash: string, card: string) => `Cash: ${cash} · Card: ${card}`,
     tabHome: 'Home',
-    tabCharges: 'Charges',
+    tabOwed: 'Owed',
     tabPayments: 'Payments',
     tabMembers: 'Members',
     tabMore: 'More',

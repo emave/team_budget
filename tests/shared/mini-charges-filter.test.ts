@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseChargesStatusParam } from '@/app/(mini)/mini/charges/filter';
+import { parseChargesStatusParam } from '@/app/(mini)/mini/owed/filter';
 
 describe('parseChargesStatusParam', () => {
   it('returns undefined for nullish / "all"', () => {

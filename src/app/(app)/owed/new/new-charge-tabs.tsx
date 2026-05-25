@@ -15,13 +15,13 @@ export function NewChargeTabs({ members }: { members: Member[] }) {
   return (
     <div style={{ overflowX: 'auto' }}>
       <Tabs activeKey={key} onChange={({ activeKey }) => setKey(activeKey)} orientation={ORIENTATION.horizontal}>
-        <Tab key="adhoc" title={m.charges.tabAdhoc}>
+        <Tab key="adhoc" title={m.owed.tabAdhoc}>
           <AdhocForm members={members} />
         </Tab>
-        <Tab key="split" title={m.charges.tabSplit}>
+        <Tab key="split" title={m.owed.tabSplit}>
           <SplitForm members={members} />
         </Tab>
-        <Tab key="pot_borrow" title={m.charges.tabPotBorrow}>
+        <Tab key="pot_borrow" title={m.owed.tabPotBorrow}>
           <PotBorrowForm members={members} />
         </Tab>
       </Tabs>

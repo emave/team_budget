@@ -56,7 +56,7 @@ export function NewChargeForm({ members }: { members: Member[] }) {
           }));
           await createSplitCharge({ description, allocations });
         }
-        router.push('/mini/charges');
+        router.push('/mini/owed');
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
@@ -72,28 +72,28 @@ export function NewChargeForm({ members }: { members: Member[] }) {
           onClick={() => setMode('adhoc')}
           style={{ cursor: 'pointer' }}
         >
-          {m.charges.tabAdhoc}
+          {m.owed.tabAdhoc}
         </a>
         <a
           data-active={mode === 'split'}
           onClick={() => setMode('split')}
           style={{ cursor: 'pointer' }}
         >
-          {m.charges.tabSplit}
+          {m.owed.tabSplit}
         </a>
         <a
           data-active={mode === 'pot_borrow'}
           onClick={() => setMode('pot_borrow')}
           style={{ cursor: 'pointer' }}
         >
-          {m.charges.tabPotBorrow}
+          {m.owed.tabPotBorrow}
         </a>
       </div>
 
       <form onSubmit={onSubmit}>
         {mode !== 'split' && (
           <>
-            <MiniField label={m.charges.memberLabel}>
+            <MiniField label={m.owed.memberLabel}>
               <MiniSelect value={userId} onChange={(e) => setUserId(e.currentTarget.value)}>
                 <option value="">{m.common.pickAMember}</option>
                 {members.map((mm) => (
@@ -103,7 +103,7 @@ export function NewChargeForm({ members }: { members: Member[] }) {
                 ))}
               </MiniSelect>
             </MiniField>
-            <MiniField label={m.charges.amountLabelEgFormat}>
+            <MiniField label={m.owed.amountLabelEgFormat}>
               <MiniInput
                 inputMode="decimal"
                 placeholder="0.00"
@@ -112,7 +112,7 @@ export function NewChargeForm({ members }: { members: Member[] }) {
               />
             </MiniField>
             {mode === 'pot_borrow' && (
-              <MiniField label={m.charges.fromPotLabel}>
+              <MiniField label={m.owed.fromPotLabel}>
                 <MiniSelect
                   value={sourcePot}
                   onChange={(e) => setSourcePot(e.currentTarget.value as 'cash' | 'card')}
@@ -122,7 +122,7 @@ export function NewChargeForm({ members }: { members: Member[] }) {
                 </MiniSelect>
               </MiniField>
             )}
-            <MiniField label={m.charges.descriptionLabel}>
+            <MiniField label={m.owed.descriptionLabel}>
               <MiniInput
                 value={description}
                 onChange={(e) => setDescription(e.currentTarget.value)}
@@ -132,30 +132,30 @@ export function NewChargeForm({ members }: { members: Member[] }) {
               {pending
                 ? '…'
                 : mode === 'adhoc'
-                  ? m.charges.submitAdhoc
-                  : m.charges.submitPotBorrow}
+                  ? m.owed.submitAdhoc
+                  : m.owed.submitPotBorrow}
             </MiniButton>
           </>
         )}
 
         {mode === 'split' && (
           <>
-            <MiniField label={m.charges.descriptionLabel}>
+            <MiniField label={m.owed.descriptionLabel}>
               <MiniInput
                 value={description}
                 onChange={(e) => setDescription(e.currentTarget.value)}
               />
             </MiniField>
-            <MiniField label={m.charges.totalAmountLabel}>
+            <MiniField label={m.owed.totalAmountLabel}>
               <MiniInput
                 inputMode="decimal"
-                placeholder={m.charges.totalPlaceholder}
+                placeholder={m.owed.totalPlaceholder}
                 value={splitTotal}
                 onChange={(e) => setSplitTotal(e.currentTarget.value)}
               />
             </MiniField>
             <h4 style={{ margin: '12px 0 6px', fontSize: 13, color: 'var(--mini-hint)', textTransform: 'uppercase' }}>
-              {m.charges.membersSectionTitle}
+              {m.owed.membersSectionTitle}
             </h4>
             {members.map((mm) => {
               const checked = !!splitSelected[mm.id];
@@ -200,7 +200,7 @@ export function NewChargeForm({ members }: { members: Member[] }) {
               type="submit"
               disabled={pending || selectedIds.length === 0 || !description}
             >
-              {pending ? '…' : m.charges.submitSplit}
+              {pending ? '…' : m.owed.submitSplit}
             </MiniButton>
           </>
         )}

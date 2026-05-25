@@ -16,9 +16,9 @@ export default async function MiniNewChargePage() {
   return (
     <>
       <MiniInit />
-      <MiniBack href="/mini/charges">{m.mini.back}</MiniBack>
+      <MiniBack href="/mini/owed">{m.mini.back}</MiniBack>
       <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
-        {m.charges.newPageTitle}
+        {m.owed.newPageTitle}
       </h2>
       <NewChargeForm
         members={members.map((mm) => ({ id: mm.id, displayName: mm.displayName }))}
