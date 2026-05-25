@@ -47,7 +47,7 @@ export default async function MiniGuestsPage(props: {
         <h2 style={{ fontSize: 18, margin: 0, color: 'var(--mini-text)', flex: 1 }}>
           {m.guests.pageTitle}
         </h2>
-        <MiniLinkButton href="/mini/payments/guest" variant="primary" inline>
+        <MiniLinkButton href="/mini/received/guest" variant="primary" inline>
           {m.mini.recordCta}
         </MiniLinkButton>
       </div>

@@ -16,7 +16,7 @@ export default async function NewPaymentPage() {
   const m = getMessages(locale);
   return (
     <div>
-      <PageHeader title={m.payments.newPageTitle} />
+      <PageHeader title={m.received.newPageTitle} />
       <RecordPaymentForm
         members={members.map((mm) => ({ id: mm.id, displayName: mm.displayName }))}
         guests={guests.map((g) => ({ id: g.id, name: g.name }))}

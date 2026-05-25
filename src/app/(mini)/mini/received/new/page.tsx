@@ -16,9 +16,9 @@ export default async function MiniNewPaymentPage() {
   return (
     <>
       <MiniInit />
-      <MiniBack href="/mini/payments">{m.mini.back}</MiniBack>
+      <MiniBack href="/mini/received">{m.mini.back}</MiniBack>
       <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
-        {m.payments.newPageTitle}
+        {m.received.newPageTitle}
       </h2>
       <RecordPaymentForm
         members={members.map((mm) => ({ id: mm.id, displayName: mm.displayName }))}

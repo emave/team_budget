@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/server/auth/server-helpers';
+import { requireAdmin, requireUser } from '@/server/auth/server-helpers';
 import { getDb } from '@/server/db/client';
 import { listDeposits, type DepositSource } from '@/server/domain/deposits';
 import { listGuests } from '@/server/domain/guests';
@@ -7,7 +7,9 @@ import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
-import { DepositsView, type PersonOption } from './deposits-view';
+import { LinkButton } from '@/ui/link-button';
+import { ActionNewIcon } from '@/ui/icons';
+import { ReceivedView, type PersonOption } from './received-view';
 
 type Tab = 'all' | DepositSource;
 
@@ -23,9 +25,10 @@ function defaultRange() {
   return { from: iso(from), to: iso(to) };
 }
 
-export default async function DepositsPage(props: {
+export default async function ReceivedPage(props: {
   searchParams?: Promise<{ tab?: string; from?: string; to?: string; personId?: string }>;
 }) {
+  const me = await requireUser();
   await requireAdmin();
   const sp = (await props.searchParams) ?? {};
   const db = getDb();
@@ -60,9 +63,18 @@ export default async function DepositsPage(props: {
 
   return (
     <div>
-      <PageHeader title={m.deposits.pageTitle} />
+      <PageHeader
+        title={m.received.pageTitle}
+        actions={
+          me.role === 'admin' ? (
+            <LinkButton href="/received/new" startEnhancer={<ActionNewIcon />}>
+              {m.received.record}
+            </LinkButton>
+          ) : null
+        }
+      />
       <Panel>
-        <DepositsView
+        <ReceivedView
           tab={tab}
           from={from}
           to={to}

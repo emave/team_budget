@@ -11,7 +11,7 @@ interface PersonOption {
   label: string;
 }
 
-export function DepositsFilterForm({
+export function ReceivedFilterForm({
   tab,
   initialFrom,
   initialTo,
@@ -37,7 +37,7 @@ export function DepositsFilterForm({
     params.set('from', from);
     params.set('to', to);
     if (personId) params.set('personId', personId);
-    router.push(`/mini/deposits?${params.toString()}`);
+    router.push(`/mini/received?${params.toString()}`);
   }
 
   return (
@@ -47,17 +47,17 @@ export function DepositsFilterForm({
       style={{ alignItems: 'flex-end', marginBottom: 12, flexWrap: 'wrap' }}
     >
       <label className="mini-field" style={{ flex: '1 1 120px', marginBottom: 0 }}>
-        <span className="mini-field__label">{m.deposits.filterFrom}</span>
+        <span className="mini-field__label">{m.received.filterFrom}</span>
         <MiniInput type="date" value={from} onChange={(e) => setFrom(e.currentTarget.value)} />
       </label>
       <label className="mini-field" style={{ flex: '1 1 120px', marginBottom: 0 }}>
-        <span className="mini-field__label">{m.deposits.filterTo}</span>
+        <span className="mini-field__label">{m.received.filterTo}</span>
         <MiniInput type="date" value={to} onChange={(e) => setTo(e.currentTarget.value)} />
       </label>
       <label className="mini-field" style={{ flex: '2 1 180px', marginBottom: 0 }}>
-        <span className="mini-field__label">{m.deposits.filterPerson}</span>
+        <span className="mini-field__label">{m.received.filterPerson}</span>
         <MiniSelect value={personId} onChange={(e) => setPersonId(e.currentTarget.value)}>
-          <option value="">{m.deposits.filterPersonAll}</option>
+          <option value="">{m.received.filterPersonAll}</option>
           {personOptions.map((p) => (
             <option key={p.id} value={p.id}>
               {p.label}
@@ -66,7 +66,7 @@ export function DepositsFilterForm({
         </MiniSelect>
       </label>
       <MiniButton type="submit" inline>
-        {m.deposits.apply}
+        {m.received.apply}
       </MiniButton>
     </form>
   );

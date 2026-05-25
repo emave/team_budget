@@ -39,14 +39,14 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
         note: note.trim() || undefined,
       });
     },
-    onSuccess: () => router.push('/mini/payments'),
+    onSuccess: () => router.push('/mini/received'),
   });
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <label style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'var(--mini-text)' }}>
         <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
-        {m.guestDeposits.guestAnonymousOption}
+        {m.received.guestAnonymousOption}
       </label>
       {!anonymous && (
         <>
@@ -55,11 +55,11 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
             onChange={(e) => { setPickedId(e.target.value || null); setName(''); }}
             style={{ padding: '8px 10px', borderRadius: 6 }}
           >
-            <option value="">{m.guestDeposits.guestPlaceholder}</option>
+            <option value="">{m.received.guestPlaceholder}</option>
             {guests.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
           <input
-            placeholder={m.guestDeposits.guestPlaceholder}
+            placeholder={m.received.guestPlaceholder}
             value={name}
             onChange={(e) => { setName(e.target.value); setPickedId(null); }}
             style={{ padding: '8px 10px', borderRadius: 6 }}
@@ -67,7 +67,7 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
         </>
       )}
       <input
-        placeholder={m.guestDeposits.amountLabel}
+        placeholder={m.received.amountLabel}
         inputMode="decimal"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
@@ -92,7 +92,7 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
         </button>
       </div>
       <input
-        placeholder={m.guestDeposits.noteLabel}
+        placeholder={m.received.noteLabel}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         style={{ padding: '8px 10px', borderRadius: 6 }}
@@ -103,7 +103,7 @@ export function GuestDepositForm({ guests }: { guests: { id: string; name: strin
         disabled={!amount || submit.isPending || (!anonymous && !pickedId && !name.trim())}
         style={{ padding: '10px 12px', borderRadius: 6 }}
       >
-        {m.guestDeposits.submit}
+        {m.received.submitGuest}
       </button>
       {submit.isError && <div style={{ color: '#dc2626' }}>{(submit.error as Error).message}</div>}
     </div>

@@ -44,7 +44,7 @@ function tabFromKey(key: string): TabId {
   return key === 'members' ? 'member' : key === 'guests' ? 'guest' : 'all';
 }
 
-export function DepositsView({
+export function ReceivedView({
   tab,
   from,
   to,
@@ -70,7 +70,7 @@ export function DepositsView({
     params.set('to', merged.to);
     if (merged.personId) params.set('personId', merged.personId);
     const qs = params.toString();
-    return qs ? `/deposits?${qs}` : '/deposits';
+    return qs ? `/received?${qs}` : '/received';
   };
 
   const navigate = (next: Partial<{ tab: TabId; from: string; to: string; personId: string | null }>) =>
@@ -118,9 +118,9 @@ export function DepositsView({
         onChange={({ activeKey }) => navigate({ tab: tabFromKey(String(activeKey)), personId: null })}
         activateOnFocus
       >
-        <Tab key="all" title={m.deposits.tabAll} />
-        <Tab key="members" title={m.deposits.tabMembers} />
-        <Tab key="guests" title={m.deposits.tabGuests} />
+        <Tab key="all" title={m.received.tabAll} />
+        <Tab key="members" title={m.received.tabMembers} />
+        <Tab key="guests" title={m.received.tabGuests} />
       </Tabs>
 
       <div
@@ -133,7 +133,7 @@ export function DepositsView({
         }}
       >
         <div style={{ flex: '1 1 280px', minWidth: 240 }}>
-          <FormControl label={`${m.deposits.filterFrom} → ${m.deposits.filterTo}`}>
+          <FormControl label={`${m.received.filterFrom} → ${m.received.filterTo}`}>
             <DatePicker
               value={pickerValue}
               onChange={({ date }) => applyRange(Array.isArray(date) ? date : [date])}
@@ -144,11 +144,11 @@ export function DepositsView({
           </FormControl>
         </div>
         <div style={{ flex: '1 1 240px', minWidth: 200 }}>
-          <FormControl label={m.deposits.filterPerson}>
+          <FormControl label={m.received.filterPerson}>
             <Select
               options={personOptions.map((o) => ({ id: o.id, label: o.label }))}
               value={selectValue}
-              placeholder={m.deposits.filterPersonAll}
+              placeholder={m.received.filterPersonAll}
               clearable
               onChange={(p) => {
                 const id = (p.value[0]?.id as string | undefined) ?? null;
@@ -160,12 +160,12 @@ export function DepositsView({
       </div>
 
       <div style={{ color: '#6b7280', fontSize: 13, margin: '8px 0 12px' }}>
-        {m.deposits.rangeTotal(deposits.length, formatCents(total))}
+        {m.received.rangeTotal(deposits.length, formatCents(total))}
       </div>
 
       {deposits.length === 0 ? (
         <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
-          {m.deposits.empty}
+          {m.received.empty}
         </div>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -188,7 +188,7 @@ export function DepositsView({
                   closeable={false}
                   kind={d.source === 'member' ? 'accent' : 'warning'}
                 >
-                  {d.source === 'member' ? m.deposits.sourceMember : m.deposits.sourceGuest}
+                  {d.source === 'member' ? m.received.sourceMember : m.received.sourceGuest}
                 </Tag>
               </span>
               <span style={{ flex: '1 1 160px', minWidth: 0 }}>
@@ -209,14 +209,14 @@ export function DepositsView({
                 {formatCents(d.amount)}
               </span>
               <span style={{ flex: '1 1 200px', minWidth: 0, color: '#6b7280' }}>
-                {d.note || m.deposits.noNote}
+                {d.note || m.received.noNote}
               </span>
               <Button
                 kind={KIND.tertiary}
                 size={SIZE.mini}
                 isLoading={cancelMut.isPending && cancelMut.variables?.id === d.id}
                 onClick={() => {
-                  if (confirm(m.deposits.confirmCancel)) cancelMut.mutate(d);
+                  if (confirm(m.received.confirmCancel)) cancelMut.mutate(d);
                 }}
               >
                 {m.common.delete}

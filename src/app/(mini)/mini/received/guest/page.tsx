@@ -17,7 +17,7 @@ export default async function MiniGuestDepositPage() {
     <>
       <MiniInit />
       <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
-        {m.guestDeposits.newPageTitle}
+        {m.received.guestPageTitle}
       </h2>
       <GuestDepositForm guests={guests.map((g) => ({ id: g.id, name: g.name }))} />
       <MiniTabs />

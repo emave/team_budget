@@ -37,11 +37,6 @@ export default async function MiniMorePage() {
             subtitle={<span>{m.mini.moreOnGuests}</span>}
           />
           <MiniLinkRow
-            href="/mini/deposits"
-            title={<>🐖 {m.nav.deposits}</>}
-            subtitle={<span>{m.mini.moreOnDeposits}</span>}
-          />
-          <MiniLinkRow
             href="/mini/settings"
             title={<>⚙️ {m.nav.settings}</>}
             subtitle={<span>{m.mini.moreOnSettings}</span>}

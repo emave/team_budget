@@ -14,7 +14,7 @@ import { MiniRow } from '../../_components/mini-row';
 import { MiniEmpty } from '../../_components/mini-empty';
 import { MiniBadge } from '../../_components/mini-badge';
 import { MiniCancelButton } from '../../_components/mini-cancel-button';
-import { DepositsFilterForm } from './filter-form';
+import { ReceivedFilterForm } from './filter-form';
 
 type Tab = 'all' | DepositSource;
 
@@ -68,7 +68,7 @@ export default async function MiniDepositsPage(props: {
       <MiniInit />
       <MiniBack href="/mini">{m.mini.back}</MiniBack>
       <h2 style={{ fontSize: 18, margin: '0 0 8px', color: 'var(--mini-text)' }}>
-        {m.deposits.pageTitle}
+        {m.received.pageTitle}
       </h2>
 
       <div className="mini-tab-row" style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
@@ -81,7 +81,7 @@ export default async function MiniDepositsPage(props: {
           return (
             <a
               key={k}
-              href={`/mini/deposits${params.toString() ? `?${params.toString()}` : ''}`}
+              href={`/mini/received${params.toString() ? `?${params.toString()}` : ''}`}
               className="mini-button mini-button--inline"
               style={{
                 flex: 1,
@@ -91,13 +91,13 @@ export default async function MiniDepositsPage(props: {
                 textDecoration: 'none',
               }}
             >
-              {k === 'all' ? m.deposits.tabAll : k === 'members' ? m.deposits.tabMembers : m.deposits.tabGuests}
+              {k === 'all' ? m.received.tabAll : k === 'members' ? m.received.tabMembers : m.received.tabGuests}
             </a>
           );
         })}
       </div>
 
-      <DepositsFilterForm
+      <ReceivedFilterForm
         tab={tabKey}
         initialFrom={from}
         initialTo={to}
@@ -106,11 +106,11 @@ export default async function MiniDepositsPage(props: {
       />
 
       <div className="mini-history-bar">
-        {m.deposits.rangeTotal(deposits.length, formatCents(total))}
+        {m.received.rangeTotal(deposits.length, formatCents(total))}
       </div>
 
       {deposits.length === 0 ? (
-        <MiniEmpty>{m.deposits.empty}</MiniEmpty>
+        <MiniEmpty>{m.received.empty}</MiniEmpty>
       ) : (
         deposits.map((d) => (
           <MiniRow
@@ -125,7 +125,7 @@ export default async function MiniDepositsPage(props: {
             subtitle={
               <>
                 <MiniBadge variant="neutral">
-                  {d.source === 'member' ? m.deposits.sourceMember : m.deposits.sourceGuest}
+                  {d.source === 'member' ? m.received.sourceMember : m.received.sourceGuest}
                 </MiniBadge>
                 {'  '}
                 <span>{d.receivedAt.slice(0, 10)}</span>

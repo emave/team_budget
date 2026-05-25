@@ -134,7 +134,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
         allocations,
       });
     },
-    onSuccess: () => router.push('/payments'),
+    onSuccess: () => router.push('/received'),
   });
 
   // --- Guest branch state (unchanged) ---
@@ -164,7 +164,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
         note: guestNote || undefined,
       });
     },
-    onSuccess: () => router.push('/deposits?tab=guests'),
+    onSuccess: () => router.push('/received?tab=guests'),
   });
 
   const Toggle = (
@@ -175,7 +175,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
         onClick={() => setMode('member')}
         type="button"
       >
-        {m.guestDeposits.toggleMember}
+        {m.received.toggleMember}
       </Button>
       <Button
         kind={mode === 'guest' ? KIND.primary : KIND.tertiary}
@@ -183,7 +183,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
         onClick={() => setMode('guest')}
         type="button"
       >
-        {m.guestDeposits.toggleGuest}
+        {m.received.toggleGuest}
       </Button>
     </div>
   );
@@ -193,7 +193,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
       <>
         {Toggle}
         <div style={{ display: 'grid', gap: 12 }}>
-          <FormControl label={m.guestDeposits.guestLabel}>
+          <FormControl label={m.received.guestLabel}>
             <Select
               creatable
               options={guests.map((g) => ({ id: g.id, label: g.name }))}
@@ -216,10 +216,10 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
                 }
               }}
               onInputChange={(e) => setGuestQuery(e.currentTarget.value)}
-              placeholder={m.guestDeposits.guestPlaceholder}
+              placeholder={m.received.guestPlaceholder}
             />
           </FormControl>
-          <FormControl label={m.guestDeposits.methodLabel}>
+          <FormControl label={m.received.methodLabel}>
             <Select
               options={[
                 { id: 'cash', label: m.common.methodCash },
@@ -229,10 +229,10 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
               onChange={({ value }) => setGuestMethod((value[0]?.id as 'cash' | 'card') ?? 'cash')}
             />
           </FormControl>
-          <FormControl label={m.guestDeposits.amountLabel}>
+          <FormControl label={m.received.amountLabel}>
             <Input value={guestAmount} onChange={(e) => setGuestAmount(e.currentTarget.value)} placeholder="0.00" />
           </FormControl>
-          <FormControl label={m.guestDeposits.noteLabel}>
+          <FormControl label={m.received.noteLabel}>
             <Input value={guestNote} onChange={(e) => setGuestNote(e.currentTarget.value)} />
           </FormControl>
           <SubmitButton
@@ -241,7 +241,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
             isLoading={submitGuest.isPending}
             disabled={!guestAmount || submitGuest.isPending}
           >
-            {m.guestDeposits.submit}
+            {m.received.submitGuest}
           </SubmitButton>
           {submitGuest.isError && (
             <div style={{ color: '#dc2626' }}>{(submitGuest.error as Error).message}</div>
@@ -260,7 +260,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
     <>
       {Toggle}
       <div style={{ display: 'grid', gap: 12 }}>
-        <FormControl label={m.payments.payerLabel}>
+        <FormControl label={m.received.payerLabel}>
           <Select
             options={members.map((mm) => ({ id: mm.id, label: mm.displayName }))}
             value={
@@ -271,7 +271,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
             onChange={({ value }) => setPayerUserId(String(value[0]?.id ?? ''))}
           />
         </FormControl>
-        <FormControl label={m.payments.methodLabel}>
+        <FormControl label={m.received.methodLabel}>
           <Select
             options={[
               { id: 'cash', label: m.common.methodCash },
@@ -281,26 +281,26 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
             onChange={({ value }) => setMethod((value[0]?.id as 'cash' | 'card') ?? 'cash')}
           />
         </FormControl>
-        <FormControl label={m.payments.amountLabel}>
+        <FormControl label={m.received.amountLabel}>
           <Input
             value={amount}
             onChange={(e) => setAmount(e.currentTarget.value)}
             placeholder="0.00"
           />
         </FormControl>
-        <FormControl label={m.payments.noteLabel}>
+        <FormControl label={m.received.noteLabel}>
           <Input value={note} onChange={(e) => setNote(e.currentTarget.value)} />
         </FormControl>
 
         {payerUserId && (
           <div style={{ background: '#f9fafb', padding: 12, borderRadius: 6 }}>
-            <strong>{m.payments.allocationsHeading}</strong>
+            <strong>{m.received.allocationsHeading}</strong>
             {openCharges.isLoading && (
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: 6 }}>…</div>
             )}
             {!openCharges.isLoading && charges.length === 0 && (
               <div style={{ fontSize: 13, color: '#374151', marginTop: 8 }}>
-                {m.payments.noOpenChargesHint(payerName)}
+                {m.received.noOpenChargesHint(payerName)}
               </div>
             )}
             {!openCharges.isLoading && charges.length > 0 && (
@@ -314,9 +314,9 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
               >
                 <thead>
                   <tr style={{ textAlign: 'left', color: '#6b7280' }}>
-                    <th style={{ padding: '4px 8px 4px 0' }}>{m.payments.allocCharge}</th>
-                    <th style={{ padding: '4px 8px', textAlign: 'right' }}>{m.payments.allocRemaining}</th>
-                    <th style={{ padding: '4px 0', textAlign: 'right', width: 140 }}>{m.payments.allocAmount}</th>
+                    <th style={{ padding: '4px 8px 4px 0' }}>{m.received.allocCharge}</th>
+                    <th style={{ padding: '4px 8px', textAlign: 'right' }}>{m.received.allocRemaining}</th>
+                    <th style={{ padding: '4px 0', textAlign: 'right', width: 140 }}>{m.received.allocAmount}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,7 +350,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
                 <tfoot>
                   <tr style={{ borderTop: '1px solid #d1d5db' }}>
                     <td colSpan={2} style={{ padding: '8px 8px 0 0', color: '#374151' }}>
-                      {m.payments.allocTotal(formatCents(allocatedSum), formatCents(amountCents))}
+                      {m.received.allocTotal(formatCents(allocatedSum), formatCents(amountCents))}
                     </td>
                     <td />
                   </tr>
@@ -360,12 +360,12 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
             )}
             {amountCents > 0 && !allocationsExceed && excessCents > 0 && payerName && (
               <div style={{ marginTop: 8, color: '#065f46' }}>
-                {m.payments.excessToWallet(formatCents(excessCents), payerName)}
+                {m.received.excessToWallet(formatCents(excessCents), payerName)}
               </div>
             )}
             {allocationsExceed && (
               <div style={{ marginTop: 8, color: '#dc2626' }}>
-                {m.payments.allocationsExceed}
+                {m.received.allocationsExceed}
               </div>
             )}
           </div>
@@ -377,7 +377,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
           isLoading={submit.isPending}
           disabled={submitDisabled}
         >
-          {m.payments.submit}
+          {m.received.submitMember}
         </SubmitButton>
         {submit.isError && (
           <div style={{ color: '#dc2626' }}>{(submit.error as Error).message}</div>

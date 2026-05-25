@@ -159,7 +159,7 @@ export default async function MiniChargesPage(props: {
                     <span>{formatDate(c.createdAt, locale)}</span>
                     <MiniBadge variant="neutral">{typeLabel}</MiniBadge>
                     {c.status === 'open' && remaining > 0 && remaining !== c.amount && (
-                      <span>{m.payments.allocRemaining}: {formatCents(remaining)}</span>
+                      <span>{m.received.allocRemaining}: {formatCents(remaining)}</span>
                     )}
                     {showCreditHint && (
                       <MiniBadge variant="success">

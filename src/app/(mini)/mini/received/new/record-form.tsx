@@ -130,7 +130,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
           note: note.trim() || undefined,
           allocations,
         });
-        router.push('/mini/payments');
+        router.push('/mini/received');
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
@@ -140,7 +140,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
 
   return (
     <form onSubmit={onSubmit}>
-      <MiniField label={m.payments.payerLabel}>
+      <MiniField label={m.received.payerLabel}>
         <MiniSelect
           value={payerUserId}
           onChange={(e) => setPayerUserId(e.currentTarget.value)}
@@ -154,7 +154,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
         </MiniSelect>
       </MiniField>
 
-      <MiniField label={m.payments.methodLabel}>
+      <MiniField label={m.received.methodLabel}>
         <MiniSelect
           value={method}
           onChange={(e) => setMethod(e.currentTarget.value as 'cash' | 'card')}
@@ -164,7 +164,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
         </MiniSelect>
       </MiniField>
 
-      <MiniField label={m.payments.amountLabel}>
+      <MiniField label={m.received.amountLabel}>
         <MiniInput
           inputMode="decimal"
           placeholder="0.00"
@@ -173,19 +173,19 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
         />
       </MiniField>
 
-      <MiniField label={m.payments.noteLabel}>
+      <MiniField label={m.received.noteLabel}>
         <MiniInput value={note} onChange={(e) => setNote(e.currentTarget.value)} />
       </MiniField>
 
       {payerUserId && (
         <div className="mini-card" style={{ padding: 12, marginBottom: 12 }}>
-          <strong>{m.payments.allocationsHeading}</strong>
+          <strong>{m.received.allocationsHeading}</strong>
           {chargesLoading && (
             <div className="mini-helper" style={{ marginTop: 6 }}>…</div>
           )}
           {!chargesLoading && openCharges.length === 0 && (
             <div className="mini-helper" style={{ marginTop: 6 }}>
-              {m.payments.noOpenChargesHint(payerName)}
+              {m.received.noOpenChargesHint(payerName)}
             </div>
           )}
           {!chargesLoading &&
@@ -207,7 +207,7 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
                     {' — '}
                     {c.description}
                     <div className="mini-helper">
-                      {m.payments.allocRemaining}: {formatCents(c.remainingCents)}
+                      {m.received.allocRemaining}: {formatCents(c.remainingCents)}
                     </div>
                   </div>
                   <MiniInput
@@ -227,22 +227,22 @@ export function RecordPaymentForm({ members }: { members: Member[] }) {
             })}
           {openCharges.length > 0 && (
             <div className="mini-helper" style={{ marginTop: 4 }}>
-              {m.payments.allocTotal(formatCents(allocatedSum), formatCents(amountCents))}
+              {m.received.allocTotal(formatCents(allocatedSum), formatCents(amountCents))}
             </div>
           )}
           {amountCents > 0 && !allocationsExceed && excessCents > 0 && payerName && (
             <div className="mini-helper" style={{ color: 'var(--mini-success-fg)' }}>
-              {m.payments.excessToWallet(formatCents(excessCents), payerName)}
+              {m.received.excessToWallet(formatCents(excessCents), payerName)}
             </div>
           )}
           {allocationsExceed && (
-            <div className="mini-error">{m.payments.allocationsExceed}</div>
+            <div className="mini-error">{m.received.allocationsExceed}</div>
           )}
         </div>
       )}
 
       <MiniButton type="submit" disabled={submitDisabled}>
-        {pending ? '…' : m.payments.submit}
+        {pending ? '…' : m.received.submitMember}
       </MiniButton>
       {error && <div className="mini-error">{error}</div>}
     </form>
