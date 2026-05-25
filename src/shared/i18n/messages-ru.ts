@@ -16,6 +16,7 @@ export const MESSAGES_RU: Messages = {
     deposits: 'Взносы',
     spendings: 'Расходы',
     handbook: 'Справка',
+    history: 'История',
     settings: 'Настройки',
     adminBadge: '(админ)',
     menu: 'Меню',

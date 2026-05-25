@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           <MembersTable rows={memberRows} />
         </Panel>
         <div style={{ marginTop: 16, textAlign: 'center' }}>
-          <Link href="/dashboard/history">{m.dashboard.viewHistory}</Link>
+          <Link href="/history">{m.dashboard.viewHistory}</Link>
         </div>
       </div>
     );

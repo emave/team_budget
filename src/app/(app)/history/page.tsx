@@ -6,7 +6,7 @@ import { resolveDashboardRange } from '@/shared/date-range';
 import { resolveLocaleForRequest } from '@/server/i18n/resolve';
 import { getMessages } from '@/shared/i18n';
 import { PageHeader } from '@/ui/page-header';
-import { MoneyHistory } from '../money-history';
+import { MoneyHistory } from '../dashboard/money-history';
 
 export default async function DashboardHistory(
   props: {

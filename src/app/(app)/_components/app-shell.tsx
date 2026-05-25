@@ -50,6 +50,7 @@ export function AppShell({
     { href: '/handbook', label: m.nav.handbook, Icon: NavInfoIcon },
   ];
   const adminExtras: NavItem[] = [
+    { href: '/history', label: m.nav.history, Icon: NavInfoIcon },
     { href: '/guests', label: m.nav.guests, Icon: NavGuestsIcon },
     { href: '/deposits', label: m.nav.deposits, Icon: NavDepositsIcon },
     { href: '/settings', label: m.nav.settings, Icon: NavSettingsIcon },

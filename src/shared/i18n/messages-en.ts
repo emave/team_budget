@@ -12,6 +12,7 @@ export const MESSAGES_EN = {
     deposits: 'Deposits',
     spendings: 'Expenses',
     handbook: 'Handbook',
+    history: 'History',
     settings: 'Settings',
     adminBadge: '(admin)',
     menu: 'Menu',
