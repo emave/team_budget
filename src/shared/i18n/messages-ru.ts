@@ -14,7 +14,7 @@ export const MESSAGES_RU: Messages = {
     payments: 'Поступления',
     guests: 'Гости',
     deposits: 'Взносы',
-    spendings: 'Расходы',
+    spent: 'Расходы',
     handbook: 'Справка',
     history: 'История',
     settings: 'Настройки',
@@ -278,7 +278,7 @@ export const MESSAGES_RU: Messages = {
     submit: 'Записать взнос',
     submitted: 'Взнос записан.',
   },
-  spendings: {
+  spent: {
     title: 'Расходы',
     subtitle: 'Что команда потратила из касс',
     record: 'Записать расход',
@@ -337,6 +337,7 @@ export const MESSAGES_RU: Messages = {
     tabOwed: 'Долги',
     tabPayments: 'Платежи',
     tabMembers: 'Участники',
+    tabSpent: 'Расходы',
     tabMore: 'Ещё',
     tabInfo: 'Информация',
     yourCharges: 'Ваши начисления',

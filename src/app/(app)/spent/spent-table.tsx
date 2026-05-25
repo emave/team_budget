@@ -18,10 +18,10 @@ export interface SpendingRow {
   showCancel: boolean;
 }
 
-export function SpendingsTable({ rows }: { rows: SpendingRow[] }) {
+export function SpentTable({ rows }: { rows: SpendingRow[] }) {
   const m = useMessages();
   return (
-    <DataList emptyMessage={m.spendings.none} isEmpty={rows.length === 0}>
+    <DataList emptyMessage={m.spent.none} isEmpty={rows.length === 0}>
       {rows.map((r) => {
         const subtitleParts = [r.pot, r.category, r.whenFormatted].filter(Boolean);
         return (

@@ -34,10 +34,10 @@ export default async function MiniSpendingsPage() {
       <MiniBack href="/mini/more">{m.mini.back}</MiniBack>
       <div className="mini-toolbar">
         <h2 style={{ fontSize: 18, margin: 0, color: 'var(--mini-text)', flex: 1 }}>
-          {m.spendings.title}
+          {m.spent.title}
         </h2>
         {isAdmin && (
-          <MiniLinkButton href="/mini/spendings/new" variant="primary" inline>
+          <MiniLinkButton href="/mini/spent/new" variant="primary" inline>
             {m.mini.recordCta}
           </MiniLinkButton>
         )}
@@ -45,7 +45,7 @@ export default async function MiniSpendingsPage() {
 
       <MiniSection>
         {rows.length === 0 ? (
-          <MiniEmpty>{m.spendings.none}</MiniEmpty>
+          <MiniEmpty>{m.spent.none}</MiniEmpty>
         ) : (
           rows.map((s) => {
             const icon = s.pot === 'cash' ? '💵' : '💳';

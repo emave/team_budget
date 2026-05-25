@@ -34,33 +34,33 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
         description: v.description,
         categoryId: v.categoryId || undefined,
       }),
-    onSuccess: () => router.push('/spendings'),
+    onSuccess: () => router.push('/spent'),
   });
 
   return (
     <form onSubmit={handleSubmit((v) => mut.mutate(v))} style={{ display: 'grid', gap: 12 }}>
-      <FormControl label={m.spendings.potLabel}>
+      <FormControl label={m.spent.potLabel}>
         <Select
           options={[{ id: 'cash', label: m.common.methodCash }, { id: 'card', label: m.common.methodCard }]}
           value={[{ id: pot, label: pot === 'cash' ? m.common.methodCash : m.common.methodCard }]}
           onChange={({ value }) => setValue('pot', (value[0]?.id as 'cash' | 'card') ?? 'cash')}
         />
       </FormControl>
-      <FormControl label={m.spendings.amountLabel}>
+      <FormControl label={m.spent.amountLabel}>
         <Input {...(register('amount') as object)} placeholder="0.00" />
       </FormControl>
-      <FormControl label={m.spendings.descriptionLabel}>
+      <FormControl label={m.spent.descriptionLabel}>
         <Input {...(register('description') as object)} />
       </FormControl>
-      <FormControl label={m.spendings.categoryLabel}>
+      <FormControl label={m.spent.categoryLabel}>
         <Select
           options={[{ id: '', label: m.common.none_em_dash }, ...categories.map((c) => ({ id: c.id, label: c.name }))]}
           value={catId !== undefined ? [{ id: catId, label: categories.find((c) => c.id === catId)?.name ?? m.common.none_em_dash }] : []}
           onChange={({ value }) => setValue('categoryId', value[0]?.id ? String(value[0].id) : undefined)}
-          placeholder={m.spendings.categoryPlaceholder}
+          placeholder={m.spent.categoryPlaceholder}
         />
       </FormControl>
-      <SubmitButton type="submit" isLoading={mut.isPending}>{m.spendings.submit}</SubmitButton>
+      <SubmitButton type="submit" isLoading={mut.isPending}>{m.spent.submit}</SubmitButton>
       {mut.isError && <div style={{ color: '#dc2626' }}>{(mut.error as Error).message}</div>}
     </form>
   );

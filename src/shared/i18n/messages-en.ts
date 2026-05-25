@@ -10,7 +10,7 @@ export const MESSAGES_EN = {
     payments: 'Payments in',
     guests: 'Guests',
     deposits: 'Deposits',
-    spendings: 'Expenses',
+    spent: 'Spent',
     handbook: 'Handbook',
     history: 'History',
     settings: 'Settings',
@@ -256,7 +256,7 @@ export const MESSAGES_EN = {
     submit: 'Record deposit',
     submitted: 'Deposit recorded.',
   },
-  spendings: {
+  spent: {
     title: 'Expenses',
     subtitle: 'Money the team spent from its pots',
     record: 'Record expense',
@@ -316,6 +316,7 @@ export const MESSAGES_EN = {
     tabOwed: 'Owed',
     tabPayments: 'Payments',
     tabMembers: 'Members',
+    tabSpent: 'Spent',
     tabMore: 'More',
     tabInfo: 'Info',
     yourCharges: 'Your charges',

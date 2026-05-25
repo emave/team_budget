@@ -30,7 +30,7 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
           description,
           categoryId: categoryId || undefined,
         });
-        router.push('/mini/spendings');
+        router.push('/mini/spent');
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
@@ -40,13 +40,13 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
 
   return (
     <form onSubmit={onSubmit}>
-      <MiniField label={m.spendings.potLabel}>
+      <MiniField label={m.spent.potLabel}>
         <MiniSelect value={pot} onChange={(e) => setPot(e.currentTarget.value as 'cash' | 'card')}>
           <option value="cash">{m.common.methodCash}</option>
           <option value="card">{m.common.methodCard}</option>
         </MiniSelect>
       </MiniField>
-      <MiniField label={m.spendings.amountLabel}>
+      <MiniField label={m.spent.amountLabel}>
         <MiniInput
           inputMode="decimal"
           placeholder="0.00"
@@ -54,13 +54,13 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
           onChange={(e) => setAmount(e.currentTarget.value)}
         />
       </MiniField>
-      <MiniField label={m.spendings.descriptionLabel}>
+      <MiniField label={m.spent.descriptionLabel}>
         <MiniInput
           value={description}
           onChange={(e) => setDescription(e.currentTarget.value)}
         />
       </MiniField>
-      <MiniField label={m.spendings.categoryLabel}>
+      <MiniField label={m.spent.categoryLabel}>
         <MiniSelect
           value={categoryId}
           onChange={(e) => setCategoryId(e.currentTarget.value)}
@@ -74,7 +74,7 @@ export function RecordSpendingForm({ categories }: { categories: Cat[] }) {
         </MiniSelect>
       </MiniField>
       <MiniButton type="submit" disabled={pending}>
-        {pending ? '…' : m.spendings.submit}
+        {pending ? '…' : m.spent.submit}
       </MiniButton>
       {error && <div className="mini-error">{error}</div>}
     </form>

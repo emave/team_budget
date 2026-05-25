@@ -9,7 +9,7 @@ import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
 import { LinkButton } from '@/ui/link-button';
 import { ActionNewIcon } from '@/ui/icons';
-import { SpendingsTable, type SpendingRow } from './spendings-table';
+import { SpentTable, type SpendingRow } from './spent-table';
 
 export default async function SpendingsPage() {
   const me = await requireUser();
@@ -34,18 +34,18 @@ export default async function SpendingsPage() {
   return (
     <div>
       <PageHeader
-        title={m.spendings.title}
-        subtitle={m.spendings.subtitle}
+        title={m.spent.title}
+        subtitle={m.spent.subtitle}
         actions={
           me.role === 'admin' ? (
-            <LinkButton href="/spendings/new" startEnhancer={<ActionNewIcon />}>
-              {m.spendings.record}
+            <LinkButton href="/spent/new" startEnhancer={<ActionNewIcon />}>
+              {m.spent.record}
             </LinkButton>
           ) : null
         }
       />
       <Panel>
-        <SpendingsTable rows={shaped} />
+        <SpentTable rows={shaped} />
       </Panel>
     </div>
   );

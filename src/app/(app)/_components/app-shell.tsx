@@ -46,7 +46,7 @@ export function AppShell({
     { href: '/members', label: m.nav.members, Icon: NavMembersIcon },
     { href: '/owed', label: m.nav.owed, Icon: NavDebtsIcon },
     { href: '/payments', label: m.nav.payments, Icon: NavPaymentsInIcon },
-    { href: '/spendings', label: m.nav.spendings, Icon: NavExpensesIcon },
+    { href: '/spent', label: m.nav.spent, Icon: NavExpensesIcon },
     { href: '/handbook', label: m.nav.handbook, Icon: NavInfoIcon },
   ];
   const adminExtras: NavItem[] = [
