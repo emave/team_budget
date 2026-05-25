@@ -59,9 +59,9 @@ See [`docs/superpowers/specs/2026-05-19-team-budget-design.md`](docs/superpowers
 2. As bootstrap admin: open `/`. You should be redirected to `/login` if no session.
 3. Sign in with the Telegram widget.
 4. Land on `/dashboard`. Verify pot balances render (both $0.00 on a fresh DB).
-5. Navigate to `/members`, click "+ Invite", generate a link.
-6. Test settings: change dues amount, click "Generate dues now". Charges should appear on `/charges` for every active member.
-7. Record a payment for one of those charges via `/payments/new`. Confirm the dashboard pot balance updates.
+5. Navigate to `/people`, click "+ Invite", generate a link.
+6. Test settings: change dues amount, click "Generate dues now". Charges should appear on `/owed` for every active member.
+7. Record a payment for one of those charges via `/received/new`. Confirm the dashboard pot balance updates.
 
 ## Deployment
 
