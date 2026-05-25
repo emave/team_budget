@@ -30,7 +30,7 @@ function defaultRange() {
   return { from: iso(from), to: iso(to) };
 }
 
-export default async function MiniDepositsPage(props: {
+export default async function MiniReceivedPage(props: {
   searchParams?: Promise<{ tab?: string; from?: string; to?: string; personId?: string }>;
 }) {
   const user = await requireUser();
