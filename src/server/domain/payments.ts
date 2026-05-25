@@ -11,6 +11,8 @@ export interface AllocationInput {
   amount: number;
 }
 
+export type PaymentKind = 'wallet_deposit' | 'charge_payment';
+
 export interface RecordPaymentInput {
   payerUserId: string;
   method: Pot;
@@ -19,6 +21,7 @@ export interface RecordPaymentInput {
   receivedAt?: string;
   allocations: AllocationInput[];
   createdByUserId: string;
+  kind?: PaymentKind;
 }
 
 export interface RecordPaymentResult {
@@ -80,6 +83,7 @@ export async function recordPayment(
         note: input.note ?? null,
         receivedAt,
         createdByUserId: input.createdByUserId,
+        kind: input.kind ?? 'charge_payment',
       })
       .run();
     for (const a of input.allocations) {

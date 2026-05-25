@@ -117,6 +117,7 @@ export async function recordCreditDeposit(db: Db, input: RecordCreditDepositInpu
     receivedAt: input.receivedAt,
     allocations: [],
     createdByUserId: input.createdByUserId,
+    kind: 'wallet_deposit',
   });
   const opens = await listOpenChargesForMember(db, input.payerUserId);
   for (const c of opens) {

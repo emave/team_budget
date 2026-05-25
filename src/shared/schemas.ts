@@ -117,11 +117,6 @@ export const recordGuestDepositSchema = z.object({
 
 export const cancelGuestDepositSchema = z.object({ id: idSchema });
 
-export const guestDepositRangeSchema = z.object({
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
-
 export const recordCreditDepositSchema = z.object({
   payerUserId: idSchema,
   method: potSchema,

@@ -6,8 +6,9 @@ import { useMessages } from '@/app/_i18n-provider';
 import { cancelCharge } from '@/server/actions/charges-server';
 import { cancelPayment } from '@/server/actions/payments-server';
 import { cancelSpending } from '@/server/actions/spendings-server';
+import { cancelGuestDeposit } from '@/server/actions/guest-deposits-server';
 
-type Kind = 'charge' | 'payment' | 'spending';
+type Kind = 'charge' | 'payment' | 'spending' | 'guest_deposit';
 
 export function MiniCancelButton({ id, kind }: { id: string; kind: Kind }) {
   const m = useMessages();
@@ -22,7 +23,8 @@ export function MiniCancelButton({ id, kind }: { id: string; kind: Kind }) {
       try {
         if (kind === 'charge') await cancelCharge({ id });
         else if (kind === 'payment') await cancelPayment({ id });
-        else await cancelSpending({ id });
+        else if (kind === 'spending') await cancelSpending({ id });
+        else await cancelGuestDeposit({ id });
         router.refresh();
       } catch (e) {
         setError((e as Error).message);

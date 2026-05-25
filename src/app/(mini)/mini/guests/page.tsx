@@ -53,9 +53,6 @@ export default async function MiniGuestsPage(props: {
       </div>
 
       <div className="mini-filterbar">
-        <Link href="/mini/guests/deposits" data-active={false}>
-          📊 {m.guests.depositsPageTitle}
-        </Link>
         <Link
           href={includeArchived ? '/mini/guests' : '/mini/guests?archived=1'}
           data-active={includeArchived}

@@ -6,6 +6,7 @@ export {
   ShoppingBagIcon as NavExpensesIcon,
   InfoIcon as NavInfoIcon,
   UsersThreeIcon as NavGuestsIcon,
+  PiggyBankIcon as NavDepositsIcon,
   GearIcon as NavSettingsIcon,
   ListIcon as NavMenuIcon,
   PlusIcon as ActionNewIcon,

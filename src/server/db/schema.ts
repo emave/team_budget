@@ -78,6 +78,9 @@ export const payments = sqliteTable('payments', {
   excludeFromPot: integer('exclude_from_pot', { mode: 'boolean' }).notNull().default(false),
   transferredFromUserId: text('transferred_from_user_id').references(() => users.id),
   transferGroupId: text('transfer_group_id'),
+  kind: text('kind', { enum: ['wallet_deposit', 'charge_payment'] })
+    .notNull()
+    .default('charge_payment'),
 });
 
 export const paymentAllocations = sqliteTable('payment_allocations', {

@@ -5,13 +5,11 @@ import type { Db } from '@/server/domain/types';
 import {
   recordGuestDepositSchema,
   cancelGuestDepositSchema,
-  guestDepositRangeSchema,
 } from '@/shared/schemas';
 import {
   recordGuestDeposit as domainRecord,
   cancelGuestDeposit as domainCancel,
   listGuestDeposits as domainList,
-  guestDepositSummary as domainSummary,
 } from '@/server/domain/guest-deposits';
 
 export function makeGuestDepositActions(deps: { getDb: () => Db } = { getDb: defaultGetDb }) {
@@ -34,20 +32,14 @@ export function makeGuestDepositActions(deps: { getDb: () => Db } = { getDb: def
     return domainCancel(db, p.id);
   });
 
-  const guestDepositSummary = adminAction(async ({ db }, input: unknown) => {
-    const p = guestDepositRangeSchema.parse(input);
-    return domainSummary(db, p);
-  });
-
   const listGuestDeposits = adminAction(async ({ db }, input: { guestId?: string | null } | undefined) => {
     return domainList(db, { guestId: input?.guestId ?? undefined });
   });
 
-  return { recordGuestDeposit, cancelGuestDeposit, guestDepositSummary, listGuestDeposits };
+  return { recordGuestDeposit, cancelGuestDeposit, listGuestDeposits };
 }
 
 const prod = makeGuestDepositActions();
 export const recordGuestDeposit = prod.recordGuestDeposit;
 export const cancelGuestDeposit = prod.cancelGuestDeposit;
-export const guestDepositSummary = prod.guestDepositSummary;
 export const listGuestDeposits = prod.listGuestDeposits;

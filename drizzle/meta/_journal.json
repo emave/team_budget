@@ -43,6 +43,13 @@
       "when": 1779462821860,
       "tag": "0005_strange_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1779714286241,
+      "tag": "0006_normal_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

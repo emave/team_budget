@@ -96,38 +96,4 @@ describe('guest-deposits domain', () => {
     expect(onlyGuest[0]!.id).toBe(a.id);
   });
 
-  it('guestDepositSummary aggregates by date and guest', async () => {
-    const { guestDepositSummary } = await import('@/server/domain/guest-deposits');
-    const g1 = await createGuest(db, { name: 'P', createdByUserId: adminId });
-    const g2 = await createGuest(db, { name: 'V', createdByUserId: adminId });
-    await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 1000, method: 'cash',
-      receivedAt: '2026-05-15T10:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 500, method: 'cash',
-      receivedAt: '2026-05-15T18:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      guestId: g2.id, amount: 3000, method: 'card',
-      receivedAt: '2026-05-15T11:00:00.000Z', createdByUserId: adminId,
-    });
-    await recordGuestDeposit(db, {
-      amount: 700, method: 'cash',
-      receivedAt: '2026-05-16T09:00:00.000Z', createdByUserId: adminId,
-    });
-    const cancelled = await recordGuestDeposit(db, {
-      guestId: g1.id, amount: 999, method: 'cash',
-      receivedAt: '2026-05-15T12:00:00.000Z', createdByUserId: adminId,
-    });
-    await cancelGuestDeposit(db, cancelled.id);
-
-    const rows = await guestDepositSummary(db, { from: '2026-05-15', to: '2026-05-16' });
-    const find = (date: string, guestId: string | null) =>
-      rows.find((r) => r.date === date && r.guestId === guestId)?.amount;
-    expect(find('2026-05-15', g1.id)).toBe(1500);
-    expect(find('2026-05-15', g2.id)).toBe(3000);
-    expect(find('2026-05-16', null)).toBe(700);
-    expect(rows.length).toBe(3);
-  });
 });

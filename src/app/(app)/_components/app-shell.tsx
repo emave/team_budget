@@ -17,6 +17,7 @@ import {
   NavExpensesIcon,
   NavInfoIcon,
   NavGuestsIcon,
+  NavDepositsIcon,
   NavSettingsIcon,
   NavMenuIcon,
   RowCancelIcon,
@@ -50,6 +51,7 @@ export function AppShell({
   ];
   const adminExtras: NavItem[] = [
     { href: '/guests', label: m.nav.guests, Icon: NavGuestsIcon },
+    { href: '/deposits', label: m.nav.deposits, Icon: NavDepositsIcon },
     { href: '/settings', label: m.nav.settings, Icon: NavSettingsIcon },
   ];
   const items: NavItem[] = role === 'admin' ? [...baseNav, ...adminExtras] : baseNav;

@@ -7,7 +7,6 @@ import { formatDate, getMessages } from '@/shared/i18n';
 import { formatCents } from '@/shared/format';
 import { PageHeader } from '@/ui/page-header';
 import { Panel } from '@/ui/panel';
-import { LinkButton } from '@/ui/link-button';
 import { GuestsTable, type GuestRow } from './guests-table';
 import { NewGuestButton } from './new-guest-button';
 
@@ -47,14 +46,7 @@ export default async function GuestsPage(
     <div>
       <PageHeader
         title={m.guests.pageTitle}
-        actions={
-          <>
-            <LinkButton href="/guests/deposits" kind="secondary">
-              📊 {m.guests.depositsPageTitle}
-            </LinkButton>
-            <NewGuestButton />
-          </>
-        }
+        actions={<NewGuestButton />}
       />
       <Panel>
         <GuestsTable rows={rows} />

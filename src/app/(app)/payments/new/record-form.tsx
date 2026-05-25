@@ -164,7 +164,7 @@ export function RecordPaymentForm({ members, guests }: { members: Member[]; gues
         note: guestNote || undefined,
       });
     },
-    onSuccess: () => router.push('/guests/deposits'),
+    onSuccess: () => router.push('/deposits?tab=guests'),
   });
 
   const Toggle = (
