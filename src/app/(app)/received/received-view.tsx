@@ -192,8 +192,8 @@ export function ReceivedView({
                 </Tag>
               </span>
               <span style={{ flex: '1 1 160px', minWidth: 0 }}>
-                {d.personName || m.guests.anonymous}
-                {d.personArchived ? m.guests.archivedSuffix : ''}
+                {d.personName || m.people.guests.anonymous}
+                {d.personArchived ? m.people.guests.archivedSuffix : ''}
               </span>
               <span style={{ minWidth: 60, color: '#374151' }}>
                 {d.method === 'cash' ? m.common.cash : m.common.card}

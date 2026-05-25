@@ -49,7 +49,7 @@ export default async function MiniMemberDetailPage(props: {
   return (
     <>
       <MiniInit />
-      <MiniBack href="/mini/members">{m.mini.back}</MiniBack>
+      <MiniBack href="/mini/people">{m.mini.back}</MiniBack>
 
       <h2 style={{ fontSize: 20, margin: '0 0 12px', color: 'var(--mini-text)' }}>
         {u.displayName}
@@ -69,7 +69,7 @@ export default async function MiniMemberDetailPage(props: {
           {debt > 0 ? m.mini.youOwe : m.mini.settled}
         </div>
         <div style={{ fontSize: 24, fontWeight: 700, marginTop: 2 }}>
-          {debt > 0 ? formatCents(debt) : m.members.settledBadge}
+          {debt > 0 ? formatCents(debt) : m.people.settledBadge}
         </div>
       </MiniCard>
 
@@ -100,7 +100,7 @@ export default async function MiniMemberDetailPage(props: {
       </MiniSection>
 
       {prepaid.length > 0 && (
-        <MiniSection heading={m.members.prepaid.heading}>
+        <MiniSection heading={m.people.prepaid.heading}>
           <div className="mini-chip-list" style={{ padding: '8px 0' }}>
             {prepaid.map((c) => (
               <span key={c.id} className="mini-chip">
@@ -175,7 +175,7 @@ export default async function MiniMemberDetailPage(props: {
       </MiniSection>
 
       {isAdmin && settings && (
-        <MiniSection heading={m.members.dues.heading}>
+        <MiniSection heading={m.people.dues.heading}>
           <div style={{ padding: '8px 0' }}>
             <MiniChargeDuesForm
               userId={u.id}

@@ -82,14 +82,14 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
   });
   const del = useMutation({
     mutationFn: () => deleteMember({ id: user.id }),
-    onSuccess: () => router.push('/members'),
+    onSuccess: () => router.push('/people'),
   });
 
   const blockedText =
     deleteBlockedReason === 'has_financial_history'
-      ? m.members.deleteBlockedHasHistory
+      ? m.people.deleteBlockedHasHistory
       : deleteBlockedReason === 'has_invites'
-        ? m.members.deleteBlockedHasInvites
+        ? m.people.deleteBlockedHasInvites
         : null;
 
   return (
@@ -112,7 +112,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
           isLoading={deactivate.isPending}
           overrides={fullOnSmall}
         >
-          {m.members.deactivate}
+          {m.people.deactivate}
         </Button>
       ) : (
         <Button
@@ -121,7 +121,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
           isLoading={reactivate.isPending}
           overrides={fullOnSmall}
         >
-          {m.members.reactivate}
+          {m.people.reactivate}
         </Button>
       )}
 
@@ -134,7 +134,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             isLoading={del.isPending}
             overrides={fullOnSmall}
           >
-            {m.members.deleteButton}
+            {m.people.deleteButton}
           </Button>
           {blockedText && (
             <span style={{ color: '#6b7280', fontSize: 12 }}>{blockedText}</span>
@@ -143,13 +143,13 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
       )}
 
       <Modal isOpen={editOpen} onClose={() => setEditOpen(false)}>
-        <ModalHeader>{m.members.editModalTitle}</ModalHeader>
+        <ModalHeader>{m.people.editModalTitle}</ModalHeader>
         <ModalBody>
           <form
             id="edit-member-form"
             onSubmit={handleSubmit((v) => edit.mutate(v))}
           >
-            <FormControl label={m.members.editDisplayNameLabel}>
+            <FormControl label={m.people.editDisplayNameLabel}>
               <Controller
                 control={control}
                 name="displayName"
@@ -163,7 +163,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
                 )}
               />
             </FormControl>
-            <FormControl label={m.members.roleLabel}>
+            <FormControl label={m.people.roleLabel}>
               <Controller
                 control={control}
                 name="role"
@@ -172,8 +172,8 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
                     value={field.value}
                     onChange={(e) => field.onChange(e.currentTarget.value)}
                   >
-                    <Radio value="admin">{m.members.roleAdmin}</Radio>
-                    <Radio value="member">{m.members.roleMember}</Radio>
+                    <Radio value="admin">{m.people.roleAdmin}</Radio>
+                    <Radio value="member">{m.people.roleMember}</Radio>
                   </RadioGroup>
                 )}
               />
@@ -217,14 +217,14 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             }}
             isLoading={deactivate.isPending}
           >
-            {m.members.deactivate}
+            {m.people.deactivate}
           </ModalButton>
         </ModalFooter>
       </Modal>
 
       <Modal isOpen={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-        <ModalHeader>{m.members.deleteButton}</ModalHeader>
-        <ModalBody>{m.members.confirmDelete(user.displayName)}</ModalBody>
+        <ModalHeader>{m.people.deleteButton}</ModalHeader>
+        <ModalBody>{m.people.confirmDelete(user.displayName)}</ModalBody>
         <ModalFooter>
           <ModalButton kind="tertiary" onClick={() => setConfirmDeleteOpen(false)}>
             {m.common.cancel}
@@ -236,7 +236,7 @@ export function AdminControls({ user, isSelf, deleteBlockedReason }: Props) {
             }}
             isLoading={del.isPending}
           >
-            {m.members.deleteButton}
+            {m.people.deleteButton}
           </ModalButton>
         </ModalFooter>
       </Modal>

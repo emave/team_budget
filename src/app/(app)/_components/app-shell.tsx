@@ -16,7 +16,6 @@ import {
   NavPaymentsInIcon,
   NavExpensesIcon,
   NavInfoIcon,
-  NavGuestsIcon,
   NavSettingsIcon,
   NavMenuIcon,
   RowCancelIcon,
@@ -42,7 +41,7 @@ export function AppShell({
 
   const baseNav: NavItem[] = [
     { href: '/dashboard', label: m.nav.dashboard, Icon: NavDashboardIcon },
-    { href: '/members', label: m.nav.members, Icon: NavMembersIcon },
+    { href: '/people', label: m.nav.people, Icon: NavMembersIcon },
     { href: '/owed', label: m.nav.owed, Icon: NavDebtsIcon },
     { href: '/received', label: m.nav.received, Icon: NavPaymentsInIcon },
     { href: '/spent', label: m.nav.spent, Icon: NavExpensesIcon },
@@ -50,7 +49,6 @@ export function AppShell({
   ];
   const adminExtras: NavItem[] = [
     { href: '/history', label: m.nav.history, Icon: NavInfoIcon },
-    { href: '/guests', label: m.nav.guests, Icon: NavGuestsIcon },
     { href: '/settings', label: m.nav.settings, Icon: NavSettingsIcon },
   ];
   const items: NavItem[] = role === 'admin' ? [...baseNav, ...adminExtras] : baseNav;

@@ -12,9 +12,9 @@ export default async function MiniInvitePage() {
   return (
     <>
       <MiniInit />
-      <MiniBack href="/mini/members">{m.mini.back}</MiniBack>
+      <MiniBack href="/mini/people">{m.mini.back}</MiniBack>
       <h2 style={{ fontSize: 18, margin: '0 0 12px', color: 'var(--mini-text)' }}>
-        {m.members.inviteModalTitle}
+        {m.people.inviteModalTitle}
       </h2>
       <InviteForm />
     </>

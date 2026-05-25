@@ -14,7 +14,7 @@ export function ArchiveButton({ id, archived }: { id: string; archived: boolean 
     mutationFn: () => (archived ? unarchiveGuest({ id }) : archiveGuest({ id })),
     onSuccess: () => router.refresh(),
   });
-  const label = archived ? m.guests.btnUnarchive : m.guests.btnArchive;
+  const label = archived ? m.people.guests.btnUnarchive : m.people.guests.btnArchive;
   const Icon = archived ? RowUnarchiveIcon : RowArchiveIcon;
   return (
     <Button
@@ -22,7 +22,7 @@ export function ArchiveButton({ id, archived }: { id: string; archived: boolean 
       size={SIZE.mini}
       shape={SHAPE.square}
       onClick={() => {
-        if (!archived && !window.confirm(m.guests.confirmArchive)) return;
+        if (!archived && !window.confirm(m.people.guests.confirmArchive)) return;
         mutate.mutate();
       }}
       isLoading={mutate.isPending}

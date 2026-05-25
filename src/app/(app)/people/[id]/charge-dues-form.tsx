@@ -54,7 +54,7 @@ export function ChargeDuesForm({ userId, monthlyDuesAmount }: Props) {
   });
 
   if (monthlyDuesAmount <= 0) {
-    return <div>{m.members.dues.noAmountConfigured}</div>;
+    return <div>{m.people.dues.noAmountConfigured}</div>;
   }
 
   return (
@@ -65,23 +65,23 @@ export function ChargeDuesForm({ userId, monthlyDuesAmount }: Props) {
             control={control}
             name="period"
             render={({ field }) => (
-              <FormControl label={m.members.dues.monthLabel}>
+              <FormControl label={m.people.dues.monthLabel}>
                 <MonthPicker value={field.value} onChange={field.onChange} />
               </FormControl>
             )}
           />
         </div>
         <Button type="submit" isLoading={mutation.isPending} overrides={{ BaseButton: { style: { flex: '1 1 200px' } } }}>
-          {m.members.dues.chargeButton(formatCents(monthlyDuesAmount))}
+          {m.people.dues.chargeButton(formatCents(monthlyDuesAmount))}
         </Button>
       </div>
       {conflict && (
         <div style={{ color: '#b00', marginTop: 8 }}>
-          {m.members.dues.alreadyCharged(conflict.period, conflict.status)}
+          {m.people.dues.alreadyCharged(conflict.period, conflict.status)}
         </div>
       )}
       {success && (
-        <div style={{ color: '#080', marginTop: 8 }}>{m.members.dues.successAck}</div>
+        <div style={{ color: '#080', marginTop: 8 }}>{m.people.dues.successAck}</div>
       )}
     </form>
   );

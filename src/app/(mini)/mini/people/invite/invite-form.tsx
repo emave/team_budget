@@ -53,7 +53,7 @@ export function InviteForm() {
   if (link) {
     return (
       <>
-        <p style={{ fontSize: 14, color: 'var(--mini-text)' }}>{m.members.shareLink}</p>
+        <p style={{ fontSize: 14, color: 'var(--mini-text)' }}>{m.people.shareLink}</p>
         <button
           type="button"
           onClick={copyLink}
@@ -72,15 +72,15 @@ export function InviteForm() {
 
   return (
     <form onSubmit={onSubmit}>
-      <MiniField label={m.members.displayNameLabel}>
+      <MiniField label={m.people.displayNameLabel}>
         <MiniInput
-          placeholder={m.members.displayNamePlaceholder}
+          placeholder={m.people.displayNamePlaceholder}
           value={hint}
           onChange={(e) => setHint(e.currentTarget.value)}
         />
       </MiniField>
       <MiniButton type="submit" disabled={pending}>
-        {pending ? '…' : m.members.generateLink}
+        {pending ? '…' : m.people.generateLink}
       </MiniButton>
       {error && <div className="mini-error">{error}</div>}
     </form>

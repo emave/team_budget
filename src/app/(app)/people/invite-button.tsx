@@ -45,21 +45,21 @@ export function InviteButton() {
           reset();
         }}
       >
-        {m.members.invite}
+        {m.people.invite}
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
-        <ModalHeader>{m.members.inviteModalTitle}</ModalHeader>
+        <ModalHeader>{m.people.inviteModalTitle}</ModalHeader>
         <ModalBody>
           {!link && (
             <form onSubmit={handleSubmit((v: FormValues) => mut.mutate(v))}>
-              <FormControl label={m.members.displayNameLabel}>
+              <FormControl label={m.people.displayNameLabel}>
                 <Input
                   {...(register('displayNameHint') as object)}
-                  placeholder={m.members.displayNamePlaceholder}
+                  placeholder={m.people.displayNamePlaceholder}
                 />
               </FormControl>
               <Button type="submit" isLoading={mut.isPending}>
-                {m.members.generateLink}
+                {m.people.generateLink}
               </Button>
               {mut.isError && (
                 <p style={{ color: '#b91c1c', marginTop: 12 }}>
@@ -70,7 +70,7 @@ export function InviteButton() {
           )}
           {link && (
             <div>
-              <p>{m.members.shareLink}</p>
+              <p>{m.people.shareLink}</p>
               <code
                 style={{
                   display: 'block',
@@ -86,7 +86,7 @@ export function InviteButton() {
           )}
         </ModalBody>
         <ModalFooter>
-          <ModalButton onClick={() => setOpen(false)}>{m.members.closeButton}</ModalButton>
+          <ModalButton onClick={() => setOpen(false)}>{m.people.closeButton}</ModalButton>
         </ModalFooter>
       </Modal>
     </>

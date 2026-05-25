@@ -76,7 +76,7 @@ export default async function MiniHistoryPage(props: {
                 } else if (ev.kind === 'guest_deposit') {
                   title = (
                     <>
-                      👤 {ev.guestName ?? m.guests.anonymous}
+                      👤 {ev.guestName ?? m.people.guests.anonymous}
                     </>
                   );
                   badge = (

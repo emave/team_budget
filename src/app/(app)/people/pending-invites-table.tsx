@@ -27,11 +27,11 @@ export function PendingInvitesTable({ rows }: { rows: PendingInviteRow[] }) {
   const m = useMessages();
   const locale = useLocale();
   return (
-    <DataList emptyMessage={m.members.noPendingInvites} isEmpty={rows.length === 0}>
+    <DataList emptyMessage={m.people.noPendingInvites} isEmpty={rows.length === 0}>
       {rows.map((r) => (
         <DataCard
           key={r.id}
-          title={r.displayNameHint ? r.displayNameHint : <Muted>{m.members.hintEmpty}</Muted>}
+          title={r.displayNameHint ? r.displayNameHint : <Muted>{m.people.hintEmpty}</Muted>}
           subtitle={formatDate(r.createdAt, locale)}
           actions={<RowActions row={r} />}
         />
@@ -61,14 +61,14 @@ function RowActions({ row }: { row: PendingInviteRow }) {
   }
 
   function onRevoke() {
-    if (!window.confirm(m.members.confirmRevoke)) return;
+    if (!window.confirm(m.people.confirmRevoke)) return;
     revoke.mutate();
   }
 
   return (
     <>
       <Button kind={KIND.secondary} size={SIZE.compact} onClick={onCopy}>
-        {copied ? m.members.copied : m.members.copyLink}
+        {copied ? m.people.copied : m.people.copyLink}
       </Button>
       <Button
         kind={KIND.secondary}
@@ -76,7 +76,7 @@ function RowActions({ row }: { row: PendingInviteRow }) {
         onClick={onRevoke}
         isLoading={revoke.isPending}
       >
-        {m.members.revoke}
+        {m.people.revoke}
       </Button>
     </>
   );

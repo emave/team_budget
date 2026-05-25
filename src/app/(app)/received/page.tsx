@@ -57,7 +57,7 @@ export default async function ReceivedPage(props: {
   }));
   const guestOptions: PersonOption[] = guests.map((g) => ({
     id: g.id,
-    label: g.archived ? `${g.name}${m.guests.archivedSuffix}` : g.name,
+    label: g.archived ? `${g.name}${m.people.guests.archivedSuffix}` : g.name,
     source: 'guest',
   }));
 

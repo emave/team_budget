@@ -23,12 +23,12 @@ export function NewGuestButton() {
   return (
     <>
       <Button kind={KIND.primary} size={SIZE.compact} startEnhancer={<ActionNewIcon />} onClick={() => setOpen(true)}>
-        {m.guests.addNew}
+        {m.people.guests.addNew}
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
-        <ModalHeader>{m.guests.nameModalTitle}</ModalHeader>
+        <ModalHeader>{m.people.guests.nameModalTitle}</ModalHeader>
         <ModalBody>
-          <FormControl label={m.guests.namePromptLabel}>
+          <FormControl label={m.people.guests.namePromptLabel}>
             <Input value={name} onChange={(e) => setName(e.currentTarget.value)} autoFocus />
           </FormControl>
         </ModalBody>

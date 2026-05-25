@@ -26,13 +26,13 @@ export function RenameButton({ id, name }: { id: string; name: string }) {
         size={SIZE.mini}
         shape={SHAPE.square}
         onClick={() => { setValue(name); setOpen(true); }}
-        title={m.guests.btnRename}
-        aria-label={m.guests.btnRename}
+        title={m.people.guests.btnRename}
+        aria-label={m.people.guests.btnRename}
       >
         <RowRenameIcon size={14} />
       </Button>
       <Modal isOpen={open} onClose={() => setOpen(false)}>
-        <ModalHeader>{m.guests.renameModalTitle}</ModalHeader>
+        <ModalHeader>{m.people.guests.renameModalTitle}</ModalHeader>
         <ModalBody>
           <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} autoFocus />
         </ModalBody>

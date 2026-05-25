@@ -55,7 +55,7 @@ export default async function MiniDepositsPage(props: {
     ...members.map((u) => ({ id: u.id, label: u.displayName, source: 'member' as const })),
     ...guests.map((g) => ({
       id: g.id,
-      label: g.archived ? `${g.name}${m.guests.archivedSuffix}` : g.name,
+      label: g.archived ? `${g.name}${m.people.guests.archivedSuffix}` : g.name,
       source: 'guest' as const,
     })),
   ];
@@ -118,8 +118,8 @@ export default async function MiniDepositsPage(props: {
             title={
               <>
                 {d.source === 'member' ? '👤' : '🧑‍🤝‍🧑'}{' '}
-                {d.personName || m.guests.anonymous}
-                {d.personArchived ? m.guests.archivedSuffix : ''}
+                {d.personName || m.people.guests.anonymous}
+                {d.personArchived ? m.people.guests.archivedSuffix : ''}
               </>
             }
             subtitle={

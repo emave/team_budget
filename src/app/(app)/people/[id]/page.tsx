@@ -143,17 +143,17 @@ export default async function MemberDetail(props: { params: Promise<{ id: string
       />
 
       <StatusCard tone={debt > 0 ? 'negative' : 'positive'}>
-        {debt > 0 ? m.members.owes(formatCents(debt)) : m.members.settledBadge}
+        {debt > 0 ? m.people.owes(formatCents(debt)) : m.people.settledBadge}
       </StatusCard>
 
       <Panel marginBottom={16}>
-        <SectionHeading>{m.members.openCharges}</SectionHeading>
+        <SectionHeading>{m.people.openCharges}</SectionHeading>
         <OpenChargesTable rows={openRows} />
       </Panel>
 
       {prepaid.length > 0 && (
         <Panel marginBottom={16}>
-          <SectionHeading>{m.members.prepaid.heading}</SectionHeading>
+          <SectionHeading>{m.people.prepaid.heading}</SectionHeading>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {prepaid.map((c) => (
               <span
@@ -189,13 +189,13 @@ export default async function MemberDetail(props: { params: Promise<{ id: string
 
       {isAdmin && settings && (
         <Panel marginBottom={16}>
-          <SectionHeading>{m.members.dues.heading}</SectionHeading>
+          <SectionHeading>{m.people.dues.heading}</SectionHeading>
           <ChargeDuesForm userId={u.id} monthlyDuesAmount={settings.monthlyDuesAmount} />
         </Panel>
       )}
 
       <Panel>
-        <SectionHeading>{m.members.paymentHistory}</SectionHeading>
+        <SectionHeading>{m.people.paymentHistory}</SectionHeading>
         <PaymentHistoryTable rows={paymentRows} />
       </Panel>
     </div>

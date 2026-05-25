@@ -51,12 +51,12 @@ export function MiniChargeDuesForm({
   }
 
   if (monthlyDuesAmount <= 0) {
-    return <div className="mini-helper">{m.members.dues.noAmountConfigured}</div>;
+    return <div className="mini-helper">{m.people.dues.noAmountConfigured}</div>;
   }
 
   return (
     <form onSubmit={onSubmit}>
-      <MiniField label={m.members.dues.monthLabel}>
+      <MiniField label={m.people.dues.monthLabel}>
         <MiniInput
           type="month"
           value={period}
@@ -64,16 +64,16 @@ export function MiniChargeDuesForm({
         />
       </MiniField>
       <MiniButton type="submit" disabled={pending}>
-        {pending ? '…' : m.members.dues.chargeButton(formatCents(monthlyDuesAmount))}
+        {pending ? '…' : m.people.dues.chargeButton(formatCents(monthlyDuesAmount))}
       </MiniButton>
       {conflict && (
         <div className="mini-error">
-          {m.members.dues.alreadyCharged(conflict.period, conflict.status)}
+          {m.people.dues.alreadyCharged(conflict.period, conflict.status)}
         </div>
       )}
       {success && (
         <div className="mini-helper" style={{ color: 'var(--mini-success-fg)' }}>
-          {m.members.dues.successAck}
+          {m.people.dues.successAck}
         </div>
       )}
       {error && <div className="mini-error">{error}</div>}

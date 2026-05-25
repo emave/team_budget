@@ -30,7 +30,7 @@ export function MembersTable({ rows }: { rows: MemberRow[] }) {
         return (
           <DataCard
             key={r.id}
-            href={`/members/${r.id}`}
+            href={`/people/${r.id}`}
             title={
               <>
                 {r.displayName}

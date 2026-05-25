@@ -177,7 +177,7 @@ export default async function MiniDashboard() {
             adminMembers.map((mm) => (
               <MiniLinkRow
                 key={mm.id}
-                href={`/mini/members/${mm.id}`}
+                href={`/mini/people/${mm.id}`}
                 title={mm.displayName}
                 subtitle={
                   mm.credit > 0 ? (
@@ -188,7 +188,7 @@ export default async function MiniDashboard() {
                   mm.debt > 0 ? (
                     <MiniBadge variant="danger">{m.common.owesAmount(formatCents(mm.debt))}</MiniBadge>
                   ) : (
-                    <MiniBadge variant="success">{m.members.settledBadge}</MiniBadge>
+                    <MiniBadge variant="success">{m.people.settledBadge}</MiniBadge>
                   )
                 }
               />

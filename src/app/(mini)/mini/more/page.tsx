@@ -19,37 +19,31 @@ export default async function MiniMorePage() {
         {m.mini.moreTitle}
       </h2>
 
-      {isAdmin && (
-        <MiniSection heading={m.mini.activitySection}>
+      <MiniSection>
+        <MiniLinkRow
+          href="/mini/people"
+          title={<>👤 {m.nav.people}</>}
+          subtitle={<span>{m.mini.moreOnPeople}</span>}
+        />
+        {isAdmin && (
           <MiniLinkRow
             href="/mini/history"
             title={<>📈 {m.mini.viewHistory}</>}
             subtitle={<span>{m.mini.moreOnHistory}</span>}
           />
-        </MiniSection>
-      )}
-
-      {isAdmin && (
-        <MiniSection heading={m.mini.adminSection}>
-          <MiniLinkRow
-            href="/mini/guests"
-            title={<>👥 {m.nav.guests}</>}
-            subtitle={<span>{m.mini.moreOnGuests}</span>}
-          />
-          <MiniLinkRow
-            href="/mini/settings"
-            title={<>⚙️ {m.nav.settings}</>}
-            subtitle={<span>{m.mini.moreOnSettings}</span>}
-          />
-        </MiniSection>
-      )}
-
-      <MiniSection heading={m.mini.teamSection}>
+        )}
         <MiniLinkRow
           href="/mini/handbook"
           title={<>ℹ️ {m.mini.infoTitle}</>}
           subtitle={<span>{m.mini.moreOnInfo}</span>}
         />
+        {isAdmin && (
+          <MiniLinkRow
+            href="/mini/settings"
+            title={<>⚙️ {m.nav.settings}</>}
+            subtitle={<span>{m.mini.moreOnSettings}</span>}
+          />
+        )}
       </MiniSection>
 
       <MiniTabs />

@@ -19,14 +19,14 @@ export interface GuestRow {
 export function GuestsTable({ rows }: { rows: GuestRow[] }) {
   const m = useMessages();
   return (
-    <DataList emptyMessage={m.guests.none} isEmpty={rows.length === 0}>
+    <DataList emptyMessage={m.people.guests.none} isEmpty={rows.length === 0}>
       {rows.map((r) => (
         <DataCard
           key={r.id}
           title={
             <>
               {r.name}
-              {r.archived && <Muted>{m.guests.archivedSuffix}</Muted>}
+              {r.archived && <Muted>{m.people.guests.archivedSuffix}</Muted>}
             </>
           }
           titleRight={r.totalFormatted}

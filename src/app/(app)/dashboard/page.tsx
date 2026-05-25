@@ -18,7 +18,7 @@ import { StatusCard } from '@/ui/status-card';
 import { SectionHeading } from '@/ui/heading';
 import { Muted } from '@/ui/text';
 import { PotCard } from './pot-card';
-import { MembersTable, type MemberRow } from '../members/members-table';
+import { MembersTable, type MemberRow } from '../people/members-table';
 
 export default async function DashboardPage() {
   const user = await requireUser();
