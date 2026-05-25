@@ -32,13 +32,13 @@ export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Pag
   if (mode === 'edit' && !open) {
     return (
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <Button kind={KIND.tertiary} onClick={() => setOpen(true)}>{m.info.edit}</Button>
+        <Button kind={KIND.tertiary} onClick={() => setOpen(true)}>{m.handbook.edit}</Button>
         <Button
           kind={KIND.tertiary}
           onClick={() => remove.mutate()}
           isLoading={remove.isPending}
         >
-          {m.info.deleteBtn}
+          {m.handbook.deleteBtn}
         </Button>
       </div>
     );
@@ -46,19 +46,19 @@ export function PageEditor({ mode, page }: { mode: 'create' | 'edit'; page?: Pag
 
   return (
     <div style={{ display: 'grid', gap: 12, marginTop: 8 }}>
-      <FormControl label={m.info.titleLabel}>
+      <FormControl label={m.handbook.titleLabel}>
         <Input value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
       </FormControl>
-      <FormControl label={m.info.bodyLabel}>
+      <FormControl label={m.handbook.bodyLabel}>
         <Textarea value={body} onChange={(e) => setBody(e.currentTarget.value)} rows={6} />
       </FormControl>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button startEnhancer={<ActionSaveIcon />} onClick={() => save.mutate()} isLoading={save.isPending} disabled={!title}>
-          {mode === 'create' ? m.info.create : m.info.save}
+          {mode === 'create' ? m.handbook.create : m.handbook.save}
         </Button>
         {mode === 'edit' && (
           <Button kind={KIND.tertiary} onClick={() => { setOpen(false); setTitle(page?.title ?? ''); setBody(page?.body ?? ''); }}>
-            {m.info.cancel}
+            {m.handbook.cancel}
           </Button>
         )}
       </div>

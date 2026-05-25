@@ -11,7 +11,7 @@ export const MESSAGES_EN = {
     guests: 'Guests',
     deposits: 'Deposits',
     spendings: 'Expenses',
-    info: 'Info',
+    handbook: 'Handbook',
     settings: 'Settings',
     adminBadge: '(admin)',
     menu: 'Menu',
@@ -274,10 +274,10 @@ export const MESSAGES_EN = {
     submit: 'Record expense',
   },
 
-  info: {
-    title: 'Info',
+  handbook: {
+    title: 'Handbook',
     newEntry: 'New entry',
-    none: 'No info entries yet.',
+    none: 'No handbook entries yet.',
     titleLabel: 'Title',
     bodyLabel: 'Body (Markdown)',
     create: 'Create',

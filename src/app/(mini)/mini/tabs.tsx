@@ -23,7 +23,7 @@ export function MiniTabs() {
       label: m.mini.tabMore,
       matchPrefixes: [
         '/mini/more',
-        '/mini/info',
+        '/mini/handbook',
         '/mini/spendings',
         '/mini/guests',
         '/mini/settings',

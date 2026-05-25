@@ -56,7 +56,7 @@ export default async function MiniMorePage() {
 
       <MiniSection heading={m.mini.teamSection}>
         <MiniLinkRow
-          href="/mini/info"
+          href="/mini/handbook"
           title={<>ℹ️ {m.mini.infoTitle}</>}
           subtitle={<span>{m.mini.moreOnInfo}</span>}
         />

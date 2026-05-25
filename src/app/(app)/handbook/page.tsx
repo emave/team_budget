@@ -18,7 +18,7 @@ export default async function InfoPage() {
 
   return (
     <div>
-      <PageHeader title={m.info.title} />
+      <PageHeader title={m.handbook.title} />
       {pages.map((p) => (
         <div key={p.id} style={{ marginBottom: 16 }}>
           <Panel>
@@ -30,12 +30,12 @@ export default async function InfoPage() {
       ))}
       {me.role === 'admin' && (
         <Panel>
-          <SectionHeading>{m.info.newEntry}</SectionHeading>
+          <SectionHeading>{m.handbook.newEntry}</SectionHeading>
           <PageEditor mode="create" />
         </Panel>
       )}
       {pages.length === 0 && me.role !== 'admin' && (
-        <Panel><Muted>{m.info.none}</Muted></Panel>
+        <Panel><Muted>{m.handbook.none}</Muted></Panel>
       )}
     </div>
   );

@@ -15,7 +15,7 @@ export const MESSAGES_RU: Messages = {
     guests: 'Гости',
     deposits: 'Взносы',
     spendings: 'Расходы',
-    info: 'Информация',
+    handbook: 'Справка',
     settings: 'Настройки',
     adminBadge: '(админ)',
     menu: 'Меню',
@@ -296,8 +296,8 @@ export const MESSAGES_RU: Messages = {
     submit: 'Записать расход',
   },
 
-  info: {
-    title: 'Информация',
+  handbook: {
+    title: 'Справка',
     newEntry: 'Новая запись',
     none: 'Записей пока нет.',
     titleLabel: 'Заголовок',
